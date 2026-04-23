@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-field text-ink antialiased;
+  background-image:
+    radial-gradient(circle at top left, rgba(94, 182, 255, 0.28), transparent 32%),
+    radial-gradient(circle at top right, rgba(223, 242, 255, 0.95), transparent 36%),
+    linear-gradient(180deg, #f9fdff 0%, #f3fbff 44%, #eef8ff 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 182, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.18), black 20%, rgba(0, 0, 0, 0.15));
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.surface {
+  @apply rounded-3xl border border-white/80 bg-white/70 shadow-card backdrop-blur-md;
+}
+
+.surface-strong {
+  @apply rounded-3xl border border-white/90 bg-cloud/90 shadow-glow;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 28px;
+  z-index: 0;
+  font: inherit;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #214b73 !important;
+  border-radius: 9999px !important;
+  padding: 4px 8px !important;
+  box-shadow: 0 10px 30px rgba(36, 78, 117, 0.12);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.98);
+  color: #16324f;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+}
+
+.flag-pin {
+  position: relative;
+  display: flex;
+  width: 40px;
+  height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transform-origin: center bottom;
+  transition: transform 160ms ease, filter 160ms ease;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.18));
+}
+
+.flag-pin.is-selected {
+  transform: translateY(-2px) scale(1.06);
+  filter: drop-shadow(0 16px 20px rgba(36, 78, 117, 0.22));
+}
+
+.flag-pin__flag-shell {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.flag-pin__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.flag-pin__dot {
+  margin-top: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: #16324f;
+  border: 2px solid white;
+  box-shadow: 0 8px 16px rgba(36, 78, 117, 0.16);
+}
+
+.flag-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 28px rgba(36, 78, 117, 0.18);
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.flag-marker.is-hovered,
+.flag-marker.is-selected {
+  transform: translateY(-2px) scale(1.06);
+  background: #5eb6ff;
+  color: white;
+}
+
+.flag-marker__flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.flag-marker__count {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #16324f;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.flag-cluster {
+  display: flex;
+  height: 46px;
+  width: 46px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #16324f;
+  border: 3px solid white;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 14px 28px rgba(36, 78, 117, 0.18);
+}
+
+.animate-fade-in {
+  animation: fadeIn 300ms ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .flag-pin {
+    width: 28px !important;
+    height: 34px !important;
+  }
+
+  .flag-pin__flag-shell {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .flag-pin__flag {
+    font-size: 16px;
+  }
+}

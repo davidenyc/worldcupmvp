@@ -1,0 +1,9 @@
+.next
+node_modules
+.env
+dist
+coverage
+prisma/dev.db
+.DS_Store
+.codex-seed-build
+tsconfig.tsbuildinfo

@@ -1,0 +1,244 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  fifaCode          String            @unique
+  iso2              String
+  continent         String
+  confederation     String
+  flagAsset         String
+  flagEmoji         String
+  primaryColors     String[]
+  supporterKeywords String[]
+  supportersLabel   String
+  featured          Boolean           @default(false)
+  venueTags         VenueCountryTag[]
+  submissions       Submission[]
+  matchesHome       Match[]           @relation("HomeCountry")
+  matchesAway       Match[]           @relation("AwayCountry")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Borough {
+  id            String         @id @default(cuid())
+  key           String         @unique
+  label         String
+  centerLat     Float
+  centerLng     Float
+  neighborhoods Neighborhood[]
+  venues        Venue[]
+}
+
+model Neighborhood {
+  id        String   @id
+  name      String
+  boroughId String
+  lat       Float
+  lng       Float
+  borough   Borough  @relation(fields: [boroughId], references: [id], onDelete: Cascade)
+  venues    Venue[]
+
+  @@unique([boroughId, name])
+}
+
+model Venue {
+  id                   String                  @id @default(cuid())
+  slug                 String                  @unique
+  name                 String
+  description          String
+  address              String
+  city                 String
+  state                String
+  postalCode           String
+  lat                  Float
+  lng                  Float
+  boroughId            String?
+  borough              Borough?                @relation(fields: [boroughId], references: [id])
+  neighborhoodId       String?
+  neighborhood         Neighborhood?           @relation(fields: [neighborhoodId], references: [id])
+  phone                String?
+  website              String?
+  instagramUrl         String?
+  cuisineTags          String[]
+  atmosphereTags       String[]
+  likelySupporterCountry String
+  showsSoccer          Boolean                 @default(false)
+  openNow              Boolean                 @default(false)
+  numberOfScreens      Int                     @default(0)
+  hasProjector         Boolean                 @default(false)
+  hasOutdoorViewing    Boolean                 @default(false)
+  familyFriendly       Boolean                 @default(false)
+  standingRoomFriendly Boolean                 @default(false)
+  privateEventsAvailable Boolean               @default(false)
+  goodForGroups        Boolean                 @default(false)
+  acceptsReservations  Boolean                 @default(false)
+  reservationType      String?
+  reservationUrl       String?
+  reservationPhone     String?
+  approximateCapacity  Int?
+  capacityBucket       String?
+  capacityConfidence   String?
+  priceLevel           Int?
+  rating               Float?
+  reviewCount          Int?
+  sourceType           String
+  sourceConfidence     Float                   @default(0)
+  verificationStatus   String                  @default("demo_editorial")
+  isFeatured           Boolean                 @default(false)
+  isOfficialFanHub     Boolean                 @default(false)
+  gameDayScore         Float                   @default(0)
+  fanLikelihoodScore   Float                   @default(0)
+  editorialBoost       Float                   @default(0)
+  editorialNotes       String?
+  matchdayNotes        String?
+  supporterNotes       String?
+  imageUrls            String[]
+  venueTypes           VenueType[]
+  countryTags          VenueCountryTag[]
+  reservationOptions   ReservationOption[]
+  reviews              Review[]
+  matches              VenueMatchAssociation[]
+  sourceRecords        VenueSourceRecord[]
+  duplicateSubmissions Submission[]            @relation("SubmissionDuplicateVenue")
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+}
+
+model VenueType {
+  id      String @id @default(cuid())
+  key     String
+  label   String
+  venueId String
+  venue   Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, key])
+}
+
+model VenueCountryTag {
+  id        String   @id @default(cuid())
+  venueId    String
+  countryId  String
+  strength   Float    @default(1)
+  note       String?
+  venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([venueId, countryId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  venueId     String
+  sourceName  String
+  rating      Float?
+  reviewCount Int?
+  snippet     String?
+  confidence  Float    @default(0)
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model ReservationOption {
+  id         String   @id @default(cuid())
+  venueId     String
+  type        String
+  label       String
+  url         String?
+  phone       String?
+  notes       String?
+  isPrimary   Boolean  @default(false)
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Submission {
+  id                  String    @id @default(cuid())
+  name                String
+  address             String
+  borough             String
+  neighborhood        String?
+  website             String?
+  instagram           String?
+  countryId           String?
+  country             Country?  @relation(fields: [countryId], references: [id])
+  submittedById       String?
+  submittedBy         User?     @relation(fields: [submittedById], references: [id])
+  showsSoccer         Boolean   @default(false)
+  acceptsReservations Boolean   @default(false)
+  approximateCapacity Int?
+  description         String
+  status              String    @default("pending")
+  sourceConfidence    Float     @default(0)
+  duplicateOfVenueId  String?
+  duplicateOfVenue    Venue?    @relation("SubmissionDuplicateVenue", fields: [duplicateOfVenueId], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  role        String       @default("admin")
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Match {
+  id             String                  @id @default(cuid())
+  slug           String                  @unique
+  competition    String
+  startsAt       DateTime
+  note           String?
+  homeCountryId  String
+  awayCountryId  String
+  homeCountry    Country                 @relation("HomeCountry", fields: [homeCountryId], references: [id])
+  awayCountry    Country                 @relation("AwayCountry", fields: [awayCountryId], references: [id])
+  venueLinks     VenueMatchAssociation[]
+}
+
+model VenueMatchAssociation {
+  id        String   @id @default(cuid())
+  venueId   String
+  matchId   String
+  featured  Boolean  @default(false)
+  note      String?
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, matchId])
+}
+
+model ImportJob {
+  id            String   @id
+  sourceName    String
+  fileName      String
+  status        String
+  rowsProcessed Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model VenueSourceRecord {
+  id               String   @id @default(cuid())
+  venueId          String
+  sourceName       String
+  sourceType       String
+  sourceExternalId String?
+  sourceConfidence Float    @default(0)
+  attributionLabel String
+  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+}
