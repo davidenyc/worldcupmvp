@@ -45,7 +45,7 @@ const NAME_TO_SLUG: Record<string, string> = {
   "united kingdom": "england" // Fallback: treat UK polygon as England entry point
 };
 
-// NYC marker coordinates for the "NYC-only" US indicator.
+// USA marker coordinates for the host-city indicator.
 const NYC_COORDS: [number, number] = [-74.006, 40.7128];
 const US_NAME = "united states of america";
 
@@ -64,10 +64,10 @@ export function WorldMap({
   /**
    * Called on click. When provided, the map does NOT navigate — the caller
    * decides what happens (e.g. open a side panel, filter venues).
-   * When omitted, the map falls back to router.push(`/map?country=:slug`).
+   * When omitted, the map falls back to router.push(`/nyc/map?country=:slug`).
    */
   onCountrySelect?: (country: CountrySummary) => void;
-  /** Dim the US polygon and add an NYC pin to signal NYC-only coverage. */
+  /** Dim the US polygon and add a USA pin to signal host-city coverage. */
   highlightNYC?: boolean;
   className?: string;
 }) {
@@ -112,9 +112,9 @@ export function WorldMap({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <div className="text-sm uppercase tracking-[0.24em] text-mist">Interactive world map</div>
-          <h2 className="text-2xl font-semibold tracking-tight text-deep">Choose a supporter path into NYC</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-deep">Choose a supporter path into the USA</h2>
         </div>
-        <div className="hidden text-sm text-navy/60 md:block">Tap a country to see its NYC spots</div>
+        <div className="hidden text-sm text-navy/60 md:block">Tap a country to see its watch spots</div>
       </div>
       <ComposableMap
         projectionConfig={{ scale: 150 }}
@@ -151,7 +151,7 @@ export function WorldMap({
                     if (country) onCountryFocus?.(country);
                   }}
                   tabIndex={country ? 0 : -1}
-                  aria-label={country ? `${country.name} — view NYC venues` : String(geo?.properties?.name ?? "")}
+                  aria-label={country ? `${country.name} — view watch spots` : String(geo?.properties?.name ?? "")}
                   style={{
                     default: {
                       fill,
@@ -177,7 +177,7 @@ export function WorldMap({
           }
         </Geographies>
 
-        {/* NYC-only indicator: signals that within the US we only serve NYC. */}
+        {/* Host-city indicator: signals that within the US we only serve the selected city. */}
         {highlightNYC ? (
           <Marker coordinates={NYC_COORDS}>
             <g pointerEvents="none">
@@ -195,7 +195,7 @@ export function WorldMap({
                   strokeWidth: 2
                 }}
               >
-                NYC
+                USA
               </text>
             </g>
           </Marker>

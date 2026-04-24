@@ -14,7 +14,7 @@ export function CountryFlagsBanner({ countries }: { countries: CountrySummary[] 
           <button
             key={`${country.slug}-${index}`}
             type="button"
-            onClick={() => router.push(`/map?country=${country.slug}`)}
+            onClick={() => router.push(`/nyc/map?country=${country.slug}`)}
             className="group flex w-16 shrink-0 cursor-pointer flex-col items-center gap-1 px-2 text-white transition-transform duration-200 hover:scale-[1.15]"
             aria-label={`Explore ${country.name} supporter spots`}
           >

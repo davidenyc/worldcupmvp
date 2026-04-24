@@ -1,20 +1,16 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-
 export default function NotFound() {
   return (
-    <div className="container-shell flex min-h-[60vh] items-center justify-center py-16">
-      <div className="surface-strong max-w-xl p-8 text-center">
-        <div className="text-sm uppercase tracking-[0.2em] text-mist">404</div>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-deep">That match-day page is off the board.</h1>
-        <p className="mt-4 text-navy/72">
-          Try heading back to the country directory and picking another supporter community.
-        </p>
-        <Link href="/" className="mt-6 inline-block">
-          <Button>Back to home</Button>
-        </Link>
-      </div>
-    </div>
+    <main className="container-shell flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
+      <div className="text-6xl">🏟️</div>
+      <h1 className="mt-6 text-4xl font-semibold text-[#0a1628] dark:text-white">Page not found</h1>
+      <p className="mt-3 max-w-sm text-sm text-[#0a1628]/55 dark:text-white/55">
+        This page doesn&apos;t exist or was moved. Head back to find your watch spot.
+      </p>
+      <Link href="/" className="mt-6 rounded-full bg-[#f4b942] px-5 py-2.5 text-sm font-semibold text-[#0a1628]">
+        Back to home
+      </Link>
+    </main>
   );
 }

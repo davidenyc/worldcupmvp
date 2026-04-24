@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { MapPin, Phone } from "lucide-react";
+import { Clock3, ExternalLink, Instagram, MapPin, Phone } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { RankedVenue } from "@/lib/types";
+import { getVenueImageSet } from "@/lib/utils/venueImages";
 
 type Cluster = {
   id: string;
@@ -57,7 +59,7 @@ function clusterVenues(venues: RankedVenue[]) {
 
 export function NycMapPanel({
   venues,
-  title = "NYC venue map",
+  title = "USA host-city venue map",
   height = "h-[520px]"
 }: {
   venues: RankedVenue[];
@@ -66,26 +68,27 @@ export function NycMapPanel({
 }) {
   const clusters = useMemo(() => clusterVenues(venues), [venues]);
   const [activeVenue, setActiveVenue] = useState<RankedVenue | null>(venues[0] ?? null);
+  const activeVenueImages = activeVenue ? getVenueImageSet(activeVenue) : [];
 
   return (
     <div className="surface-strong p-5">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <div className="text-sm uppercase tracking-[0.24em] text-mist">NYC venue map</div>
-          <h3 className="text-2xl font-semibold text-deep">{title}</h3>
+          <div className="text-sm uppercase tracking-[0.24em] text-mist dark:text-white/45">Host-city venue map</div>
+          <h3 className="text-2xl font-semibold text-deep dark:text-white">{title}</h3>
         </div>
-        <Badge>{venues.length} venues</Badge>
+        <Badge className="dark:bg-white/10 dark:text-white">{venues.length} venues</Badge>
       </div>
       <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
         <div
-          className={`relative overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,#eef8ff_0%,#dff2ff_42%,#f8fcff_100%)] ${height}`}
+          className={`relative overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,#eef8ff_0%,#dff2ff_42%,#f8fcff_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#17212f_0%,#111827_100%)] ${height}`}
         >
           <div className="absolute inset-0 bg-pitch-grid bg-[length:26px_26px] opacity-40" />
-          <div className="absolute left-6 top-6 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-navy shadow-sm">
-            New York City
+          <div className="absolute left-6 top-6 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-navy shadow-sm dark:bg-white/10 dark:text-white">
+            Host city
           </div>
-          <div className="absolute bottom-6 left-6 rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-navy/70 shadow-sm">
-            2D map abstraction with marker clustering
+          <div className="absolute bottom-6 left-6 rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-navy/70 shadow-sm dark:border-white/10 dark:bg-[#161b22]/90 dark:text-white/70">
+            Map view with venue clustering
           </div>
 
           {clusters.map((cluster) => {
@@ -116,47 +119,97 @@ export function NycMapPanel({
 
         <div className="space-y-3">
           {activeVenue && (
-            <div className="rounded-[28px] border border-white/80 bg-white p-5 shadow-card">
+            <div className="overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-card dark:border-white/10 dark:bg-[#161b22]">
+              <div className="relative h-44">
+                <Image
+                  src={activeVenueImages[0]}
+                  alt={activeVenue.name}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/70 via-[#0a1628]/20 to-transparent" />
+              </div>
+              <div className="p-5">
               <div className="flex items-center gap-2">
-                <Badge>{activeVenue.venueTypes[0].replace(/_/g, " ")}</Badge>
-                {activeVenue.acceptsReservations && <Badge className="bg-accent/15 text-accent">Reserve</Badge>}
+                {activeVenue.venueTypes[0] ? (
+                  <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">
+                    {activeVenue.venueTypes[0].replace(/_/g, " ")}
+                  </Badge>
+                ) : null}
+                {activeVenue.acceptsReservations && <Badge className="bg-accent/15 text-accent dark:bg-[#f4b942]/25 dark:text-[#ffd56b]">Reserve</Badge>}
               </div>
-              <h4 className="mt-3 text-xl font-semibold text-deep">{activeVenue.name}</h4>
-              <div className="mt-2 text-sm text-navy/70">
-                {activeVenue.neighborhood}, {activeVenue.borough}
+              <h4 className="mt-3 text-xl font-semibold text-deep dark:text-white">{activeVenue.name}</h4>
+              <div className="mt-2 text-sm text-navy/70 dark:text-white/70">
+                {activeVenue.neighborhood}
               </div>
-              <p className="mt-3 text-sm leading-6 text-navy/75">{activeVenue.supporterNotes}</p>
+              <p className="mt-3 text-sm leading-6 text-navy/75 dark:text-white/75">{activeVenue.supporterNotes}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Badge>{activeVenue.approximateCapacity ?? "?"} cap.</Badge>
-                <Badge>{activeVenue.numberOfScreens} screens</Badge>
-                <Badge>{activeVenue.gameDayScore.toFixed(1)} vibe</Badge>
+                <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.approximateCapacity ?? "?"} cap.</Badge>
+                <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.numberOfScreens} screens</Badge>
+                <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.gameDayScore.toFixed(1)} vibe</Badge>
+                <Badge className={`${activeVenue.openNow ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "dark:border-white/15 dark:bg-white/8 dark:text-white"}`}>
+                  <Clock3 className="mr-1 inline h-3.5 w-3.5" />
+                  {activeVenue.openNow ? "Open now" : "Hours vary"}
+                </Badge>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <a
                   href={`https://maps.apple.com/?q=${encodeURIComponent(activeVenue.address)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-line bg-sky/50 px-3 py-2 text-sm font-medium text-navy"
+                  className="rounded-full border border-line bg-sky/50 px-3 py-2 text-sm font-medium text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
                 >
                   Directions
                 </a>
-                {activeVenue.acceptsReservations && (
+                {activeVenue.acceptsReservations && (activeVenue.reservationUrl || activeVenue.reservationPhone) && (
                   <a
-                    href={activeVenue.reservationUrl ?? `tel:${activeVenue.reservationPhone ?? ""}`}
+                    href={activeVenue.reservationUrl ?? `tel:${activeVenue.reservationPhone!}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full bg-accent px-3 py-2 text-sm font-medium text-white"
+                    className="rounded-full bg-accent px-3 py-2 text-sm font-medium text-[#0a1628]"
                   >
                     Reserve
                   </a>
                 )}
+                {activeVenue.website && (
+                  <a
+                    href={activeVenue.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Website
+                  </a>
+                )}
+                {activeVenue.instagramUrl && (
+                  <a
+                    href={activeVenue.instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    Insta
+                  </a>
+                )}
+                {(activeVenue.reservationPhone || activeVenue.phone) && (
+                  <a
+                    href={`tel:${activeVenue.reservationPhone ?? activeVenue.phone ?? ""}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
                 <Link
                   href={`/venue/${activeVenue.slug}`}
-                  className="rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-navy"
+                  className="rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
                 >
                   View venue
                 </Link>
               </div>
+            </div>
             </div>
           )}
           <div className="space-y-3">
@@ -165,14 +218,12 @@ export function NycMapPanel({
                 key={venue.id}
                 type="button"
                 onClick={() => setActiveVenue(venue)}
-                className="block w-full rounded-2xl border border-white/80 bg-white px-4 py-4 text-left shadow-sm transition hover:bg-sky/35"
+                className="block w-full rounded-2xl border border-white/80 bg-white px-4 py-4 text-left shadow-sm transition hover:bg-sky/35 dark:border-white/10 dark:bg-[#161b22] dark:hover:bg-white/5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="font-semibold text-deep">{venue.name}</div>
-                    <div className="mt-1 text-sm text-navy/65">
-                      {venue.neighborhood}, {venue.borough}
-                    </div>
+                    <div className="font-semibold text-deep dark:text-white">{venue.name}</div>
+                    <div className="mt-1 text-sm text-navy/65 dark:text-white/65">{venue.neighborhood}</div>
                   </div>
                   {venue.reservationPhone && <Phone className="h-4 w-4 text-accent" />}
                 </div>

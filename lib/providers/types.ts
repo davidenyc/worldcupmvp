@@ -7,6 +7,7 @@ import {
 } from "@/lib/types";
 
 export interface VenueSearchParams {
+  city?: string;
   countrySlug?: string;
   priceLevel?: number;
   venueTypes?: string[];

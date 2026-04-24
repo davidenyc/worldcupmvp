@@ -4,6 +4,7 @@ export interface MapProviderConfig {
   id: string;
   label: string;
   tileUrl: string;
+  darkTileUrl?: string;
   attribution: string;
   defaultCenter: [number, number];
   defaultZoom: number;

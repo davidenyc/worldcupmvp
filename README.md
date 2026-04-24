@@ -1,6 +1,6 @@
 # GameDay Map
 
-GameDay Map is a polished NYC-first World Cup fan discovery platform built on compliant ingestion architecture: demo data first, then CSV imports, manual curation, user submissions, and isolated official provider connectors.
+GameDay Map is a polished World Cup 2026 fan experience built on compliant ingestion architecture: demo data first, then CSV imports, manual curation, user submissions, and isolated official provider connectors.
 
 ## Current scope
 
@@ -8,7 +8,7 @@ GameDay Map is a polished NYC-first World Cup fan discovery platform built on co
 - Light pastel-blue visual system
 - Interactive world map hero plus mobile-friendly flag picker
 - Flagship `/map` page powered by Leaflet with flag markers, clustering, service areas, and synced results
-- NYC venue map with client-side clustering and marker mini-cards
+- Host-city venue map with client-side clustering and marker mini-cards
 - Expanded venue model with reservations, capacity, amenities, verification, and source tracking
 - Admin scaffolding for imports, moderation, duplicate review, and featured controls
 

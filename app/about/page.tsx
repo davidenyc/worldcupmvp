@@ -13,9 +13,9 @@ export default function AboutPage() {
     <div className="container-shell py-10">
       <div className="max-w-4xl">
         <Badge>About GameDay Map</Badge>
-        <h1 className="mt-4 text-5xl font-semibold tracking-tight text-deep">Built for game-day discovery, not scraping hacks.</h1>
+        <h1 className="mt-4 text-5xl font-semibold tracking-tight text-deep">Built for game-day discovery, not scraping hacks</h1>
         <p className="mt-5 text-lg leading-8 text-navy/72">
-          GameDay Map helps supporters find restaurants, bars, cafes, and fan hubs in NYC that match their national team or culture. The MVP is designed around mock data, modular providers, and future official integrations.
+          GameDay Map helps supporters find restaurants, bars, cafes, and fan hubs across the 2026 World Cup host cities that match their national team or culture. The MVP is designed around mock data, modular providers, and future official integrations.
         </p>
       </div>
 

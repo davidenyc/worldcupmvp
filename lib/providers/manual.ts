@@ -1,6 +1,6 @@
 import { demoCountries, demoImportJobs, demoSubmissions } from "@/lib/data/demo";
 import { CsvVenueProvider } from "@/lib/providers/csv";
-import { VenueProvider } from "@/lib/providers/types";
+import { VenueProvider, VenueSearchParams } from "@/lib/providers/types";
 import { CountrySummary, ImportJobRecord, SubmissionRecord, Venue } from "@/lib/types";
 
 const csvProvider = new CsvVenueProvider();
@@ -17,8 +17,8 @@ export class ManualVenueProvider implements VenueProvider {
     return demoCountries.find((country) => country.slug === slug) ?? null;
   }
 
-  async listVenues(): Promise<Venue[]> {
-    return csvProvider.listVenues();
+  async listVenues(params?: VenueSearchParams): Promise<Venue[]> {
+    return csvProvider.listVenues(params);
   }
 
   async getVenueBySlug(slug: string): Promise<Venue | null> {
