@@ -4,12 +4,15 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 
 import { VenueCard } from "@/components/venue/venue-card";
+import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { RankedVenue } from "@/lib/types";
 
 export function SavedVenuesClient({ venues }: { venues: RankedVenue[] }) {
   const favorites = useFavoritesStore((state) => state.favorites);
+  const { userCity } = useUserCity();
   const savedVenues = venues.filter((venue) => favorites.includes(venue.slug));
+  const exploreHref = `/${userCity ?? "nyc"}/map`;
 
   return (
     <section className="surface p-6">
@@ -42,7 +45,7 @@ export function SavedVenuesClient({ venues }: { venues: RankedVenue[] }) {
             Tap <span className="font-semibold">Save</span> on any venue card and it will show up here.
           </p>
           <Link
-            href="/nyc/map"
+            href={exploreHref}
             className="mt-5 inline-flex rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-[#0a1628]"
           >
             Explore venues

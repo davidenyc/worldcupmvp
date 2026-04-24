@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ type FormValues = {
 };
 
 export function SubmitForm() {
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const { register, handleSubmit, setValue, watch, reset } = useForm<FormValues>({
     defaultValues: {
       borough: "Manhattan",
@@ -36,7 +38,10 @@ export function SubmitForm() {
     const parsed = submissionSchema.safeParse(values);
     if (parsed.success) {
       reset();
+      setStatus("success");
+      return;
     }
+    setStatus("error");
   }
 
   return (
@@ -85,11 +90,23 @@ export function SubmitForm() {
         {...register("description")}
       />
 
+      {status === "success" ? (
+        <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+          Thanks. Your venue suggestion was captured for review.
+        </div>
+      ) : null}
+
+      {status === "error" ? (
+        <div className="mt-4 rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
+          A few details are still missing. Fill out the required fields and try again.
+        </div>
+      ) : null}
+
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-navy/62">
-          Demo submission flow. Next step: wire to server actions and moderation records.
+          Suggestions go into the moderation queue next.
         </p>
-        <Button type="submit">Submit venue</Button>
+        <Button type="submit" className="w-full sm:w-auto">Submit venue</Button>
       </div>
     </form>
   );

@@ -67,6 +67,7 @@ type CuratedVenueSeed = {
   privateEventsAvailable: boolean;
   goodForGroups: boolean;
   sourceConfidence: number;
+  sourceNote?: string;
   verificationStatus: "demo_editorial";
   editorialBoost: number;
   atmosphereTags: AtmosphereKey[];
@@ -281,14 +282,17 @@ function buildVenue(country: CountrySummary, countryIndex: number, venueIndex: n
   const sourceConfidence = Number((0.55 + ((countryIndex + venueIndex) % 6) * 0.07).toFixed(2));
   const isOfficialFanHub = venueIndex === 0;
   const isFeatured = featuredOrder.includes(country.slug) && venueIndex <= 1;
-  const gameDayScore = Number(
-    (
-      7.4 +
-      (blueprint.featuredBias > 1 ? 0.8 : 0.3) +
-      (isOfficialFanHub ? 0.9 : 0) +
-      (country.featured ? 0.3 : 0) +
-      (venueIndex % 3) * 0.25
-    ).toFixed(1)
+  const gameDayScore = Math.min(
+    8.9,
+    Number(
+      (
+        7.4 +
+        (blueprint.featuredBias > 1 ? 0.8 : 0.3) +
+        (isOfficialFanHub ? 0.9 : 0) +
+        (country.featured ? 0.3 : 0) +
+        (venueIndex % 3) * 0.25
+      ).toFixed(1)
+    )
   );
   const fanLikelihoodScore = Number((7.2 + venueIndex * 0.35 + (country.featured ? 0.7 : 0.2)).toFixed(1));
   const screens = blueprint.screenBase + (countryIndex % 3);
@@ -358,7 +362,10 @@ function buildVenue(country: CountrySummary, countryIndex: number, venueIndex: n
 }
 
 function buildCuratedVenue(country: CountrySummary, index: number, seed: CuratedVenueSeed): Venue {
-  const showGames = seed.venueIntent !== "cultural_dining";
+  const resolvedVenueIntent = resolveVenueIntent(seed);
+  const showGames = resolveShowsSoccer(seed, resolvedVenueIntent);
+  const resolvedGameDayScore = resolveGameDayScore(seed, resolvedVenueIntent, showGames);
+  const resolvedSourceConfidence = resolveSourceConfidence(seed, resolvedVenueIntent, showGames);
   const capacityBucket = capacityBucketFromValue(seed.approximateCapacity);
   const reservationUrl =
     seed.reservationType === "none" ? undefined : seed.reservationUrl ?? `https://reserve.example.com/${country.slug}/${slugify(seed.slugSuffix)}`;
@@ -381,18 +388,19 @@ function buildCuratedVenue(country: CountrySummary, index: number, seed: Curated
     phone: seed.reservationPhone,
     website: seed.website,
     instagramUrl: seed.instagramUrl,
+    sourceNote: resolveSourceNote(seed, resolvedVenueIntent, showGames),
     venueTypes: seed.venueTypes,
     associatedCountries: [country.slug],
     likelySupporterCountry,
-    venueIntent: seed.venueIntent,
+    venueIntent: resolvedVenueIntent,
     cuisineTags: seed.cuisineTags.length ? seed.cuisineTags : [country.name, "NYC"],
     atmosphereTags: seed.atmosphereTags,
     showsSoccer: showGames,
     openNow: true,
     priceLevel:
-      seed.venueIntent === "watch_party" ? 3 : seed.venueIntent === "sports_bar" ? 2 : 3,
+      resolvedVenueIntent === "watch_party" ? 3 : resolvedVenueIntent === "sports_bar" ? 2 : 3,
     rating: seed.rating,
-    reviewCount: seed.venueIntent === "cultural_dining" ? 1200 : 860,
+    reviewCount: resolvedVenueIntent === "cultural_dining" ? 1200 : 860,
     numberOfScreens: seed.numberOfScreens,
     hasProjector: seed.hasProjector,
     hasOutdoorViewing: seed.hasOutdoorViewing,
@@ -410,20 +418,20 @@ function buildCuratedVenue(country: CountrySummary, index: number, seed: Curated
     sourceType: "editorial",
     sourceName: "gameday-editorial",
     sourceExternalId: `featured-${country.slug}-${slugify(seed.slugSuffix)}`,
-    sourceConfidence: seed.sourceConfidence,
+    sourceConfidence: resolvedSourceConfidence,
     verificationStatus: seed.verificationStatus,
     isFeatured: true,
     isOfficialFanHub: seed.isOfficialFanHub ?? false,
-    gameDayScore: seed.gameDayScore,
+    gameDayScore: resolvedGameDayScore,
     fanLikelihoodScore:
-      seed.venueIntent === "cultural_dining"
-        ? Number((seed.gameDayScore - 1.2).toFixed(1))
-        : Number((seed.gameDayScore + 0.4).toFixed(1)),
+      resolvedVenueIntent === "cultural_dining"
+        ? Number((resolvedGameDayScore - 1.2).toFixed(1))
+        : Number((resolvedGameDayScore + 0.4).toFixed(1)),
     editorialBoost: seed.editorialBoost,
     editorialNotes: seed.note,
     matchdayNotes: seed.note,
     supporterNotes:
-      seed.venueIntent === "cultural_dining"
+      resolvedVenueIntent === "cultural_dining"
         ? `Best for authentic ${country.name} dining rather than a guaranteed watch party.`
         : `Likely ${country.name} supporters gather here during marquee matches.`,
     imageUrls: imageSet(index + country.slug.length),
@@ -432,18 +440,913 @@ function buildCuratedVenue(country: CountrySummary, index: number, seed: Curated
   };
 }
 
+type SportsBarSeed = Omit<CuratedVenueSeed, "likelySupporterCountry" | "venueIntent" | "verificationStatus"> & {
+  associatedCountries: string[];
+  priceLevel: number;
+};
+
+type VenueCredibilitySeed = {
+  name: string;
+  venueTypes: string[];
+  venueIntent?: string;
+  cuisineTags: string[];
+  numberOfScreens: number;
+  hasProjector?: boolean;
+  showsSoccer?: boolean;
+  gameDayScore: number;
+  sourceConfidence: number;
+  sourceNote?: string;
+  note: string;
+};
+
+type VenueCredibilityOverride = {
+  sourceNote?: string;
+  sourceConfidence?: number;
+  gameDayScore?: number;
+  venueIntent?: VenueIntentKey;
+  showsSoccer?: boolean;
+};
+
+const VENUE_CREDIBILITY_OVERRIDES: Record<string, VenueCredibilityOverride> = {
+  "Dead Rabbit NYC": {
+    sourceNote: "Irish-American bar with multiple screens; known to show big soccer events during World Cup",
+    gameDayScore: 8.5,
+    sourceConfidence: 0.75
+  },
+  "Paddy Reilly's Music Bar": {
+    sourceNote: "Irish pub — shows big matches; primarily a music venue so atmosphere varies",
+    gameDayScore: 8.0,
+    sourceConfidence: 0.88
+  },
+  Boqueria: {
+    sourceNote: "Spanish tapas bar with bar seating and screens; shows big Spain matches during World Cup but not a dedicated watch venue",
+    gameDayScore: 7.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.55
+  },
+  "Despaña Vinos y Más": {
+    sourceNote: "Authentic Spanish deli and wine bar in Soho — 5 screens but primarily a food and wine destination; atmosphere during Spain matches may be lively",
+    gameDayScore: 7.5,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  Despaña: {
+    sourceNote: "Authentic Spanish deli and wine bar — culturally relevant for Spain supporters but primarily a food and wine destination",
+    gameDayScore: 7.5,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "El Parador Café": {
+    sourceNote: "Long-running NYC Mexican restaurant known for loud, packed World Cup watch parties",
+    sourceConfidence: 0.75
+  },
+  "Mole Restaurant and Bar": {
+    sourceNote: "West Village Mexican bar-restaurant with 5 screens; shows Mexico matches during major tournaments",
+    gameDayScore: 7.8,
+    sourceConfidence: 0.75
+  },
+  "Churrascaria Plataforma": {
+    sourceNote: "Brazilian steakhouse — primarily a dining destination but shows Brazil matches during World Cup on bar area screens",
+    gameDayScore: 7.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Ipanema Restaurant": {
+    sourceNote: "Brazilian and Portuguese restaurant with a bar area and screens; lively for Brazil matches but still primarily dining-led",
+    gameDayScore: 7.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.55
+  },
+  "Berimbau Brazilian Table": {
+    sourceNote: "Brazilian restaurant — primarily a dining destination but may show Brazil matches during major tournaments",
+    gameDayScore: 7.5,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Berimbau Brazilian Table 36th Street": {
+    sourceNote: "Brazilian restaurant and bar with some screens; plausible Brazil match destination but not a dedicated soccer venue",
+    gameDayScore: 7.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.55
+  },
+  "Buenos Aires": {
+    sourceNote: "Argentine restaurant — culturally relevant for Albiceleste supporters, but primarily a dining destination",
+    gameDayScore: 7.5,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  Balvanera: {
+    sourceNote: "Argentine brasserie — included for community relevance more than confirmed watch-party culture",
+    gameDayScore: 7.4,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "El Gauchito Restaurant": {
+    sourceNote: "Argentine grill and butcher-shop restaurant — culturally relevant, but not a dedicated soccer watch venue",
+    gameDayScore: 7.2,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "El Gauchito Bar & Grill": {
+    sourceNote: "Argentine bar and grill with screens; plausible Albiceleste match spot but more neighborhood grill than dedicated soccer bar",
+    gameDayScore: 7.6,
+    sourceConfidence: 0.75
+  },
+  Balthazar: {
+    sourceNote: "French brasserie — iconic dining room, but match viewing is secondary to the restaurant experience",
+    gameDayScore: 7.2,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Le Coucou": {
+    sourceNote: "High-end French restaurant — included for cultural relevance, not as a dedicated watch venue",
+    gameDayScore: 7.0,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  Frenchette: {
+    sourceNote: "French bistro with a strong bar program, but not a proven soccer-first venue",
+    gameDayScore: 7.4,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "La Grande Boucherie": {
+    sourceNote: "French brasserie and bar with occasional sports viewing, but primarily a dining destination",
+    gameDayScore: 7.6,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.55
+  },
+  "IPPUDO NY": {
+    sourceNote: "Japanese ramen restaurant — included for community relevance, not because it is a dedicated match bar",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "IPPUDO Westside": {
+    sourceNote: "Japanese ramen restaurant — included for community relevance, not because it is a dedicated match bar",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Japan Village": {
+    sourceNote: "Japanese food hall and market — culturally important, but not a dedicated soccer watch venue",
+    gameDayScore: 6.5,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Cafe Mogador": {
+    sourceNote: "Neighborhood Moroccan restaurant — dining-led, with any match watching secondary to the restaurant experience",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Cafe Mogador Williamsburg": {
+    sourceNote: "Neighborhood Moroccan restaurant — dining-led, with any match watching secondary to the restaurant experience",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Zerza Moroccan Kitchen": {
+    sourceNote: "Moroccan restaurant — culturally relevant for community representation, not a dedicated watch venue",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  Tagine: {
+    sourceNote: "Moroccan restaurant — culturally relevant for community representation, not a dedicated watch venue",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Joey Bats Cafe - Grand Central": {
+    sourceNote: "Portuguese cafe and bakery — good community anchor, but not a dedicated soccer watch spot",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  },
+  "Joey Bats Cafe - Chelsea Market": {
+    sourceNote: "Portuguese cafe and bakery — good community anchor, but not a dedicated soccer watch spot",
+    gameDayScore: 6.8,
+    venueIntent: "cultural_dining",
+    showsSoccer: false,
+    sourceConfidence: 0.4
+  }
+};
+
+const SPECIFIC_CULTURAL_DINING_VENUES = new Set([
+  "Le Baobab",
+  "Africa Kine Restaurant",
+  "Papaye Restaurant",
+  "Accra Restaurant",
+  "Ravagh Persian Grill",
+  "Persepolis",
+  "Meme Mediterranean",
+  "Zatar Restaurant"
+]);
+
+const ICONIC_SOCCER_VENUES = new Set([
+  "Smithfield Hall",
+  "Legends",
+  "Football Factory at Legends",
+  "Nevada Smith's",
+  "Ye Olde King's Head",
+  "The Londoner",
+  "Phoenix Landing"
+]);
+
+const CITY_STATE_BY_KEY: Record<string, string> = {
+  nyc: "NY",
+  "los-angeles": "CA",
+  miami: "FL",
+  dallas: "TX",
+  atlanta: "GA",
+  boston: "MA",
+  seattle: "WA",
+  "san-francisco": "CA",
+  philadelphia: "PA",
+  "kansas-city": "MO"
+};
+
+function venueNameAndTags(seed: VenueCredibilitySeed) {
+  return `${seed.name} ${seed.cuisineTags.join(" ")} ${seed.note}`.toLowerCase();
+}
+
+function hasVenueType(seed: VenueCredibilitySeed, type: string) {
+  return seed.venueTypes.includes(type);
+}
+
+function isRestaurantOnly(seed: VenueCredibilitySeed) {
+  return seed.venueTypes.length === 1 && seed.venueTypes[0] === "restaurant";
+}
+
+function isBritishIrishPub(seed: VenueCredibilitySeed) {
+  const haystack = venueNameAndTags(seed);
+  return /(pub|tavern|ale house|irish|english|scottish|british|ye olde|connolly|paddy|churchill|shakespeare|baker street|winslow|carragher|fado|meehan|ned devine|finn mc|bards|kent ale|smithfield|banter|caledonia|queens atlas|londoner|holy grail|phoenix landing)/.test(
+    haystack
+  );
+}
+
+function isDedicatedSoccerBar(seed: VenueCredibilitySeed) {
+  const haystack = venueNameAndTags(seed);
+  return (
+    hasVenueType(seed, "supporter_club") ||
+    /soccer bar|sports bar|football factory|legends|smithfield|nevada smith|banter|ye olde king|holy grail|phoenix landing|the londoner|professor thom|standings bar|rattle n hum|tir na nog|jack doyle|long room|ainsworth/.test(
+      haystack
+    ) ||
+    seed.numberOfScreens >= 10
+  );
+}
+
+function isLatinBarRestaurant(seed: VenueCredibilitySeed) {
+  const haystack = venueNameAndTags(seed);
+  return (
+    /(mexican|argentine|brazilian|colombian|ecuadorian|latin|portuguese|spanish)/.test(haystack) &&
+    (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge"))
+  );
+}
+
+function isAsianBarForward(seed: VenueCredibilitySeed) {
+  const haystack = venueNameAndTags(seed);
+  return (
+    /(japanese|korean|izakaya|soju|sake|ramen)/.test(haystack) &&
+    (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge"))
+  );
+}
+
+function isGermanBeerHall(seed: VenueCredibilitySeed) {
+  const haystack = venueNameAndTags(seed);
+  return /(german|bavarian|beer hall|beer garden|brauhaus)/.test(haystack);
+}
+
+function resolveVenueIntent(seed: VenueCredibilitySeed): VenueIntentKey {
+  const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
+  if (override?.venueIntent) return override.venueIntent;
+  if (SPECIFIC_CULTURAL_DINING_VENUES.has(seed.name)) return "cultural_dining";
+  if (seed.venueIntent === "cultural_dining") return "cultural_dining";
+  if (isRestaurantOnly(seed) && !isDedicatedSoccerBar(seed) && !isBritishIrishPub(seed) && seed.numberOfScreens < 4) {
+    return "cultural_dining";
+  }
+  if (seed.venueIntent === "sports_bar" && !isDedicatedSoccerBar(seed)) {
+    if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) return "watch_party";
+    return "both";
+  }
+  return (seed.venueIntent ?? "both") as VenueIntentKey;
+}
+
+function resolveShowsSoccer(seed: VenueCredibilitySeed, venueIntent: VenueIntentKey) {
+  const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
+  if (typeof override?.showsSoccer === "boolean") return override.showsSoccer;
+  if (venueIntent === "cultural_dining") return false;
+  if (seed.numberOfScreens >= 4) return true;
+  if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge") || isDedicatedSoccerBar(seed) || isBritishIrishPub(seed)) {
+    return true;
+  }
+  if (isRestaurantOnly(seed)) return false;
+  return Boolean(seed.showsSoccer);
+}
+
+function resolveGameDayScore(seed: VenueCredibilitySeed, venueIntent: VenueIntentKey, showsSoccer: boolean) {
+  const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
+  if (typeof override?.gameDayScore === "number") return override.gameDayScore;
+  if (SPECIFIC_CULTURAL_DINING_VENUES.has(seed.name)) return 6.5;
+  if (venueIntent === "cultural_dining" || !showsSoccer) {
+    if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge") || seed.numberOfScreens >= 3) {
+      return Math.min(seed.gameDayScore, 7.8);
+    }
+    return Math.min(seed.gameDayScore, 6.8);
+  }
+  if (isRestaurantOnly(seed)) return Math.min(seed.gameDayScore, 7.5);
+  if (!ICONIC_SOCCER_VENUES.has(seed.name) && seed.gameDayScore > 9.0) return 8.9;
+  return seed.gameDayScore;
+}
+
+function resolveSourceConfidence(seed: VenueCredibilitySeed, venueIntent: VenueIntentKey, showsSoccer: boolean) {
+  const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
+  if (typeof override?.sourceConfidence === "number") return override.sourceConfidence;
+  if (isDedicatedSoccerBar(seed)) return 0.9;
+  if (isBritishIrishPub(seed)) return 0.88;
+  if (venueIntent === "cultural_dining" || !showsSoccer) {
+    return isRestaurantOnly(seed) ? 0.4 : 0.55;
+  }
+  if (isGermanBeerHall(seed) || isLatinBarRestaurant(seed) || isAsianBarForward(seed) || ((hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) && seed.numberOfScreens >= 4)) {
+    return 0.75;
+  }
+  return 0.55;
+}
+
+function resolveSourceNote(seed: VenueCredibilitySeed, venueIntent: VenueIntentKey, showsSoccer: boolean) {
+  const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
+  if (override?.sourceNote) return override.sourceNote;
+  if (seed.sourceNote) return seed.sourceNote;
+  const screenLabel =
+    seed.numberOfScreens > 0
+      ? `${seed.numberOfScreens} screen${seed.numberOfScreens === 1 ? "" : "s"}`
+      : "limited screen setup";
+
+  if (isDedicatedSoccerBar(seed)) {
+    return `Dedicated sports bar with ${screenLabel}${seed.hasProjector ? " and a projector" : ""}; shows all major international soccer`;
+  }
+  if (isBritishIrishPub(seed)) {
+    return "British/Irish pub — shows all World Cup matches and Premier League as standard";
+  }
+  if (isGermanBeerHall(seed)) {
+    return `German beer hall with ${screenLabel}; shows Bundesliga and World Cup matches`;
+  }
+  if (isAsianBarForward(seed)) {
+    return `Japanese or Korean bar-forward venue with ${screenLabel}; known to show national team matches during major tournaments`;
+  }
+  if (isLatinBarRestaurant(seed)) {
+    return `Latin bar-restaurant with ${screenLabel}; known for lively World Cup crowds, especially Mexico and South America matches`;
+  }
+  if (venueIntent === "cultural_dining" || !showsSoccer) {
+    return "Cultural community restaurant — included for its connection to the supporter community; may set up a screen for major matches but is primarily a dining destination";
+  }
+  if ((hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) && seed.numberOfScreens > 0) {
+    return `Neighborhood bar with ${screenLabel}; plausible big-match viewing spot but not a dedicated soccer bar`;
+  }
+  return "Primarily a restaurant rather than a dedicated soccer venue; any match viewing is secondary to dining";
+}
+
+function buildSportsBar(seed: SportsBarSeed, index: number): Venue {
+  const capacityBucket = capacityBucketFromValue(seed.approximateCapacity);
+
+  return {
+    id: `sports-bar-${index}`,
+    slug: `nyc-sports-bar-${slugify(seed.name)}`,
+    name: seed.name,
+    description: seed.note,
+    address: seed.address,
+    city: "New York",
+    state: "NY",
+    postalCode: seed.postalCode,
+    lat: seed.lat,
+    lng: seed.lng,
+    borough: seed.borough,
+    neighborhood: seed.neighborhood,
+    phone: seed.reservationPhone,
+    website: seed.website,
+    instagramUrl: seed.instagramUrl,
+    sourceNote: resolveSourceNote(seed, "sports_bar", true),
+    venueTypes: seed.venueTypes,
+    associatedCountries: seed.associatedCountries,
+    likelySupporterCountry: null,
+    venueIntent: "sports_bar",
+    cuisineTags: seed.cuisineTags,
+    atmosphereTags: seed.atmosphereTags,
+    showsSoccer: true,
+    openNow: false,
+    priceLevel: seed.priceLevel,
+    rating: seed.rating,
+    reviewCount: Math.floor(seed.rating * 180 + index * 40),
+    numberOfScreens: seed.numberOfScreens,
+    hasProjector: seed.hasProjector,
+    hasOutdoorViewing: seed.hasOutdoorViewing,
+    familyFriendly: seed.familyFriendly,
+    standingRoomFriendly: seed.standingRoomFriendly,
+    privateEventsAvailable: seed.privateEventsAvailable,
+    goodForGroups: seed.goodForGroups,
+    acceptsReservations: seed.reservationType !== "none",
+    reservationType: seed.reservationType,
+    reservationUrl: seed.reservationUrl,
+    reservationPhone: seed.reservationPhone,
+    approximateCapacity: seed.approximateCapacity,
+    capacityBucket,
+    capacityConfidence: seed.capacityConfidence,
+    sourceType: "editorial",
+    sourceName: "editorial",
+    sourceExternalId: `sports-bar-${slugify(seed.slugSuffix)}`,
+    sourceConfidence: resolveSourceConfidence(seed, "sports_bar", true),
+    isRealVenue: true,
+    verificationStatus: "demo_editorial",
+    isFeatured: seed.editorialBoost >= 1.2,
+    isOfficialFanHub: false,
+    gameDayScore: resolveGameDayScore(seed, "sports_bar", true),
+    fanLikelihoodScore: Number((resolveGameDayScore(seed, "sports_bar", true) * 0.9).toFixed(1)),
+    editorialBoost: seed.editorialBoost,
+    editorialNotes: seed.note,
+    matchdayNotes: seed.note,
+    supporterNotes: `A dedicated soccer bar in ${seed.neighborhood} with multiple screens, match-day energy, and a mixed international crowd.`,
+    imageUrls: [`https://picsum.photos/seed/sb${index}/800/500`],
+    createdAt: "2026-04-22T12:00:00.000Z",
+    updatedAt: "2026-04-22T12:00:00.000Z"
+  };
+}
+
+const sportsBarSeeds: SportsBarSeed[] = [
+  {
+    name: "Nevada Smith's",
+    slugSuffix: "nevada-smiths",
+    address: "74 3rd Ave, New York, NY 10003",
+    borough: "Manhattan",
+    neighborhood: "East Village",
+    postalCode: "10003",
+    lat: 40.7276,
+    lng: -73.9889,
+    venueTypes: ["bar"],
+    rating: 4.3,
+    gameDayScore: 9.4,
+    note: "NYC's most famous dedicated soccer bar, open since 1978. 14 screens plus a projector, packed shoulder-to-shoulder for every World Cup match. Legendary atmosphere, no food — just football.",
+    website: "https://www.nevadasmiths.net",
+    reservationType: "none",
+    approximateCapacity: 200,
+    capacityConfidence: "verified_by_venue",
+    numberOfScreens: 14,
+    hasProjector: true,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.99,
+    editorialBoost: 1.5,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["bar food", "draft beer", "American"],
+    priceLevel: 2,
+    associatedCountries: ["england", "ireland", "usa", "germany", "brazil", "argentina"]
+  },
+  {
+    name: "Football Factory at Legends",
+    slugSuffix: "football-factory-legends",
+    address: "6 W 33rd St, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10001",
+    lat: 40.7488,
+    lng: -73.9876,
+    venueTypes: ["bar", "restaurant"],
+    rating: 4.2,
+    gameDayScore: 9.1,
+    note: "Massive three-floor dedicated soccer bar across from the Empire State Building — 42 screens, two bars, and a global crowd. The go-to for any World Cup game in Midtown.",
+    website: "https://www.legends.net",
+    reservationType: "none",
+    approximateCapacity: 450,
+    capacityConfidence: "verified_by_venue",
+    numberOfScreens: 42,
+    hasProjector: true,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.99,
+    editorialBoost: 1.5,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["bar food", "wings", "burgers"],
+    priceLevel: 2,
+    associatedCountries: ["england", "usa", "germany", "france", "spain", "brazil", "argentina", "portugal"]
+  },
+  {
+    name: "1 LFC NYC",
+    slugSuffix: "1-lfc-nyc",
+    address: "304 W 48th St, New York, NY 10036",
+    borough: "Manhattan",
+    neighborhood: "Hell's Kitchen",
+    postalCode: "10036",
+    lat: 40.7607,
+    lng: -73.9895,
+    venueTypes: ["bar"],
+    rating: 4.5,
+    gameDayScore: 8.9,
+    note: "Liverpool FC's official NYC supporter bar with 18 screens — shows every World Cup game featuring England, Ireland, and Scotland. Arrive early on matchday, guaranteed packed atmosphere.",
+    website: "https://www.1lfcnyc.com",
+    reservationType: "none",
+    approximateCapacity: 180,
+    capacityConfidence: "verified_by_venue",
+    numberOfScreens: 18,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.98,
+    editorialBoost: 1.4,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["bar food", "English pub", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["england", "ireland", "scotland"]
+  },
+  {
+    name: "Tír na Nóg",
+    slugSuffix: "tir-na-nog-penn",
+    address: "5 Penn Plaza, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10001",
+    lat: 40.7499,
+    lng: -73.9945,
+    venueTypes: ["bar"],
+    rating: 4.3,
+    gameDayScore: 8.7,
+    note: "Massive Irish sports bar inside Penn Station with 22 screens — a must for pre/post-MetLife Stadium match days. Shows every World Cup fixture with a rowdy international crowd.",
+    website: "https://www.tirnanogbar.com",
+    reservationType: "none",
+    approximateCapacity: 300,
+    capacityConfidence: "estimated",
+    numberOfScreens: 22,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.97,
+    editorialBoost: 1.3,
+    atmosphereTags: ["watch-party", "big-groups"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["ireland", "england", "usa"]
+  },
+  {
+    name: "Professor Thom's",
+    slugSuffix: "professor-thoms",
+    address: "219 2nd Ave, New York, NY 10003",
+    borough: "Manhattan",
+    neighborhood: "East Village",
+    postalCode: "10003",
+    lat: 40.7275,
+    lng: -73.9848,
+    venueTypes: ["bar"],
+    rating: 4.4,
+    gameDayScore: 8.8,
+    note: "Long-standing East Village sports bar with 10 screens — opens early for European kick-offs, great craft beer selection and a reliable crowd for any major international fixture.",
+    reservationType: "none",
+    approximateCapacity: 120,
+    capacityConfidence: "estimated",
+    numberOfScreens: 10,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.95,
+    editorialBoost: 1.25,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["bar food", "American", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["usa", "england", "ireland"]
+  },
+  {
+    name: "Standings Bar",
+    slugSuffix: "standings-bar",
+    address: "43 E 7th St, New York, NY 10003",
+    borough: "Manhattan",
+    neighborhood: "East Village",
+    postalCode: "10003",
+    lat: 40.7271,
+    lng: -73.9878,
+    venueTypes: ["bar"],
+    rating: 4.3,
+    gameDayScore: 8.5,
+    note: "Beloved East Village sports bar with 8 screens — famous for opening at 6am for European match coverage. Small, loud, and exactly the right atmosphere for a big game.",
+    reservationType: "none",
+    approximateCapacity: 60,
+    capacityConfidence: "estimated",
+    numberOfScreens: 8,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.95,
+    editorialBoost: 1.2,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["bar food", "craft beer"],
+    priceLevel: 2,
+    associatedCountries: ["england", "usa", "ireland", "germany"]
+  },
+  {
+    name: "The Ainsworth",
+    slugSuffix: "ainsworth-chelsea",
+    address: "122 W 26th St, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "Chelsea",
+    postalCode: "10001",
+    lat: 40.7445,
+    lng: -73.9958,
+    venueTypes: ["bar", "restaurant"],
+    rating: 4.2,
+    gameDayScore: 8.4,
+    note: "Popular Chelsea sports bar with 20 screens, outdoor seating, craft cocktails, and a lively international crowd on World Cup match days.",
+    website: "https://www.theainsworthnyc.com",
+    reservationType: "resy",
+    approximateCapacity: 200,
+    capacityConfidence: "estimated",
+    numberOfScreens: 20,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    editorialBoost: 1.2,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["American", "bar food", "cocktails"],
+    priceLevel: 3,
+    associatedCountries: ["usa", "england", "brazil"]
+  },
+  {
+    name: "Rattle N Hum",
+    slugSuffix: "rattle-n-hum",
+    address: "14 E 33rd St, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Murray Hill",
+    postalCode: "10016",
+    lat: 40.748,
+    lng: -73.9838,
+    venueTypes: ["bar"],
+    rating: 4.4,
+    gameDayScore: 8.3,
+    note: "Midtown beer institution with 40+ taps and 12 screens — all World Cup matches shown on every TV, welcoming crowd for any nation.",
+    website: "https://www.rattlenhumbarnyc.com",
+    reservationType: "none",
+    approximateCapacity: 130,
+    capacityConfidence: "estimated",
+    numberOfScreens: 12,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    editorialBoost: 1.15,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["craft beer", "bar food", "American"],
+    priceLevel: 2,
+    associatedCountries: ["usa", "england", "ireland"]
+  },
+  {
+    name: "Slattery's Midtown Pub",
+    slugSuffix: "slatterys-midtown",
+    address: "8 E 36th St, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10016",
+    lat: 40.7501,
+    lng: -73.9839,
+    venueTypes: ["bar"],
+    rating: 4.2,
+    gameDayScore: 8.1,
+    note: "Irish sports bar one block from the Empire State Building with 10 screens — a reliable Midtown option for World Cup watch parties, always busy on match mornings with an international office crowd.",
+    reservationType: "none",
+    approximateCapacity: 110,
+    capacityConfidence: "estimated",
+    numberOfScreens: 10,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.92,
+    editorialBoost: 1.05,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["ireland", "england", "usa"]
+  },
+  {
+    name: "Paulaner Bräuhaus NYC",
+    slugSuffix: "paulaner-brauhaus-nyc",
+    address: "265 Park Ave S, New York, NY 10010",
+    borough: "Manhattan",
+    neighborhood: "Flatiron",
+    postalCode: "10010",
+    lat: 40.7406,
+    lng: -73.9877,
+    venueTypes: ["bar", "restaurant"],
+    rating: 4.3,
+    gameDayScore: 8.6,
+    note: "Authentic German beer hall open since 1997 — 12 screens and a projector make it the premier Germany watch party spot in NYC. Packed and vocal for every Die Mannschaft match.",
+    website: "https://www.paulanernycbeer.com",
+    reservationType: "phone",
+    reservationPhone: "(212) 529-2900",
+    approximateCapacity: 280,
+    capacityConfidence: "verified_by_venue",
+    numberOfScreens: 12,
+    hasProjector: true,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.97,
+    editorialBoost: 1.25,
+    atmosphereTags: ["watch-party", "authentic-food", "big-groups"],
+    cuisineTags: ["German", "beer hall", "pretzels", "schnitzel"],
+    priceLevel: 2,
+    associatedCountries: ["germany", "austria", "switzerland"]
+  },
+  {
+    name: "Zum Schneider",
+    slugSuffix: "zum-schneider",
+    address: "107 Ave C, New York, NY 10009",
+    borough: "Manhattan",
+    neighborhood: "Alphabet City",
+    postalCode: "10009",
+    lat: 40.724,
+    lng: -73.9761,
+    venueTypes: ["bar", "restaurant"],
+    rating: 4.5,
+    gameDayScore: 8.7,
+    note: "NYC's premier Bavarian beer hall with 6 screens and a projector on the outdoor patio — raucous German match-day energy, imported Augustiner on tap, and an expat crowd that sings the anthem.",
+    website: "https://www.zumschneider.com",
+    reservationType: "none",
+    approximateCapacity: 100,
+    capacityConfidence: "estimated",
+    numberOfScreens: 6,
+    hasProjector: true,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.98,
+    editorialBoost: 1.3,
+    atmosphereTags: ["watch-party", "authentic-food", "outdoor"],
+    cuisineTags: ["German", "Bavarian", "beer hall", "sausage"],
+    priceLevel: 2,
+    associatedCountries: ["germany", "austria"]
+  },
+  {
+    name: "Kettle of Fish",
+    slugSuffix: "kettle-of-fish",
+    address: "59 Christopher St, New York, NY 10014",
+    borough: "Manhattan",
+    neighborhood: "West Village",
+    postalCode: "10014",
+    lat: 40.7335,
+    lng: -74.0025,
+    venueTypes: ["bar"],
+    rating: 4.4,
+    gameDayScore: 8.1,
+    note: "Classic West Village dive bar and soccer institution — 4 screens but one of the oldest and most reliable soccer-viewing spots in the city. Intimate, social, and packed for World Cup.",
+    reservationType: "none",
+    approximateCapacity: 55,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.95,
+    editorialBoost: 1.1,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["bar food", "American", "draft beer"],
+    priceLevel: 1,
+    associatedCountries: ["england", "usa", "ireland"]
+  },
+  {
+    name: "Jack Doyle's",
+    slugSuffix: "jack-doyles",
+    address: "216 E 34th St, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Murray Hill",
+    postalCode: "10016",
+    lat: 40.7463,
+    lng: -73.977,
+    venueTypes: ["bar"],
+    rating: 4.3,
+    gameDayScore: 8.3,
+    note: "Irish sports bar in Murray Hill with 14 screens and a solid international crowd that fills every seat for afternoon World Cup kick-offs.",
+    reservationType: "none",
+    approximateCapacity: 130,
+    capacityConfidence: "estimated",
+    numberOfScreens: 14,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    editorialBoost: 1.15,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["ireland", "england", "usa"]
+  },
+  {
+    name: "The Long Room",
+    slugSuffix: "the-long-room",
+    address: "120 W 44th St, New York, NY 10036",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10036",
+    lat: 40.7565,
+    lng: -73.9865,
+    venueTypes: ["bar"],
+    rating: 4.3,
+    gameDayScore: 8.4,
+    note: "Theatre District Irish pub with 10 screens in a long, welcoming room layout — great for groups and big-match viewings, reliable for all World Cup fixtures.",
+    reservationType: "none",
+    approximateCapacity: 120,
+    capacityConfidence: "estimated",
+    numberOfScreens: 10,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    editorialBoost: 1.1,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2,
+    associatedCountries: ["ireland", "england", "usa"]
+  }
+];
+
 const featuredCountrySlugs = new Set([
-  "mexico",
   "argentina",
   "brazil",
   "portugal",
-  "france",
-  "japan",
-  "morocco",
-  "usa",
+  "canada",
+  "colombia",
+  "ecuador",
   "england",
+  "france",
+  "ireland",
+  "germany",
+  "ghana",
+  "ir-iran",
+  "japan",
+  "korea-republic",
+  "mexico",
+  "morocco",
+  "senegal",
   "spain",
-  "canada"
+  "scotland",
+  "usa"
 ]);
 
 const featuredCountryVenueSeeds: Record<string, CuratedVenueSeed[]> = {
@@ -1819,6 +2722,1163 @@ const featuredCountryVenueSeeds: Record<string, CuratedVenueSeed[]> = {
   ]
 };
 
+featuredCountryVenueSeeds.colombia = [
+  {
+    name: "Bogotá Latin Bistro",
+    slugSuffix: "bogota-latin-bistro",
+    address: "141 5th Ave, Brooklyn, NY 11217",
+    borough: "Brooklyn",
+    neighborhood: "Park Slope",
+    postalCode: "11217",
+    lat: 40.6784,
+    lng: -73.9736,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8.4,
+    note: "Beloved Park Slope Colombian restaurant and bar — 4 screens, strong aguardiente cocktails, and one of Brooklyn's best El Tricolor watch party atmospheres.",
+    website: "https://www.bogotabistro.com",
+    reservationType: "opentable",
+    approximateCapacity: 85,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.2,
+    atmosphereTags: ["authentic-food", "casual", "watch-party"],
+    cuisineTags: ["Colombian", "Latin", "arepas", "bandeja paisa"]
+  },
+  {
+    name: "La Pequeña Colombia",
+    slugSuffix: "la-pequena-colombia",
+    address: "83-27 Roosevelt Ave, Jackson Heights, NY 11372",
+    borough: "Queens",
+    neighborhood: "Jackson Heights",
+    postalCode: "11372",
+    lat: 40.7487,
+    lng: -73.8806,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.3,
+    note: "Heart of the Jackson Heights Colombian community — full bar with 5 screens, turns into a packed watch party for every Colombia match with chants and flag waving.",
+    reservationType: "phone",
+    reservationPhone: "(718) 478-8700",
+    approximateCapacity: 100,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.15,
+    atmosphereTags: ["authentic-food", "watch-party", "casual"],
+    cuisineTags: ["Colombian", "Latin", "Jackson Heights"]
+  },
+  {
+    name: "Arepa Lady",
+    slugSuffix: "arepa-lady-jackson-heights",
+    address: "77-17 Roosevelt Ave, Jackson Heights, NY 11372",
+    borough: "Queens",
+    neighborhood: "Jackson Heights",
+    postalCode: "11372",
+    lat: 40.7489,
+    lng: -73.8892,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.7,
+    gameDayScore: 6.8,
+    note: "Legendary Colombian street-food institution in Jackson Heights. Known more for iconic arepas than TVs — the Colombian community gathers here before matches, not to watch them.",
+    website: "https://www.arepaladinc.com",
+    reservationType: "none",
+    approximateCapacity: 50,
+    capacityConfidence: "estimated",
+    numberOfScreens: 0,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.97,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1,
+    atmosphereTags: ["authentic-food", "casual"],
+    cuisineTags: ["Colombian", "arepas", "Jackson Heights"]
+  }
+];
+
+featuredCountryVenueSeeds.ecuador = [
+  {
+    name: "Guayaquil Restaurant",
+    slugSuffix: "guayaquil-restaurant",
+    address: "70-05 Roosevelt Ave, Jackson Heights, NY 11372",
+    borough: "Queens",
+    neighborhood: "Jackson Heights",
+    postalCode: "11372",
+    lat: 40.7472,
+    lng: -73.894,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.3,
+    gameDayScore: 8.1,
+    note: "Lively Ecuadorian bar and restaurant with 4 screens — a loyal expat crowd turns it into a genuine watch-party hub for La Tri matches, with flag-waving and chants.",
+    reservationType: "phone",
+    reservationPhone: "(718) 205-8100",
+    approximateCapacity: 80,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.92,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "watch-party"],
+    cuisineTags: ["Ecuadorian", "ceviche", "Latin"]
+  },
+  {
+    name: "Hornado Ecuatoriano",
+    slugSuffix: "hornado-ecuatoriano",
+    address: "82-20 Roosevelt Ave, Jackson Heights, NY 11372",
+    borough: "Queens",
+    neighborhood: "Jackson Heights",
+    postalCode: "11372",
+    lat: 40.7488,
+    lng: -73.8823,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.5,
+    gameDayScore: 6.8,
+    note: "Authentic Ecuadorian eatery on Roosevelt Ave specializing in hornado (roast pork). A pre-match community gathering spot — the neighborhood watches together here even if the screens are small.",
+    reservationType: "none",
+    approximateCapacity: 55,
+    capacityConfidence: "estimated",
+    numberOfScreens: 1,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.9,
+    atmosphereTags: ["authentic-food", "family"],
+    cuisineTags: ["Ecuadorian", "Latin", "Jackson Heights"]
+  }
+];
+
+featuredCountryVenueSeeds.germany = [
+  {
+    name: "Heidelberg Restaurant",
+    slugSuffix: "heidelberg-restaurant",
+    address: "1648 2nd Ave, New York, NY 10028",
+    borough: "Manhattan",
+    neighborhood: "Yorkville",
+    postalCode: "10028",
+    lat: 40.7752,
+    lng: -73.9551,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.3,
+    note: "Historic German restaurant in Yorkville (NYC's old Germantown) with 6 screens, imported Spaten on tap, and a devoted match-day following — the neighborhood's anchor for Die Mannschaft watch parties.",
+    website: "https://www.heidelbergrestaurant.com",
+    reservationType: "phone",
+    reservationPhone: "(212) 628-2332",
+    approximateCapacity: 120,
+    capacityConfidence: "estimated",
+    numberOfScreens: 6,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.97,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.2,
+    atmosphereTags: ["authentic-food", "watch-party", "big-groups"],
+    cuisineTags: ["German", "schnitzel", "beer", "Yorkville"]
+  },
+  {
+    name: "Loreley Beer Garden",
+    slugSuffix: "loreley-beer-garden",
+    address: "7 Rivington St, New York, NY 10002",
+    borough: "Manhattan",
+    neighborhood: "Lower East Side",
+    postalCode: "10002",
+    lat: 40.7208,
+    lng: -73.9895,
+    venueTypes: ["bar", "restaurant"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.7,
+    note: "Outdoor LES beer garden with a massive projector screen — the summer World Cup destination for Germany fans in NYC. German drafts, pretzels, and an outdoor crowd that erupts for every goal.",
+    website: "https://www.loreleynyc.com",
+    reservationType: "none",
+    approximateCapacity: 200,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: true,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.3,
+    atmosphereTags: ["watch-party", "outdoor", "loud", "big-groups"],
+    cuisineTags: ["German", "beer garden", "pretzels"]
+  }
+];
+
+featuredCountryVenueSeeds["korea-republic"] = [
+  {
+    name: "Pocha 32",
+    slugSuffix: "pocha-32",
+    address: "15 W 32nd St, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "Koreatown",
+    postalCode: "10001",
+    lat: 40.7483,
+    lng: -73.9876,
+    venueTypes: ["bar", "restaurant"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.7,
+    note: "Korean street-food bar in the heart of K-Town with 10 screens — the Taeguk Warriors watch-party destination in NYC. Soju towers, fried chicken, and a frenzied crowd for Korea matches.",
+    website: "https://www.pocha32.com",
+    reservationType: "none",
+    approximateCapacity: 140,
+    capacityConfidence: "estimated",
+    numberOfScreens: 10,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.3,
+    atmosphereTags: ["watch-party", "loud", "authentic-food"],
+    cuisineTags: ["Korean", "fried chicken", "soju", "Koreatown"]
+  },
+  {
+    name: "Gahm Mi Oak",
+    slugSuffix: "gahm-mi-oak",
+    address: "43 W 32nd St, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "Koreatown",
+    postalCode: "10001",
+    lat: 40.7482,
+    lng: -73.9886,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.5,
+    gameDayScore: 6.9,
+    note: "24-hour Korean institution in K-Town, famous for ox bone sul-long-tang broth. A pre/post-match ritual for the Korean-American community — the neighborhood gathers here, not to watch but to fuel up.",
+    website: "https://gahmmioak.com",
+    reservationType: "none",
+    approximateCapacity: 80,
+    capacityConfidence: "estimated",
+    numberOfScreens: 1,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.97,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.9,
+    atmosphereTags: ["authentic-food", "casual"],
+    cuisineTags: ["Korean", "sul-long-tang", "24 hours", "Koreatown"]
+  }
+];
+
+featuredCountryVenueSeeds.senegal = [
+  {
+    name: "Le Baobab",
+    slugSuffix: "le-baobab-harlem",
+    address: "120 W 116th St, New York, NY 10026",
+    borough: "Manhattan",
+    neighborhood: "Harlem",
+    postalCode: "10026",
+    lat: 40.8014,
+    lng: -73.9534,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 7.9,
+    note: "West African restaurant and bar in Harlem's Little Senegal district — 3 TVs always tuned to African football during the World Cup. The community anchor for Senegal supporters in NYC.",
+    reservationType: "phone",
+    reservationPhone: "(212) 864-4700",
+    approximateCapacity: 75,
+    capacityConfidence: "estimated",
+    numberOfScreens: 3,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "casual", "watch-party"],
+    cuisineTags: ["Senegalese", "West African", "thieboudienne", "Harlem"]
+  },
+  {
+    name: "Africa Kine Restaurant",
+    slugSuffix: "africa-kine",
+    address: "256 W 116th St, New York, NY 10026",
+    borough: "Manhattan",
+    neighborhood: "Harlem",
+    postalCode: "10026",
+    lat: 40.8015,
+    lng: -73.9558,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.4,
+    gameDayScore: 6.9,
+    note: "Beloved West African destination in Little Senegal on 116th St — authentic home cooking and a tight community atmosphere. The TVs come on for Senegal matches; it's not a sports bar but the community makes it one.",
+    reservationType: "none",
+    approximateCapacity: 60,
+    capacityConfidence: "estimated",
+    numberOfScreens: 2,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.9,
+    atmosphereTags: ["authentic-food", "family"],
+    cuisineTags: ["Senegalese", "West African", "Little Senegal"]
+  }
+];
+
+featuredCountryVenueSeeds.ghana = [
+  {
+    name: "Papaye Restaurant",
+    slugSuffix: "papaye-restaurant-bronx",
+    address: "611 E Tremont Ave, Bronx, NY 10457",
+    borough: "Bronx",
+    neighborhood: "West Farms",
+    postalCode: "10457",
+    lat: 40.8419,
+    lng: -73.8948,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.5,
+    gameDayScore: 7,
+    note: "Authentic Ghanaian restaurant in the Bronx — jollof rice, fufu, groundnut soup, and 2 TVs that always show Black Stars matches. The Ghanaian community's anchor in the borough.",
+    reservationType: "phone",
+    reservationPhone: "(718) 466-2223",
+    approximateCapacity: 65,
+    capacityConfidence: "estimated",
+    numberOfScreens: 2,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.92,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1,
+    atmosphereTags: ["authentic-food", "family"],
+    cuisineTags: ["Ghanaian", "jollof rice", "fufu", "West African"]
+  },
+  {
+    name: "Accra Restaurant",
+    slugSuffix: "accra-restaurant-bronx",
+    address: "768 E Tremont Ave, Bronx, NY 10457",
+    borough: "Bronx",
+    neighborhood: "West Farms",
+    postalCode: "10457",
+    lat: 40.8427,
+    lng: -73.892,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.3,
+    gameDayScore: 7.8,
+    note: "Ghanaian bar and restaurant in the Bronx with 4 screens — the neighborhood watch party spot for Black Stars matches, gets loud and full when Ghana plays.",
+    reservationType: "phone",
+    reservationPhone: "(718) 466-0900",
+    approximateCapacity: 70,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.88,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.05,
+    atmosphereTags: ["authentic-food", "watch-party"],
+    cuisineTags: ["Ghanaian", "West African", "Bronx"]
+  }
+];
+
+featuredCountryVenueSeeds["ir-iran"] = [
+  {
+    name: "Ravagh Persian Grill",
+    slugSuffix: "ravagh-persian-grill-midtown",
+    address: "11 E 30th St, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10016",
+    lat: 40.7456,
+    lng: -73.9849,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.6,
+    gameDayScore: 8,
+    note: "Popular Persian grill in Midtown with 3 screens and an Iranian-American community that packs the bar area for Team Melli matches — flame-cooked kebabs and a welcoming atmosphere.",
+    website: "https://www.ravaghgrill.com",
+    reservationType: "opentable",
+    approximateCapacity: 90,
+    capacityConfidence: "estimated",
+    numberOfScreens: 3,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.95,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "casual", "watch-party"],
+    cuisineTags: ["Persian", "Iranian", "kebab", "Midtown"]
+  },
+  {
+    name: "Persepolis",
+    slugSuffix: "persepolis-restaurant",
+    address: "1423 2nd Ave, New York, NY 10021",
+    borough: "Manhattan",
+    neighborhood: "Upper East Side",
+    postalCode: "10021",
+    lat: 40.7697,
+    lng: -73.9559,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.4,
+    gameDayScore: 6.8,
+    note: "Upper East Side Persian restaurant with a loyal Iranian-American clientele. Not a sports bar — but the community gathers here before and after Team Melli matches. Traditional cooking in a warm setting.",
+    website: "https://www.persepolisrestaurant.com",
+    reservationType: "opentable",
+    approximateCapacity: 75,
+    capacityConfidence: "estimated",
+    numberOfScreens: 1,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.9,
+    atmosphereTags: ["authentic-food", "casual"],
+    cuisineTags: ["Persian", "Iranian", "Upper East Side"]
+  }
+];
+
+featuredCountryVenueSeeds.scotland = [];
+
+// ── Ireland ────────────────────────────────────────────────────────────────
+featuredCountryVenueSeeds.ireland = [
+  {
+    name: "Dead Rabbit NYC",
+    slugSuffix: "dead-rabbit-nyc",
+    address: "30 Water St, New York, NY 10004",
+    borough: "Manhattan",
+    neighborhood: "Financial District",
+    postalCode: "10004",
+    lat: 40.7031,
+    lng: -74.0129,
+    venueTypes: ["bar", "lounge"],
+    venueIntent: "both",
+    rating: 4.7,
+    gameDayScore: 8.7,
+    note: "World's best bar multiple years running — three floors, 8 screens, and an Irish-American soul. The FiDi destination for Ireland supporters and anyone who wants to watch the World Cup in a world-class setting.",
+    website: "https://www.deadrabbitnyc.com",
+    reservationType: "resy",
+    reservationUrl: "https://resy.com/cities/ny/dead-rabbit",
+    approximateCapacity: 200,
+    capacityConfidence: "estimated",
+    numberOfScreens: 8,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.98,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.4,
+    atmosphereTags: ["watch-party", "casual", "loud"],
+    cuisineTags: ["Irish", "cocktails", "Financial District"]
+  },
+  {
+    name: "Connolly's Pub & Restaurant",
+    slugSuffix: "connollys-pub",
+    address: "14 E 47th St, New York, NY 10017",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10017",
+    lat: 40.7565,
+    lng: -73.9772,
+    venueTypes: ["bar", "restaurant"],
+    venueIntent: "watch_party",
+    rating: 4.2,
+    gameDayScore: 8.5,
+    note: "Classic Midtown Irish pub with 12 screens — one of the most reliably packed spots for Ireland and Republic of Ireland matches, with a boisterous expat crowd and live music after games.",
+    website: "https://www.connollyspubnyc.com",
+    reservationType: "none",
+    approximateCapacity: 180,
+    capacityConfidence: "estimated",
+    numberOfScreens: 12,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.95,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.25,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"]
+  },
+  {
+    name: "Paddy Reilly's Music Bar",
+    slugSuffix: "paddy-reillys",
+    address: "519 2nd Ave, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Murray Hill",
+    postalCode: "10016",
+    lat: 40.7446,
+    lng: -73.9804,
+    venueTypes: ["bar"],
+    venueIntent: "watch_party",
+    rating: 4.3,
+    gameDayScore: 8.3,
+    note: "Murray Hill Irish dive bar with live traditional music and 8 screens — the soul of NYC's Irish community for match viewings, genuine pub atmosphere with a crowd that sings the whole way through.",
+    reservationType: "none",
+    approximateCapacity: 100,
+    capacityConfidence: "estimated",
+    numberOfScreens: 8,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.15,
+    atmosphereTags: ["watch-party", "loud", "casual"],
+    cuisineTags: ["Irish pub", "draft beer", "Murray Hill"]
+  }
+];
+
+featuredCountryVenueSeeds.england.push(
+  {
+    name: "Baker Street Pub & Grill",
+    slugSuffix: "baker-street-pub",
+    address: "20 W 41st St, New York, NY 10036",
+    borough: "Manhattan",
+    neighborhood: "Midtown",
+    postalCode: "10036",
+    lat: 40.7546,
+    lng: -73.9849,
+    venueTypes: ["bar"],
+    venueIntent: "watch_party",
+    rating: 4.3,
+    gameDayScore: 8.9,
+    note: "Authentic English pub in Midtown with 16 screens — opens for every World Cup match, known for its all-day English breakfast and one of the loudest England watch-party atmospheres in the city.",
+    website: "https://www.bakerstreetpub.com",
+    reservationType: "none",
+    approximateCapacity: 140,
+    capacityConfidence: "estimated",
+    numberOfScreens: 16,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.3,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["English pub", "fish and chips", "draft beer"]
+  },
+  {
+    name: "The Winslow",
+    slugSuffix: "the-winslow",
+    address: "243 E 14th St, New York, NY 10003",
+    borough: "Manhattan",
+    neighborhood: "East Village",
+    postalCode: "10003",
+    lat: 40.7319,
+    lng: -73.9838,
+    venueTypes: ["bar"],
+    venueIntent: "watch_party",
+    rating: 4.4,
+    gameDayScore: 8.7,
+    note: "East Village soccer bar with a UK feel and 10 screens — outdoor terrace for summer matches and one of the most vocal England crowds in the borough. Fills up 45 minutes before kickoff.",
+    reservationType: "none",
+    approximateCapacity: 90,
+    capacityConfidence: "estimated",
+    numberOfScreens: 10,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.25,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["English pub", "bar food", "draft beer"]
+  }
+);
+
+featuredCountryVenueSeeds.spain.push(
+  {
+    name: "Boqueria",
+    slugSuffix: "boqueria-flatiron",
+    address: "53 W 19th St, New York, NY 10011",
+    borough: "Manhattan",
+    neighborhood: "Flatiron",
+    postalCode: "10011",
+    lat: 40.7401,
+    lng: -73.9956,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8.3,
+    note: "Buzzing Spanish tapas bar and restaurant in the Flatiron with 6 screens at the bar — one of the more reliable La Roja watch-party spots in Manhattan, full of Spanish expats on matchday.",
+    website: "https://www.boquerianyc.com",
+    reservationType: "resy",
+    approximateCapacity: 100,
+    capacityConfidence: "estimated",
+    numberOfScreens: 6,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.2,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Spanish", "tapas", "wine", "Flatiron"]
+  },
+  {
+    name: "Despaña Vinos y Más",
+    slugSuffix: "despana-vinos",
+    address: "408 Broome St, New York, NY 10013",
+    borough: "Manhattan",
+    neighborhood: "Soho",
+    postalCode: "10013",
+    lat: 40.7215,
+    lng: -74.0005,
+    venueTypes: ["bar", "restaurant"],
+    venueIntent: "both",
+    rating: 4.6,
+    gameDayScore: 8.2,
+    note: "Authentic Spanish bodega and tapas bar in Soho with 5 screens — imported Ibérico, cava, and a genuinely Spanish crowd that fills the bar area for every La Roja World Cup match.",
+    website: "https://www.despananyc.com",
+    reservationType: "none",
+    approximateCapacity: 70,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.95,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.15,
+    atmosphereTags: ["watch-party", "authentic-food"],
+    cuisineTags: ["Spanish", "tapas", "wine", "Soho"]
+  }
+);
+
+featuredCountryVenueSeeds.mexico.push(
+  {
+    name: "El Parador Café",
+    slugSuffix: "el-parador-cafe",
+    address: "325 E 34th St, New York, NY 10016",
+    borough: "Manhattan",
+    neighborhood: "Murray Hill",
+    postalCode: "10016",
+    lat: 40.7452,
+    lng: -73.9762,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.3,
+    gameDayScore: 8.4,
+    note: "Longtime Murray Hill Mexican bar and restaurant with 8 screens — one of the oldest El Tri watch-party spots in Manhattan, turns into a full sing-along when Mexico scores.",
+    reservationType: "opentable",
+    approximateCapacity: 110,
+    capacityConfidence: "estimated",
+    numberOfScreens: 8,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.2,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "margaritas", "Murray Hill"]
+  },
+  {
+    name: "Tacuba NYC",
+    slugSuffix: "tacuba-nyc",
+    address: "359 W 46th St, New York, NY 10036",
+    borough: "Manhattan",
+    neighborhood: "Hell's Kitchen",
+    postalCode: "10036",
+    lat: 40.7601,
+    lng: -73.9897,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8.6,
+    note: "Hell's Kitchen Mexican with 7 screens, a strong mezcal program, and one of the loudest El Tri crowds in Manhattan — review after review mentions the electric watch-party atmosphere.",
+    website: "https://www.tacubanyc.com",
+    reservationType: "resy",
+    approximateCapacity: 110,
+    capacityConfidence: "estimated",
+    numberOfScreens: 7,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.95,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.25,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "tacos", "mezcal", "Hell's Kitchen"]
+  },
+  {
+    name: "La Superior",
+    slugSuffix: "la-superior-williamsburg",
+    address: "295 Berry St, Brooklyn, NY 11249",
+    borough: "Brooklyn",
+    neighborhood: "Williamsburg",
+    postalCode: "11249",
+    lat: 40.7155,
+    lng: -73.9633,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8,
+    note: "Williamsburg Mexican street-food bar with 3 screens and an outdoor patio — a relaxed but genuine watch-party spot for Mexico games, packed terrace on summer matchdays.",
+    website: "https://www.lasuperiorbk.com",
+    reservationType: "none",
+    approximateCapacity: 70,
+    capacityConfidence: "estimated",
+    numberOfScreens: 3,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.05,
+    atmosphereTags: ["authentic-food", "outdoor", "watch-party"],
+    cuisineTags: ["Mexican", "tacos", "margaritas", "Williamsburg"]
+  },
+  {
+    name: "Mole Restaurant and Bar",
+    slugSuffix: "mole-restaurant-bar",
+    address: "57 Jane St, New York, NY 10014",
+    borough: "Manhattan",
+    neighborhood: "West Village",
+    postalCode: "10014",
+    lat: 40.7364,
+    lng: -74.0078,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.0,
+    note: "West Village Mexican restaurant and bar with 5 screens and an outdoor terrace — a loyal El Tri crowd packs the bar area and patio for Mexico World Cup matches.",
+    reservationType: "opentable",
+    approximateCapacity: 75,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.92,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.05,
+    atmosphereTags: ["casual", "watch-party"],
+    cuisineTags: ["Mexican", "margaritas", "West Village"]
+  }
+);
+
+featuredCountryVenueSeeds.japan.push(
+  {
+    name: "EN Japanese Brasserie",
+    slugSuffix: "en-japanese-brasserie",
+    address: "435 Hudson St, New York, NY 10014",
+    borough: "Manhattan",
+    neighborhood: "West Village",
+    postalCode: "10014",
+    lat: 40.7286,
+    lng: -74.0064,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.6,
+    gameDayScore: 8,
+    note: "Sophisticated Japanese izakaya-style restaurant and bar with 4 screens — the West Village destination for Japanese expats watching the Samurai Blue, known for a sharp sake program and vocal Japan crowd.",
+    website: "https://www.enjb.com",
+    reservationType: "resy",
+    approximateCapacity: 120,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "watch-party"],
+    cuisineTags: ["Japanese", "izakaya", "sake", "West Village"]
+  },
+  {
+    name: "Sake Bar Satsko",
+    slugSuffix: "sake-bar-satsko",
+    address: "212 E 9th St, New York, NY 10003",
+    borough: "Manhattan",
+    neighborhood: "East Village",
+    postalCode: "10003",
+    lat: 40.7282,
+    lng: -73.9831,
+    venueTypes: ["bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8.1,
+    note: "Cozy Japanese sake bar in the East Village with 2 screens and a cult following — standing room only for Japan national team matches, a small bar that punches above its weight on match days.",
+    reservationType: "none",
+    approximateCapacity: 35,
+    capacityConfidence: "estimated",
+    numberOfScreens: 2,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.94,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "casual", "watch-party"],
+    cuisineTags: ["Japanese", "sake", "izakaya", "East Village"]
+  }
+);
+
+featuredCountryVenueSeeds.morocco.push(
+  {
+    name: "Meme Mediterranean",
+    slugSuffix: "meme-mediterranean",
+    address: "581 Hudson St, New York, NY 10014",
+    borough: "Manhattan",
+    neighborhood: "West Village",
+    postalCode: "10014",
+    lat: 40.7317,
+    lng: -74.0077,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 7.9,
+    note: "West Village Mediterranean with deep Moroccan influences — 3 screens at the bar, a cocktail-forward crowd, and genuine watch-party energy for Atlas Lions matches.",
+    website: "https://www.memenyc.com",
+    reservationType: "resy",
+    approximateCapacity: 80,
+    capacityConfidence: "estimated",
+    numberOfScreens: 3,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.93,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.05,
+    atmosphereTags: ["authentic-food", "watch-party"],
+    cuisineTags: ["Moroccan", "Mediterranean", "tagine", "West Village"]
+  },
+  {
+    name: "Zatar Restaurant",
+    slugSuffix: "zatar-restaurant",
+    address: "473 Atlantic Ave, Brooklyn, NY 11217",
+    borough: "Brooklyn",
+    neighborhood: "Boerum Hill",
+    postalCode: "11217",
+    lat: 40.6866,
+    lng: -73.9875,
+    venueTypes: ["restaurant"],
+    venueIntent: "cultural_dining",
+    rating: 4.4,
+    gameDayScore: 6.9,
+    note: "Middle Eastern and North African restaurant on Atlantic Ave — the Moroccan and Algerian community hub in Brooklyn. Turns on the TVs for Atlas Lions matches even if it's not a sports bar.",
+    reservationType: "opentable",
+    approximateCapacity: 70,
+    capacityConfidence: "estimated",
+    numberOfScreens: 2,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.91,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.9,
+    atmosphereTags: ["authentic-food", "casual"],
+    cuisineTags: ["Moroccan", "North African", "Middle Eastern", "Brooklyn"]
+  }
+);
+
+featuredCountryVenueSeeds.argentina.push(
+  {
+    name: "Saggio",
+    slugSuffix: "saggio-chelsea",
+    address: "180 9th Ave, New York, NY 10011",
+    borough: "Manhattan",
+    neighborhood: "Chelsea",
+    postalCode: "10011",
+    lat: 40.7449,
+    lng: -74.0003,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.4,
+    gameDayScore: 8.2,
+    note: "Argentine-Italian dining in Chelsea with 5 screens and a spirited bar area — one of the better Albiceleste watch parties in Manhattan, loud and proud on Messi matchdays.",
+    reservationType: "resy",
+    approximateCapacity: 90,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: true,
+    goodForGroups: true,
+    sourceConfidence: 0.91,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Argentine", "Italian", "Chelsea"]
+  },
+  {
+    name: "Buenos Aires Bakery & Cafe",
+    slugSuffix: "ba-bakery-astoria",
+    address: "28-10 31st St, Astoria, NY 11102",
+    borough: "Queens",
+    neighborhood: "Astoria",
+    postalCode: "11102",
+    lat: 40.7719,
+    lng: -73.9318,
+    venueTypes: ["restaurant", "bakery"],
+    venueIntent: "cultural_dining",
+    rating: 4.6,
+    gameDayScore: 6.5,
+    note: "Astoria Argentine bakery serving medialunas and mate — the pre-match ritual stop for the borough's Argentine community. No big screens, but the neighborhood stops here to fuel up before heading to watch the game.",
+    reservationType: "none",
+    approximateCapacity: 40,
+    capacityConfidence: "estimated",
+    numberOfScreens: 1,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: false,
+    privateEventsAvailable: false,
+    goodForGroups: false,
+    sourceConfidence: 0.9,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.85,
+    atmosphereTags: ["authentic-food", "casual", "family"],
+    cuisineTags: ["Argentine", "bakery", "medialunas", "Astoria"]
+  }
+);
+
+featuredCountryVenueSeeds.portugal.push(
+  {
+    name: "Fernanda",
+    slugSuffix: "fernanda-nomad",
+    address: "15 W 28th St, New York, NY 10001",
+    borough: "Manhattan",
+    neighborhood: "NoMad",
+    postalCode: "10001",
+    lat: 40.7449,
+    lng: -73.9892,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.6,
+    gameDayScore: 8,
+    note: "Modern Portuguese wine bar in NoMad with 4 screens — a sophisticated crowd of Portuguese expats and fans that fills the bar area for every Seleção match.",
+    website: "https://www.fernandanyc.com",
+    reservationType: "resy",
+    approximateCapacity: 70,
+    capacityConfidence: "estimated",
+    numberOfScreens: 4,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: false,
+    privateEventsAvailable: true,
+    goodForGroups: false,
+    sourceConfidence: 0.96,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["authentic-food", "watch-party"],
+    cuisineTags: ["Portuguese", "wine bar", "bacalhau", "NoMad"]
+  },
+  {
+    name: "LIC Market",
+    slugSuffix: "lic-market",
+    address: "21-52 44th Dr, Long Island City, NY 11101",
+    borough: "Queens",
+    neighborhood: "Long Island City",
+    postalCode: "11101",
+    lat: 40.7441,
+    lng: -73.9494,
+    venueTypes: ["restaurant", "bar"],
+    venueIntent: "both",
+    rating: 4.5,
+    gameDayScore: 8,
+    note: "LIC neighbourhood bar and restaurant with 5 screens always showing European football — a genuine watch-party spot for Portugal fans near the Queens waterfront, relaxed and outdoor-friendly.",
+    website: "https://licmarket.com",
+    reservationType: "none",
+    approximateCapacity: 80,
+    capacityConfidence: "estimated",
+    numberOfScreens: 5,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.9,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1,
+    atmosphereTags: ["watch-party", "casual", "outdoor"],
+    cuisineTags: ["Portuguese", "American", "Long Island City"]
+  }
+);
+
+featuredCountryVenueSeeds.canada.push(
+  {
+    name: "Caledonia Bar",
+    slugSuffix: "caledonia-bar-chelsea",
+    address: "159 8th Ave, New York, NY 10011",
+    borough: "Manhattan",
+    neighborhood: "Chelsea",
+    postalCode: "10011",
+    lat: 40.7427,
+    lng: -73.9995,
+    venueTypes: ["bar"],
+    venueIntent: "watch_party",
+    rating: 4.3,
+    gameDayScore: 8.3,
+    note: "Chelsea pub with a Scottish and Canadian expat following — 8 screens, shows all World Cup matches, boisterous crowd for Canada and Scotland fixtures. One of the few spots in NYC with a genuine Canadian soccer community.",
+    reservationType: "none",
+    approximateCapacity: 80,
+    capacityConfidence: "estimated",
+    numberOfScreens: 8,
+    hasProjector: false,
+    hasOutdoorViewing: false,
+    familyFriendly: false,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.91,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 1.1,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Scottish", "Canadian", "pub", "Chelsea"]
+  },
+  {
+    name: "The Queensboro",
+    slugSuffix: "the-queensboro-astoria",
+    address: "35-03 36th St, Astoria, NY 11106",
+    borough: "Queens",
+    neighborhood: "Astoria",
+    postalCode: "11106",
+    lat: 40.7573,
+    lng: -73.9313,
+    venueTypes: ["bar"],
+    venueIntent: "watch_party",
+    rating: 4.3,
+    gameDayScore: 7.9,
+    note: "Astoria neighbourhood pub with 6 screens and an international crowd — a welcoming World Cup spot in Queens that draws Canadian expats along with the broader soccer-loving Astoria community.",
+    reservationType: "none",
+    approximateCapacity: 65,
+    capacityConfidence: "estimated",
+    numberOfScreens: 6,
+    hasProjector: false,
+    hasOutdoorViewing: true,
+    familyFriendly: true,
+    standingRoomFriendly: true,
+    privateEventsAvailable: false,
+    goodForGroups: true,
+    sourceConfidence: 0.87,
+    verificationStatus: "demo_editorial",
+    editorialBoost: 0.95,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["American", "craft beer", "Astoria"]
+  }
+);
+
 const featuredCuratedVenues = demoCountries.flatMap((country) =>
   featuredCountrySlugs.has(country.slug)
     ? featuredCountryVenueSeeds[country.slug].map((seed, index) => buildCuratedVenue(country, index, seed))
@@ -1831,7 +3891,1038 @@ const generatedDemoVenues = demoCountries.flatMap((country, countryIndex) =>
     : Array.from({ length: 6 }, (_, venueIndex) => buildVenue(country, countryIndex, venueIndex))
 );
 
-export const demoVenues: Venue[] = [...generatedDemoVenues, ...featuredCuratedVenues];
+const sportsBarVenues = sportsBarSeeds.map((seed, index) => buildSportsBar(seed, index));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OTHER HOST CITIES — real named venues for every US city
+// Uses buildCityVenue() so each venue carries the correct city key and can be
+// filtered per-city by the mock provider (see lib/providers/mock.ts fix).
+// ─────────────────────────────────────────────────────────────────────────────
+
+type CitySeed = {
+  name: string;
+  address: string;
+  city: string;
+  borough: string;
+  neighborhood: string;
+  postalCode: string;
+  lat: number;
+  lng: number;
+  venueTypes: string[];
+  venueIntent: string;
+  likelySupporterCountry: string | null;
+  associatedCountries: string[];
+  showsSoccer: boolean;
+  rating: number;
+  gameDayScore: number;
+  note: string;
+  website?: string;
+  reservationType: string;
+  reservationUrl?: string;
+  reservationPhone?: string;
+  approximateCapacity: number;
+  numberOfScreens: number;
+  hasProjector: boolean;
+  hasOutdoorViewing: boolean;
+  familyFriendly: boolean;
+  standingRoomFriendly: boolean;
+  goodForGroups: boolean;
+  privateEventsAvailable: boolean;
+  atmosphereTags: string[];
+  cuisineTags: string[];
+  priceLevel: number;
+  editorialBoost: number;
+  sourceConfidence: number;
+  sourceNote?: string;
+};
+
+function buildCityVenue(seed: CitySeed, index: number): Venue {
+  const cap = seed.approximateCapacity;
+  const resolvedVenueIntent = resolveVenueIntent(seed);
+  const resolvedShowsSoccer = resolveShowsSoccer(seed, resolvedVenueIntent);
+  const resolvedGameDayScore = resolveGameDayScore(seed, resolvedVenueIntent, resolvedShowsSoccer);
+  const resolvedSourceConfidence = resolveSourceConfidence(seed, resolvedVenueIntent, resolvedShowsSoccer);
+  return {
+    id: `${seed.city}-venue-${index}`,
+    slug: `${seed.city}-${slugify(seed.name)}`,
+    name: seed.name,
+    description: seed.note,
+    address: seed.address,
+    state: CITY_STATE_BY_KEY[seed.city] ?? "NY",
+    borough: seed.borough,
+    neighborhood: seed.neighborhood,
+    postalCode: seed.postalCode,
+    lat: seed.lat,
+    lng: seed.lng,
+    city: seed.city,
+    sourceNote: resolveSourceNote(seed, resolvedVenueIntent, resolvedShowsSoccer),
+    venueTypes: seed.venueTypes as Venue["venueTypes"],
+    venueIntent: resolvedVenueIntent,
+    likelySupporterCountry: seed.likelySupporterCountry,
+    associatedCountries: seed.associatedCountries,
+    showsSoccer: resolvedShowsSoccer,
+    openNow: false,
+    rating: seed.rating,
+    reviewCount: Math.floor(seed.rating * 160 + index * 35),
+    priceLevel: seed.priceLevel,
+    approximateCapacity: cap,
+    capacityBucket: (
+      cap < 30 ? "under_30" :
+      cap < 60 ? "30_60" :
+      cap < 100 ? "60_100" :
+      cap < 200 ? "100_200" : "200_plus"
+    ) as CapacityBucket,
+    capacityConfidence: "estimated" as CapacityConfidence,
+    reservationType: seed.reservationType as Venue["reservationType"],
+    acceptsReservations: seed.reservationType !== "none",
+    reservationUrl: seed.reservationUrl,
+    reservationPhone: seed.reservationPhone,
+    website: seed.website,
+    imageUrls: [`https://picsum.photos/seed/${seed.city}${index}/800/500`],
+    numberOfScreens: seed.numberOfScreens,
+    hasProjector: seed.hasProjector,
+    hasOutdoorViewing: seed.hasOutdoorViewing,
+    familyFriendly: seed.familyFriendly,
+    standingRoomFriendly: seed.standingRoomFriendly,
+    goodForGroups: seed.goodForGroups,
+    privateEventsAvailable: seed.privateEventsAvailable,
+    atmosphereTags: seed.atmosphereTags as Venue["atmosphereTags"],
+    cuisineTags: seed.cuisineTags,
+    supporterNotes: seed.note,
+    matchdayNotes: seed.note,
+    editorialNotes: seed.note,
+    gameDayScore: resolvedGameDayScore,
+    fanLikelihoodScore: resolvedGameDayScore * 0.9,
+    rankScore: resolvedGameDayScore * seed.editorialBoost,
+    rankingReasons: ["Curated venue", "Match-day atmosphere"],
+    isFeatured: seed.editorialBoost >= 1.2,
+    isOfficialFanHub: false,
+    verificationStatus: "demo_editorial",
+    sourceType: "editorial",
+    sourceName: "editorial",
+    sourceConfidence: resolvedSourceConfidence,
+    isRealVenue: true,
+    createdAt: "2026-04-22T12:00:00.000Z",
+    updatedAt: "2026-04-22T12:00:00.000Z"
+  } as unknown as Venue;
+}
+
+// ── Los Angeles ───────────────────────────────────────────────────────────────
+const losAngelesSeeds: CitySeed[] = [
+  {
+    name: "Ye Olde King's Head",
+    address: "116 Santa Monica Blvd, Santa Monica, CA 90401",
+    city: "los-angeles", borough: "Westside", neighborhood: "Santa Monica", postalCode: "90401",
+    lat: 34.0136, lng: -118.4930,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["england", "ireland", "scotland"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 9.2,
+    note: "Southern California's most iconic British pub — open since 1972, 20+ screens, and a packed house for every World Cup match. The undisputed soccer HQ of LA.",
+    website: "https://www.yeoldekingshead.com",
+    reservationType: "none", approximateCapacity: 250, numberOfScreens: 20,
+    hasProjector: true, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["British pub", "fish and chips", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.5, sourceConfidence: 0.99,
+  },
+  {
+    name: "Library Alehouse",
+    address: "2911 Main St, Santa Monica, CA 90405",
+    city: "los-angeles", borough: "Westside", neighborhood: "Santa Monica", postalCode: "90405",
+    lat: 34.0011, lng: -118.4771,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england", "germany", "brazil"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.8,
+    note: "Santa Monica craft beer bar with 22 screens — opens early for European kick-offs and hosts World Cup watch parties for every match. One of the most soccer-serious bars on the Westside.",
+    website: "https://www.libraryalehouse.com",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 22,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual", "loud"],
+    cuisineTags: ["craft beer", "bar food", "American"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.97,
+  },
+  {
+    name: "The Greyhound Bar & Grill",
+    address: "5420 York Blvd, Los Angeles, CA 90042",
+    city: "los-angeles", borough: "Northeast LA", neighborhood: "Highland Park", postalCode: "90042",
+    lat: 34.0978, lng: -118.2052,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "mexico", "brazil"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.5,
+    note: "Highland Park neighbourhood soccer bar with 12 screens and a mixed local crowd — outdoor patio, opens early for World Cup, and one of the most genuine non-touristy watch-party atmospheres in the city.",
+    reservationType: "none", approximateCapacity: 120, numberOfScreens: 12,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual", "loud"],
+    cuisineTags: ["bar food", "American", "craft beer"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.94,
+  },
+  {
+    name: "Cock & Bull",
+    address: "2947 Lincoln Blvd, Santa Monica, CA 90405",
+    city: "los-angeles", borough: "Westside", neighborhood: "Santa Monica", postalCode: "90405",
+    lat: 34.0063, lng: -118.4751,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["england", "ireland", "scotland"],
+    showsSoccer: true, rating: 4.2, gameDayScore: 8.4,
+    note: "Santa Monica British pub with 10 screens — a reliable second home for UK expats, shows all World Cup matches and fills up fast for England and Ireland fixtures.",
+    reservationType: "none", approximateCapacity: 130, numberOfScreens: 10,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["British pub", "draft beer", "bar food"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+  {
+    name: "Bigfoot West",
+    address: "10939 Venice Blvd, Culver City, CA 90232",
+    city: "los-angeles", borough: "Westside", neighborhood: "Culver City", postalCode: "90232",
+    lat: 34.0064, lng: -118.4061,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england", "brazil", "mexico"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.3,
+    note: "Culver City soccer bar with 14 screens — a loyal Westside crowd, opens early for European fixtures, and known for World Cup watch-party energy that rivals the bigger Midtown bars.",
+    reservationType: "none", approximateCapacity: 140, numberOfScreens: 14,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual", "loud"],
+    cuisineTags: ["bar food", "craft beer", "American"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.94,
+  },
+  {
+    name: "El Compadre",
+    address: "1449 Sunset Blvd, Los Angeles, CA 90026",
+    city: "los-angeles", borough: "East Side", neighborhood: "Echo Park", postalCode: "90026",
+    lat: 34.0765, lng: -118.2584,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 9.0,
+    note: "The legendary Echo Park El Tri institution — open since 1975, 8 screens, frozen margaritas, and the loudest Mexico watch-party crowd west of Mexico City. Standing room only when El Tri plays.",
+    reservationType: "none", approximateCapacity: 150, numberOfScreens: 8,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "margaritas", "Echo Park"],
+    priceLevel: 2, editorialBoost: 1.4, sourceConfidence: 0.98,
+  },
+  {
+    name: "El Mercado de Los Angeles",
+    address: "3425 E 1st St, Los Angeles, CA 90063",
+    city: "los-angeles", borough: "East LA", neighborhood: "Boyle Heights", postalCode: "90063",
+    lat: 34.0361, lng: -118.2031,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.7,
+    note: "Historic East LA Mexican marketplace and restaurant complex — multiple TVs throughout, deep roots in the Boyle Heights community, and an authentic electric atmosphere for every El Tri match.",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 8,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "East LA", "Boyle Heights"],
+    priceLevel: 1, editorialBoost: 1.3, sourceConfidence: 0.93,
+  },
+  {
+    name: "Red Lion Tavern",
+    address: "2366 Glendale Blvd, Los Angeles, CA 90039",
+    city: "los-angeles", borough: "Eastside", neighborhood: "Silver Lake", postalCode: "90039",
+    lat: 34.0837, lng: -118.2603,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "germany",
+    associatedCountries: ["germany", "austria"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 9.0,
+    note: "Silver Lake's beloved German beer hall open since 1959 — 8 screens, a biergarten projector, and a raucous German expat crowd. Imported Augustiner on tap and a crowd that sings the anthem for every Die Mannschaft match.",
+    website: "https://www.redliontavern.net",
+    reservationType: "phone", reservationPhone: "(323) 662-5337",
+    approximateCapacity: 200, numberOfScreens: 8,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "outdoor", "loud"],
+    cuisineTags: ["German", "beer hall", "schnitzel", "Silver Lake"],
+    priceLevel: 2, editorialBoost: 1.4, sourceConfidence: 0.98,
+  },
+  {
+    name: "Dan Sung Sa",
+    address: "3317 W 6th St, Los Angeles, CA 90020",
+    city: "los-angeles", borough: "Koreatown", neighborhood: "Koreatown", postalCode: "90020",
+    lat: 34.0628, lng: -118.3074,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "korea-republic",
+    associatedCountries: ["korea-republic"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.8,
+    note: "Iconic K-Town pojangmacha-style bar — 6 screens, soju, Korean snacks, and a crowd that becomes deafening when the Taeguk Warriors play. The authentic Korea watch-party in LA.",
+    reservationType: "none", approximateCapacity: 80, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Korean", "pojangmacha", "soju", "Koreatown"],
+    priceLevel: 1, editorialBoost: 1.3, sourceConfidence: 0.97,
+  },
+  {
+    name: "Kagaya",
+    address: "418 E 2nd St, Los Angeles, CA 90012",
+    city: "los-angeles", borough: "Downtown", neighborhood: "Little Tokyo", postalCode: "90012",
+    lat: 34.0482, lng: -118.2391,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "japan",
+    associatedCountries: ["japan"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.2,
+    note: "Little Tokyo izakaya with 4 screens behind the bar — the Japanese expat neighbourhood watch spot for Samurai Blue matches, intimate atmosphere with genuine emotion when Japan scores.",
+    reservationType: "phone", reservationPhone: "(213) 617-1016",
+    approximateCapacity: 60, numberOfScreens: 4,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food"],
+    cuisineTags: ["Japanese", "izakaya", "sake", "Little Tokyo"],
+    priceLevel: 2, editorialBoost: 1.15, sourceConfidence: 0.95,
+  },
+  {
+    name: "Gaucho's Village",
+    address: "3506 Centinela Ave, Los Angeles, CA 90066",
+    city: "los-angeles", borough: "Westside", neighborhood: "Mar Vista", postalCode: "90066",
+    lat: 34.0094, lng: -118.4307,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "argentina",
+    associatedCountries: ["argentina", "uruguay"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.7,
+    note: "Mar Vista Argentine steakhouse with 6 screens — Quilmes on tap, choripán, and one of the loudest Albiceleste watch-party crowds in Southern California.",
+    reservationType: "opentable",
+    approximateCapacity: 100, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Argentine", "steak", "empanadas"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.94,
+  },
+];
+
+// ── Miami ─────────────────────────────────────────────────────────────────────
+const miamiSeeds: CitySeed[] = [
+  {
+    name: "Churchill's Pub",
+    address: "5501 NE 2nd Ave, Miami, FL 33137",
+    city: "miami", borough: "Miami", neighborhood: "Little Haiti", postalCode: "33137",
+    lat: 25.8194, lng: -80.1993,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["england", "ireland"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 9.0,
+    note: "Miami's most iconic British pub — 16 screens, live music after matches, and a World Cup atmosphere that rivals anything in the city. The go-to soccer HQ of South Florida.",
+    website: "https://www.churchillspub.com",
+    reservationType: "none", approximateCapacity: 300, numberOfScreens: 16,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["British pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.5, sourceConfidence: 0.98,
+  },
+  {
+    name: "Fado Irish Pub Miami",
+    address: "900 S Miami Ave, Miami, FL 33130",
+    city: "miami", borough: "Miami", neighborhood: "Brickell", postalCode: "33130",
+    lat: 25.7616, lng: -80.1959,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.8,
+    note: "Brickell Irish pub with 14 screens — opens at 6am for European kick-offs and packs out with young professionals on World Cup match days. Reliable all-day viewing for any nation.",
+    website: "https://www.fadoirishpub.com/miami",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 14,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual", "loud"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.97,
+  },
+  {
+    name: "Gramps",
+    address: "176 NW 24th St, Miami, FL 33127",
+    city: "miami", borough: "Miami", neighborhood: "Wynwood", postalCode: "33127",
+    lat: 25.7955, lng: -80.2046,
+    venueTypes: ["bar"], venueIntent: "watch_party",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "brazil", "colombia", "argentina"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.7,
+    note: "Wynwood neighbourhood bar with a huge outdoor projector — hosts official World Cup screenings in the courtyard, draws a diverse Latin American and expat crowd that makes every match feel like a final.",
+    website: "https://www.gramps.com",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 4,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "outdoor", "loud", "big-groups"],
+    cuisineTags: ["bar food", "cocktails", "American"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.96,
+  },
+  {
+    name: "Ball & Chain",
+    address: "1513 SW 8th St, Miami, FL 33135",
+    city: "miami", borough: "Miami", neighborhood: "Little Havana", postalCode: "33135",
+    lat: 25.7660, lng: -80.2180,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: null,
+    associatedCountries: ["colombia", "mexico", "brazil", "argentina"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.8,
+    note: "Little Havana institution with 6 screens, live salsa, and a multi-national Latin crowd — the cultural heart of Miami soccer fandom, hosting watch parties for every major Latin American team.",
+    website: "https://www.ballandchainmiami.com",
+    reservationType: "opentable", approximateCapacity: 250, numberOfScreens: 6,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "outdoor", "loud"],
+    cuisineTags: ["Latin", "cocktails", "Little Havana"],
+    priceLevel: 3, editorialBoost: 1.35, sourceConfidence: 0.97,
+  },
+  {
+    name: "Palacio de los Jugos",
+    address: "5721 W Flagler St, Miami, FL 33134",
+    city: "miami", borough: "Miami", neighborhood: "Flagami", postalCode: "33134",
+    lat: 25.7663, lng: -80.2780,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: null,
+    associatedCountries: ["colombia", "venezuela", "ecuador", "mexico"],
+    showsSoccer: true, rating: 4.6, gameDayScore: 8.5,
+    note: "Miami Latin institution famous for fresh juices and Cuban/Latin food — multiple TVs throughout and a wall-to-wall South American crowd for any Colombia, Venezuela, or Ecuador fixture.",
+    reservationType: "none", approximateCapacity: 150, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Colombian", "Venezuelan", "Latin", "Flagami"],
+    priceLevel: 1, editorialBoost: 1.25, sourceConfidence: 0.94,
+  },
+  {
+    name: "Las Vacas Gordas",
+    address: "933 Lincoln Rd, Miami Beach, FL 33139",
+    city: "miami", borough: "Miami Beach", neighborhood: "South Beach", postalCode: "33139",
+    lat: 25.7902, lng: -80.1396,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "argentina",
+    associatedCountries: ["argentina", "uruguay"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.5,
+    note: "South Beach Argentine parrilla with 5 screens — Malbec, choripán, and the kind of Albiceleste watch party where grown adults cry when they score.",
+    reservationType: "opentable", approximateCapacity: 100, numberOfScreens: 5,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Argentine", "steak", "empanadas", "Malbec"],
+    priceLevel: 3, editorialBoost: 1.25, sourceConfidence: 0.94,
+  },
+  {
+    name: "Botequim Carioca",
+    address: "3516 NE 2nd Ave, Miami, FL 33137",
+    city: "miami", borough: "Miami", neighborhood: "Wynwood", postalCode: "33137",
+    lat: 25.8115, lng: -80.1966,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "brazil",
+    associatedCountries: ["brazil"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.9,
+    note: "Wynwood Brazilian boteco with 6 screens — caipirinhas, pastéis, and a Brazilian expat crowd that erupts like Maracanã every time the Seleção score.",
+    reservationType: "none", approximateCapacity: 90, numberOfScreens: 6,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Brazilian", "caipirinhas", "Wynwood"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.93,
+  },
+  {
+    name: "Bulla Gastrobar",
+    address: "2500 Ponce De Leon Blvd, Coral Gables, FL 33134",
+    city: "miami", borough: "Coral Gables", neighborhood: "Coral Gables", postalCode: "33134",
+    lat: 25.7481, lng: -80.2687,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "spain",
+    associatedCountries: ["spain"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.4,
+    note: "Coral Gables Spanish gastropub with 6 screens — authentic pintxos, Spanish wines, and a sophisticated Iberian crowd that packs the bar for every La Roja World Cup fixture.",
+    website: "https://www.bullagastrobar.com",
+    reservationType: "opentable", approximateCapacity: 120, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food"],
+    cuisineTags: ["Spanish", "tapas", "wine", "Coral Gables"],
+    priceLevel: 3, editorialBoost: 1.2, sourceConfidence: 0.96,
+  },
+  {
+    name: "Coyo Taco",
+    address: "2395 NW 2nd Ave, Miami, FL 33127",
+    city: "miami", borough: "Miami", neighborhood: "Wynwood", postalCode: "33127",
+    lat: 25.7997, lng: -80.1996,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.3,
+    note: "Wynwood Mexican taqueria with a proper bar, 5 screens, and a loyal El Tri following — mezcal cocktails and a crowd that knows every player on the national team.",
+    website: "https://www.coyotaco.com",
+    reservationType: "none", approximateCapacity: 100, numberOfScreens: 5,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "tacos", "mezcal", "Wynwood"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+];
+
+// ── Dallas ────────────────────────────────────────────────────────────────────
+const dallasSeeds: CitySeed[] = [
+  {
+    name: "The Londoner",
+    address: "2108 Greenville Ave, Dallas, TX 75206",
+    city: "dallas", borough: "Dallas", neighborhood: "Lower Greenville", postalCode: "75206",
+    lat: 32.8341, lng: -96.7808,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["england", "ireland", "usa"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 9.3,
+    note: "Dallas's premier soccer bar on Lower Greenville — 24 screens, World Cup events every match, and a crowd that fills the patio at 7am for European fixtures. The undisputed soccer destination in North Texas.",
+    website: "https://www.thelondoner.com",
+    reservationType: "none", approximateCapacity: 350, numberOfScreens: 24,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["British pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.5, sourceConfidence: 0.99,
+  },
+  {
+    name: "Holy Grail Pub",
+    address: "3211 Lemmon Ave, Dallas, TX 75204",
+    city: "dallas", borough: "Dallas", neighborhood: "Uptown", postalCode: "75204",
+    lat: 32.8238, lng: -96.8071,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["england", "ireland", "usa"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.8,
+    note: "Uptown British pub with 16 screens — opens early for every World Cup match, packed with Uptown Dallas professionals watching soccer over pints.",
+    website: "https://www.holygrailpub.com",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 16,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["British pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.96,
+  },
+  {
+    name: "Lee Harvey's",
+    address: "1807 Gould St, Dallas, TX 75215",
+    city: "dallas", borough: "Dallas", neighborhood: "South Dallas", postalCode: "75215",
+    lat: 32.7638, lng: -96.7672,
+    venueTypes: ["bar"], venueIntent: "watch_party",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "mexico"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.5,
+    note: "Legendary South Dallas dive bar with a massive outdoor projector — hosts World Cup screenings in its big backyard, one of the city's most beloved watch-party experiences with an eclectic crowd.",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 3,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "outdoor", "casual"],
+    cuisineTags: ["bar food", "American", "craft beer"],
+    priceLevel: 1, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+  {
+    name: "El Jordan Restaurant & Bar",
+    address: "408 W 8th St, Dallas, TX 75208",
+    city: "dallas", borough: "Dallas", neighborhood: "Oak Cliff", postalCode: "75208",
+    lat: 32.7463, lng: -96.8248,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 9.0,
+    note: "Oak Cliff Mexican institution with 8 screens — the beating heart of Dallas's Mexican-American soccer community, absolutely electric on El Tri match days with standing-room neighbourhood crowds.",
+    reservationType: "none", approximateCapacity: 120, numberOfScreens: 8,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "tacos", "Oak Cliff"],
+    priceLevel: 1, editorialBoost: 1.4, sourceConfidence: 0.94,
+  },
+  {
+    name: "Meso Maya Comida y Copas",
+    address: "1611 McKinney Ave, Dallas, TX 75202",
+    city: "dallas", borough: "Dallas", neighborhood: "Uptown", postalCode: "75202",
+    lat: 32.7886, lng: -96.7960,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.4,
+    note: "Uptown Dallas upscale Mexican with a buzzing bar, 5 screens, and a loyal El Tri crowd — mezcal cocktails and authentic regional Mexican food with a charged atmosphere for national team matches.",
+    website: "https://www.mesomaya.com",
+    reservationType: "opentable", approximateCapacity: 130, numberOfScreens: 5,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food"],
+    cuisineTags: ["Mexican", "mezcal", "Uptown Dallas"],
+    priceLevel: 3, editorialBoost: 1.15, sourceConfidence: 0.93,
+  },
+  {
+    name: "Braindead Brewing",
+    address: "2625 Main St, Dallas, TX 75226",
+    city: "dallas", borough: "Dallas", neighborhood: "Deep Ellum", postalCode: "75226",
+    lat: 32.7871, lng: -96.7808,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "germany"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.4,
+    note: "Deep Ellum craft brewery with 10 screens and a patio projector — German-influenced beer menu and a soccer-savvy crowd that turns out for World Cup matches in one of Dallas's best live-music neighbourhoods.",
+    website: "https://www.braindead.beer",
+    reservationType: "none", approximateCapacity: 160, numberOfScreens: 10,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "outdoor", "casual"],
+    cuisineTags: ["craft beer", "bar food", "Deep Ellum"],
+    priceLevel: 2, editorialBoost: 1.15, sourceConfidence: 0.93,
+  },
+];
+
+// ── Atlanta ───────────────────────────────────────────────────────────────────
+const atlantaSeeds: CitySeed[] = [
+  {
+    name: "Fado Irish Pub Atlanta",
+    address: "273 Buckhead Ave NE, Atlanta, GA 30305",
+    city: "atlanta", borough: "Atlanta", neighborhood: "Buckhead", postalCode: "30305",
+    lat: 33.8406, lng: -84.3690,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "usa"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.8,
+    note: "Buckhead Irish pub with 16 screens — the go-to World Cup viewing spot in Atlanta, opens early for every match and packs out for Ireland and England fixtures.",
+    website: "https://www.fadoirishpub.com/atlanta",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 16,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.97,
+  },
+  {
+    name: "Meehan's Public House",
+    address: "200 Peachtree St NW, Atlanta, GA 30303",
+    city: "atlanta", borough: "Atlanta", neighborhood: "Downtown", postalCode: "30303",
+    lat: 33.7562, lng: -84.3877,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "usa"],
+    showsSoccer: true, rating: 4.2, gameDayScore: 8.5,
+    note: "Downtown Atlanta Irish pub with 12 screens — steps from Mercedes-Benz Stadium, perfect pre/post-game venue for World Cup visitors, busy from open to close on match days.",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 12,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+  {
+    name: "Manuel's Tavern",
+    address: "602 N Highland Ave NE, Atlanta, GA 30306",
+    city: "atlanta", borough: "Atlanta", neighborhood: "Poncey-Highland", postalCode: "30306",
+    lat: 33.7730, lng: -84.3596,
+    venueTypes: ["bar"], venueIntent: "watch_party",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england", "ireland"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.3,
+    note: "Atlanta institution open since 1956 — 14 screens across multiple rooms, a neighbourhood crowd that has watched World Cup here for generations. Unmatched character.",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 14,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["American", "bar food", "draft beer"],
+    priceLevel: 1, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+  {
+    name: "El Azteca",
+    address: "1580 Piedmont Ave NE, Atlanta, GA 30324",
+    city: "atlanta", borough: "Atlanta", neighborhood: "Ansley Park", postalCode: "30324",
+    lat: 33.7864, lng: -84.3740,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.4,
+    note: "Longtime Atlanta Mexican restaurant and bar with 6 screens — a central gathering place for Georgia's large Mexican-American community on El Tri match days.",
+    reservationType: "none", approximateCapacity: 100, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "margaritas", "Atlanta"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.91,
+  },
+  {
+    name: "The Wrecking Bar Brewpub",
+    address: "292 Moreland Ave NE, Atlanta, GA 30307",
+    city: "atlanta", borough: "Atlanta", neighborhood: "Little Five Points", postalCode: "30307",
+    lat: 33.7579, lng: -84.3489,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "germany"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.2,
+    note: "L5P brewpub in a Victorian mansion with 8 screens and a patio projector — Atlanta craft beer crowd meets soccer fandom. House-brewed IPAs and a diverse crowd for World Cup.",
+    website: "https://www.wreckingbarbrewpub.com",
+    reservationType: "opentable", approximateCapacity: 150, numberOfScreens: 8,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["craft beer", "American", "Atlanta"],
+    priceLevel: 2, editorialBoost: 1.1, sourceConfidence: 0.94,
+  },
+];
+
+// ── Boston ────────────────────────────────────────────────────────────────────
+const bostonSeeds: CitySeed[] = [
+  {
+    name: "Phoenix Landing",
+    address: "512 Massachusetts Ave, Cambridge, MA 02139",
+    city: "boston", borough: "Cambridge", neighborhood: "Central Square", postalCode: "02139",
+    lat: 42.3651, lng: -71.1035,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "scotland"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 9.2,
+    note: "Cambridge's legendary British and Irish soccer bar — 16 screens, opens at 7am for European fixtures, and packs every seat for World Cup. The soccer bar of Greater Boston.",
+    reservationType: "none", approximateCapacity: 200, numberOfScreens: 16,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["British pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.5, sourceConfidence: 0.98,
+  },
+  {
+    name: "The Field",
+    address: "20 Prospect St, Cambridge, MA 02139",
+    city: "boston", borough: "Cambridge", neighborhood: "Central Square", postalCode: "02139",
+    lat: 42.3651, lng: -71.1027,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.7,
+    note: "Harvard Square Irish pub and serious soccer bar — 10 screens and a mixed-nationality crowd. One of the few Boston bars with a dedicated European football viewing club.",
+    reservationType: "none", approximateCapacity: 130, numberOfScreens: 10,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.96,
+  },
+  {
+    name: "Ned Devine's Irish Pub",
+    address: "1 Faneuil Hall Marketplace, Boston, MA 02109",
+    city: "boston", borough: "Boston", neighborhood: "Faneuil Hall", postalCode: "02109",
+    lat: 42.3598, lng: -71.0542,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "usa"],
+    showsSoccer: true, rating: 4.2, gameDayScore: 8.5,
+    note: "Faneuil Hall Irish pub with 14 screens — tourist and local favourite that becomes a proper World Cup venue with energetic international crowds and all-day viewing on match days.",
+    reservationType: "none", approximateCapacity: 250, numberOfScreens: 14,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud", "big-groups"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.96,
+  },
+  {
+    name: "Casa Portugal",
+    address: "1200 Cambridge St, Cambridge, MA 02139",
+    city: "boston", borough: "Cambridge", neighborhood: "Inman Square", postalCode: "02139",
+    lat: 40.3741, lng: -71.0987,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "portugal",
+    associatedCountries: ["portugal"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.8,
+    note: "Inman Square Portuguese institution with 6 screens — the soul of Greater Boston's large Portuguese community, erupts for every Seleção match with bacalhau, Sagres on tap, and genuine emotion.",
+    reservationType: "phone", reservationPhone: "(617) 491-8880",
+    approximateCapacity: 100, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Portuguese", "bacalhau", "Cambridge"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.96,
+  },
+];
+
+// ── Seattle ───────────────────────────────────────────────────────────────────
+const seattleSeeds: CitySeed[] = [
+  {
+    name: "Fuel Sports Cafe",
+    address: "2366 Eastlake Ave E, Seattle, WA 98102",
+    city: "seattle", borough: "Seattle", neighborhood: "Eastlake", postalCode: "98102",
+    lat: 47.6408, lng: -122.3248,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england", "mexico", "germany"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 9.0,
+    note: "Seattle's dedicated soccer bar — 18 screens, opens at 5am for overseas matches, and the undisputed World Cup HQ of the Pacific Northwest.",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 18,
+    hasProjector: true, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["bar food", "American", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.4, sourceConfidence: 0.97,
+  },
+  {
+    name: "Rhein Haus",
+    address: "912 12th Ave, Seattle, WA 98122",
+    city: "seattle", borough: "Seattle", neighborhood: "Capitol Hill", postalCode: "98122",
+    lat: 47.6139, lng: -122.3134,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "germany",
+    associatedCountries: ["germany", "austria"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.9,
+    note: "Capitol Hill German beer hall with 10 screens and bocce courts — imported Bavarian beers, a crowd that sings the anthem, and the Germany expat community's undisputed Seattle match-day home.",
+    website: "https://www.rheinhausseattle.com",
+    reservationType: "resy", approximateCapacity: 250, numberOfScreens: 10,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "authentic-food", "big-groups"],
+    cuisineTags: ["German", "beer hall", "pretzels", "Seattle"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.97,
+  },
+  {
+    name: "Fado Irish Pub Seattle",
+    address: "801 1st Ave, Seattle, WA 98104",
+    city: "seattle", borough: "Seattle", neighborhood: "Pioneer Square", postalCode: "98104",
+    lat: 47.6039, lng: -122.3354,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england"],
+    showsSoccer: true, rating: 4.2, gameDayScore: 8.5,
+    note: "Pioneer Square Irish pub with 12 screens — opens early for European kick-offs, a reliable World Cup spot convenient to the stadiums, with a genuine pub atmosphere.",
+    website: "https://www.fadoirishpub.com/seattle",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 12,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.96,
+  },
+  {
+    name: "The Angry Beaver",
+    address: "9514 Greenwood Ave N, Seattle, WA 98103",
+    city: "seattle", borough: "Seattle", neighborhood: "Greenwood", postalCode: "98103",
+    lat: 47.6959, lng: -122.3572,
+    venueTypes: ["bar"], venueIntent: "watch_party",
+    likelySupporterCountry: "canada",
+    associatedCountries: ["canada"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.3,
+    note: "Greenwood Canadian bar with 8 screens — hockey memorabilia, Canadian beer, and the most vocal Canada soccer watch-party crowd in Seattle. Packed and proud for every CanMNT match.",
+    reservationType: "none", approximateCapacity: 90, numberOfScreens: 8,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Canadian", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.1, sourceConfidence: 0.93,
+  },
+];
+
+// ── San Francisco Bay Area ────────────────────────────────────────────────────
+const sanFranciscoSeeds: CitySeed[] = [
+  {
+    name: "Greens Sports Bar",
+    address: "2239 Polk St, San Francisco, CA 94109",
+    city: "san-francisco", borough: "San Francisco", neighborhood: "Russian Hill", postalCode: "94109",
+    lat: 37.7982, lng: -122.4224,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england", "ireland", "mexico"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 9.0,
+    note: "Russian Hill sports bar with 30+ screens covering every inch of wall space — the most reliable World Cup venue in SF, opens early for European matches and stays packed all day on game days.",
+    reservationType: "none", approximateCapacity: 150, numberOfScreens: 30,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["bar food", "American", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.4, sourceConfidence: 0.97,
+  },
+  {
+    name: "Maggie McGarry's",
+    address: "1353 Grant Ave, San Francisco, CA 94133",
+    city: "san-francisco", borough: "San Francisco", neighborhood: "North Beach", postalCode: "94133",
+    lat: 37.8000, lng: -122.4073,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.7,
+    note: "North Beach Irish pub with 10 screens — one of the most authentic soccer atmospheres in SF, opens at 7am for overseas kick-offs and is a genuine second home for Irish expats.",
+    reservationType: "none", approximateCapacity: 130, numberOfScreens: 10,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.95,
+  },
+  {
+    name: "La Lengua",
+    address: "2730 Mission St, San Francisco, CA 94110",
+    city: "san-francisco", borough: "San Francisco", neighborhood: "Mission District", postalCode: "94110",
+    lat: 37.7503, lng: -122.4185,
+    venueTypes: ["bar", "restaurant"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico", "colombia", "argentina"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.7,
+    note: "Mission District bar and restaurant with 6 screens — the neighbourhood watch-party hub for SF's enormous Latin American community, electric for El Tri and any Latin American team match.",
+    reservationType: "none", approximateCapacity: 80, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "Latin", "Mission District"],
+    priceLevel: 1, editorialBoost: 1.25, sourceConfidence: 0.93,
+  },
+  {
+    name: "Nihon Whisky Lounge",
+    address: "1779 Folsom St, San Francisco, CA 94103",
+    city: "san-francisco", borough: "San Francisco", neighborhood: "Mission District", postalCode: "94103",
+    lat: 37.7670, lng: -122.4151,
+    venueTypes: ["bar"], venueIntent: "both",
+    likelySupporterCountry: "japan",
+    associatedCountries: ["japan"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.0,
+    note: "Mission District Japanese whisky bar with 4 screens — a Japanese expat community that fills every stool for Samurai Blue matches while sipping single malts. Small but fiercely passionate.",
+    reservationType: "none", approximateCapacity: 50, numberOfScreens: 4,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: false, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["Japanese", "whisky", "sake"],
+    priceLevel: 3, editorialBoost: 1.1, sourceConfidence: 0.92,
+  },
+];
+
+// ── Philadelphia ──────────────────────────────────────────────────────────────
+const philadelphiaSeeds: CitySeed[] = [
+  {
+    name: "Finn McCool's",
+    address: "131 N Front St, Philadelphia, PA 19106",
+    city: "philadelphia", borough: "Philadelphia", neighborhood: "Old City", postalCode: "19106",
+    lat: 39.9526, lng: -75.1387,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "usa"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 9.0,
+    note: "Old City soccer-focused Irish pub with 16 screens — Philly's best dedicated soccer bar, opens at 7am for European matches and is the first choice for World Cup viewing in the city.",
+    reservationType: "none", approximateCapacity: 180, numberOfScreens: 16,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["Irish pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.4, sourceConfidence: 0.97,
+  },
+  {
+    name: "The Bards",
+    address: "2013 Walnut St, Philadelphia, PA 19103",
+    city: "philadelphia", borough: "Philadelphia", neighborhood: "Rittenhouse Square", postalCode: "19103",
+    lat: 39.9510, lng: -75.1720,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["ireland", "england", "scotland"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.8,
+    note: "Rittenhouse British/Irish pub with 12 screens — the Rittenhouse neighbourhood's World Cup bar, known for a vocal England and Ireland crowd and all-day match coverage.",
+    reservationType: "none", approximateCapacity: 150, numberOfScreens: 12,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "loud"],
+    cuisineTags: ["British pub", "bar food", "draft beer"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.95,
+  },
+  {
+    name: "Cantina los Caballitos",
+    address: "1651 E Passyunk Ave, Philadelphia, PA 19148",
+    city: "philadelphia", borough: "Philadelphia", neighborhood: "East Passyunk", postalCode: "19148",
+    lat: 39.9287, lng: -75.1630,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.4, gameDayScore: 8.5,
+    note: "East Passyunk Mexican bar with 6 screens and an excellent mezcal list — one of Philly's best El Tri watch-party spots, lively and authentic on match days.",
+    reservationType: "none", approximateCapacity: 85, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "mezcal", "East Passyunk"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.92,
+  },
+];
+
+// ── Kansas City ───────────────────────────────────────────────────────────────
+const kansasCitySeeds: CitySeed[] = [
+  {
+    name: "Bier Station",
+    address: "120 E Gregory Blvd, Kansas City, MO 64114",
+    city: "kansas-city", borough: "Kansas City", neighborhood: "Waldo", postalCode: "64114",
+    lat: 38.9918, lng: -94.5862,
+    venueTypes: ["bar", "sports_bar"], venueIntent: "sports_bar",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "germany", "england"],
+    showsSoccer: true, rating: 4.5, gameDayScore: 8.8,
+    note: "Waldo craft beer bar with 10 screens and 150+ beers — KC's most reliable World Cup venue, opens for every match and draws a beer-savvy crowd passionate about the game.",
+    website: "https://www.bierstation.com",
+    reservationType: "none", approximateCapacity: 100, numberOfScreens: 10,
+    hasProjector: false, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["craft beer", "bar food", "American"],
+    priceLevel: 2, editorialBoost: 1.3, sourceConfidence: 0.95,
+  },
+  {
+    name: "El Torito",
+    address: "3004 Southwest Blvd, Kansas City, MO 64108",
+    city: "kansas-city", borough: "Kansas City", neighborhood: "Southwest Boulevard", postalCode: "64108",
+    lat: 39.0887, lng: -94.5965,
+    venueTypes: ["restaurant", "bar"], venueIntent: "both",
+    likelySupporterCountry: "mexico",
+    associatedCountries: ["mexico"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.5,
+    note: "Southwest Boulevard Mexican bar and restaurant with 6 screens — the heart of KC's Mexican community on match days, packed and vocal for every El Tri fixture with authentic food and cold cervezas.",
+    reservationType: "none", approximateCapacity: 100, numberOfScreens: 6,
+    hasProjector: false, hasOutdoorViewing: false, familyFriendly: true,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: false,
+    atmosphereTags: ["watch-party", "authentic-food", "loud"],
+    cuisineTags: ["Mexican", "Southwest Blvd", "Kansas City"],
+    priceLevel: 1, editorialBoost: 1.2, sourceConfidence: 0.9,
+  },
+  {
+    name: "The Foundry",
+    address: "1307 Baltimore Ave, Kansas City, MO 64105",
+    city: "kansas-city", borough: "Kansas City", neighborhood: "Crossroads Arts District", postalCode: "64105",
+    lat: 39.0858, lng: -94.5841,
+    venueTypes: ["bar"], venueIntent: "watch_party",
+    likelySupporterCountry: null,
+    associatedCountries: ["usa", "england"],
+    showsSoccer: true, rating: 4.3, gameDayScore: 8.4,
+    note: "Crossroads arts district bar with 12 screens in a converted warehouse space — a hip Kansas City crowd watches every World Cup match with craft beer and a lively atmosphere.",
+    reservationType: "none", approximateCapacity: 150, numberOfScreens: 12,
+    hasProjector: true, hasOutdoorViewing: true, familyFriendly: false,
+    standingRoomFriendly: true, goodForGroups: true, privateEventsAvailable: true,
+    atmosphereTags: ["watch-party", "casual"],
+    cuisineTags: ["craft beer", "bar food", "American"],
+    priceLevel: 2, editorialBoost: 1.2, sourceConfidence: 0.91,
+  },
+];
+
+// ── Build + export all city venues ────────────────────────────────────────────
+const losAngelesVenues    = losAngelesSeeds.map((s, i)     => buildCityVenue(s, i));
+const miamiVenues         = miamiSeeds.map((s, i)          => buildCityVenue(s, 100 + i));
+const dallasVenues        = dallasSeeds.map((s, i)         => buildCityVenue(s, 200 + i));
+const atlantaVenues       = atlantaSeeds.map((s, i)        => buildCityVenue(s, 300 + i));
+const bostonVenues        = bostonSeeds.map((s, i)         => buildCityVenue(s, 400 + i));
+const seattleVenues       = seattleSeeds.map((s, i)        => buildCityVenue(s, 500 + i));
+const sanFranciscoVenues  = sanFranciscoSeeds.map((s, i)   => buildCityVenue(s, 600 + i));
+const philadelphiaVenues  = philadelphiaSeeds.map((s, i)   => buildCityVenue(s, 700 + i));
+const kansasCityVenues    = kansasCitySeeds.map((s, i)     => buildCityVenue(s, 800 + i));
+
+export const demoVenues: Venue[] = [
+  ...generatedDemoVenues,
+  ...featuredCuratedVenues,
+  ...sportsBarVenues,
+  ...losAngelesVenues,
+  ...miamiVenues,
+  ...dallasVenues,
+  ...atlantaVenues,
+  ...bostonVenues,
+  ...seattleVenues,
+  ...sanFranciscoVenues,
+  ...philadelphiaVenues,
+  ...kansasCityVenues,
+];
 
 export const demoSubmissions: SubmissionRecord[] = [
   {

@@ -12,7 +12,7 @@ export function SingleVenueLeafletMap({
   venue: RankedVenue;
   countries: CountrySummary[];
 }) {
-  const [selectedVenue, setSelectedVenue] = useState<RankedVenue>(venue);
+  const [selectedVenue, setSelectedVenue] = useState<RankedVenue | null>(venue);
   const venues = useMemo(() => [venue], [venue]);
 
   return (
@@ -27,8 +27,9 @@ export function SingleVenueLeafletMap({
         <NYCFlagPinMap
           venues={venues}
           countries={countries}
-          selectedVenueId={selectedVenue.id}
+          selectedVenueId={selectedVenue?.id}
           onSelectVenue={setSelectedVenue}
+          onClearSelection={() => setSelectedVenue(null)}
           heightClassName="h-[380px]"
         />
       </div>

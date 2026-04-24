@@ -12,9 +12,11 @@ function getCountryName(countries: CountrySummary[], slug: string) {
 }
 
 export function MatchScheduleStrip({
+  cityKey = "nyc",
   countries,
   matches
 }: {
+  cityKey?: string;
   countries: CountrySummary[];
   matches: WorldCupMatch[];
 }) {
@@ -29,7 +31,7 @@ export function MatchScheduleStrip({
           {matches.map((match) => (
             <Link
               key={match.id}
-              href={`/nyc/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+              href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
               className="min-w-[18rem] flex-1 rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-[#0a1628] transition hover:bg-[#eef4ff]"
             >
               <div className="flex items-start justify-between gap-3">

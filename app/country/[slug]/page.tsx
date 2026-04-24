@@ -123,7 +123,7 @@ export default async function CountryPage({
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-line bg-sky/30 p-4 text-sm text-navy/65">
-                No fixture scaffold is linked yet for this country.
+                Match schedule details for this country are still filling in.
               </div>
             )}
           </div>

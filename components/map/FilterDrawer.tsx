@@ -47,7 +47,11 @@ export function FilterDrawer({
   onToggleVenueIntent,
   onToggleCountry,
   onApplyMatch,
-  onClearAll
+  onClearAll,
+  onToggleShowAllMapVenues,
+  canToggleShowAllMapVenues,
+  showAllMapVenues,
+  totalVenueCount
 }: {
   open: boolean;
   onClose: () => void;
@@ -81,6 +85,10 @@ export function FilterDrawer({
   onToggleCountry: (slug: string) => void;
   onApplyMatch: (match: WorldCupMatch) => void;
   onClearAll: () => void;
+  onToggleShowAllMapVenues: () => void;
+  canToggleShowAllMapVenues: boolean;
+  showAllMapVenues: boolean;
+  totalVenueCount: number;
 }) {
   return (
     <>
@@ -127,12 +135,16 @@ export function FilterDrawer({
           onToggleCountry={onToggleCountry}
           onApplyMatch={onApplyMatch}
           onClearAll={onClearAll}
+          onToggleShowAllMapVenues={onToggleShowAllMapVenues}
+          canToggleShowAllMapVenues={canToggleShowAllMapVenues}
+          showAllMapVenues={showAllMapVenues}
+          totalVenueCount={totalVenueCount}
           onClose={onClose}
         />
       </div>
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:hidden ${
           open ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
@@ -167,6 +179,10 @@ export function FilterDrawer({
           onToggleCountry={onToggleCountry}
           onApplyMatch={onApplyMatch}
           onClearAll={onClearAll}
+          onToggleShowAllMapVenues={onToggleShowAllMapVenues}
+          canToggleShowAllMapVenues={canToggleShowAllMapVenues}
+          showAllMapVenues={showAllMapVenues}
+          totalVenueCount={totalVenueCount}
           onClose={onClose}
           mobile
         />
@@ -206,6 +222,10 @@ function DrawerBody({
   onToggleCountry,
   onApplyMatch,
   onClearAll,
+  onToggleShowAllMapVenues,
+  canToggleShowAllMapVenues,
+  showAllMapVenues,
+  totalVenueCount,
   onClose,
   mobile = false
 }: {
@@ -239,11 +259,20 @@ function DrawerBody({
   onToggleCountry: (slug: string) => void;
   onApplyMatch: (match: WorldCupMatch) => void;
   onClearAll: () => void;
+  onToggleShowAllMapVenues: () => void;
+  canToggleShowAllMapVenues: boolean;
+  showAllMapVenues: boolean;
+  totalVenueCount: number;
   onClose: () => void;
   mobile?: boolean;
 }) {
   return (
-    <div className={`h-full ${mobile ? "max-h-[88vh] overflow-y-auto" : ""}`}>
+    <div className={`h-full ${mobile ? "max-h-[92vh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]" : ""}`}>
+      {mobile ? (
+        <div className="flex justify-center pt-3">
+          <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
+        </div>
+      ) : null}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eef4ff] bg-white/95 px-4 py-4 backdrop-blur dark:border-white/8 dark:bg-[#161b22]/95">
         <div>
           <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Filters</div>
@@ -262,17 +291,37 @@ function DrawerBody({
       <div className="space-y-5 p-4">
         <section className="space-y-3">
           <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">🏠 Venue type</div>
+          <button
+            type="button"
+            aria-pressed={soccerBarsMode}
+            onClick={onToggleSoccerBars}
+            className={`w-full rounded-[1.15rem] border px-4 py-3 text-left transition ${
+              soccerBarsMode
+                ? "border-[#e63946] bg-[#fff1f2] shadow-sm dark:border-[#ff6b75] dark:bg-[#e63946]/12"
+                : "border-[#d8e3f5] bg-white hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className={`text-sm font-semibold ${soccerBarsMode ? "text-[#a61d24] dark:text-[#ff9aa3]" : "text-[#0a1628] dark:text-white"}`}>
+                  ⚽ Only sports bars
+                </div>
+                <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white/55">
+                  Dedicated soccer and sports bars only, without the dining-led spots.
+                </div>
+              </div>
+              <div
+                className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-semibold ${
+                  soccerBarsMode
+                    ? "bg-[#e63946] text-white dark:bg-[#ff6b75] dark:text-[#161b22]"
+                    : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/65 dark:border-white/10 dark:bg-white/8 dark:text-white/65"
+                }`}
+              >
+                {soccerBarsMode ? "On" : "Off"}
+              </div>
+            </div>
+          </button>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              aria-pressed={soccerBarsMode}
-              onClick={onToggleSoccerBars}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                soccerBarsMode ? "bg-[#e63946] text-white shadow-lg" : "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-              }`}
-            >
-              ⚽ Soccer bars
-            </button>
             {intentButtons.map((intent) => {
               const active = selectedVenueIntents.includes(intent.key);
               return (
@@ -472,6 +521,15 @@ function DrawerBody({
             >
               Clear all
             </button>
+            {canToggleShowAllMapVenues ? (
+              <button
+                type="button"
+                onClick={onToggleShowAllMapVenues}
+                className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+              >
+                {showAllMapVenues ? "Show fewer spots" : `Show all spots · ${totalVenueCount}`}
+              </button>
+            ) : null}
           </div>
         </section>
       </div>

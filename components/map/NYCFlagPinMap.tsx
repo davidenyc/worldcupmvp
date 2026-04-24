@@ -14,6 +14,13 @@ const NYC_CENTER: [number, number] = [40.742, -73.968];
 const NYC_ZOOM = 11;
 const tapDisabled = { tap: false } as unknown as Record<string, boolean>;
 
+function isNeutralSportsBar(venue: RankedVenue) {
+  return (
+    (venue.venueIntent === "sports_bar" || (venue.venueTypes as string[]).includes("sports_bar")) &&
+    !venue.likelySupporterCountry
+  );
+}
+
 function renderFlagPinInner(flagEmoji: string, slug?: string, fallbackCode?: string) {
   const flagImageUrl = getFlagImageUrl(slug);
   if (flagImageUrl) {
@@ -53,9 +60,11 @@ function createFlagPinIcon(
 }
 
 function MapEvents({
-  onMove
+  onMove,
+  onBackgroundClick
 }: {
   onMove?: (center: [number, number], zoom: number) => void;
+  onBackgroundClick?: () => void;
 }) {
   useMapEvents({
     moveend(event) {
@@ -69,6 +78,9 @@ function MapEvents({
       const map = event.target;
       const center = map.getCenter();
       onMove([center.lat, center.lng], map.getZoom());
+    },
+    click() {
+      onBackgroundClick?.();
     }
   });
 
@@ -122,16 +134,46 @@ function ThemeTileLayer({ isDark }: { isDark: boolean }) {
 export function NYCFlagPinMap({
   venues,
   countries,
+  initialCenter = NYC_CENTER,
+  initialZoom = NYC_ZOOM,
   selectedVenueId,
+  activeCountrySlug,
+  activeVenueIntent,
+  activeVenueType,
+  reservationsOnly,
+  openNowOnly,
+  highAtmosphereOnly,
   onSelectVenue,
+  onClearSelection,
+  onToggleCountry,
+  onToggleVenueIntent,
+  onToggleVenueType,
+  onToggleReservations,
+  onToggleOpenNow,
+  onToggleHighAtmosphere,
   onMapChanged,
   onMapReady,
   heightClassName = "h-[520px]"
 }: {
   venues: RankedVenue[];
   countries: CountrySummary[];
+  initialCenter?: [number, number];
+  initialZoom?: number;
   selectedVenueId?: string;
+  activeCountrySlug?: string | null;
+  activeVenueIntent?: RankedVenue["venueIntent"] | null;
+  activeVenueType?: string;
+  reservationsOnly?: boolean;
+  openNowOnly?: boolean;
+  highAtmosphereOnly?: boolean;
   onSelectVenue?: (venue: RankedVenue) => void;
+  onClearSelection?: () => void;
+  onToggleCountry?: (slug: string) => void;
+  onToggleVenueIntent?: (intent: RankedVenue["venueIntent"]) => void;
+  onToggleVenueType?: (venueType: string) => void;
+  onToggleReservations?: () => void;
+  onToggleOpenNow?: () => void;
+  onToggleHighAtmosphere?: () => void;
   onMapChanged?: (center: [number, number], zoom: number) => void;
   onMapReady?: (map: L.Map) => void;
   heightClassName?: string;
@@ -177,8 +219,8 @@ export function NYCFlagPinMap({
   return (
     <div className={`overflow-hidden ${heightClassName}`}>
       <MapContainer
-        center={NYC_CENTER}
-        zoom={NYC_ZOOM}
+        center={initialCenter}
+        zoom={initialZoom}
         scrollWheelZoom
         dragging
         touchZoom
@@ -189,11 +231,18 @@ export function NYCFlagPinMap({
         <MapReadyBridge onMapReady={onMapReady} />
         <ZoomControl position="bottomright" />
         <ThemeTileLayer isDark={isDark} />
-        <MapEvents onMove={onMapChanged} />
+        <MapEvents
+          onMove={onMapChanged}
+          onBackgroundClick={() => {
+            setOpenVenueId(null);
+            onClearSelection?.();
+          }}
+        />
         {venues.map((venue) => {
           const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) : null;
-          const flagEmoji = country?.flagEmoji ?? "📍";
-          const accentColor = country?.primaryColors[0] ?? "#16324f";
+          const neutralSportsBar = isNeutralSportsBar(venue);
+          const flagEmoji = country?.flagEmoji ?? (neutralSportsBar ? "⚽" : "📍");
+          const accentColor = country?.primaryColors[0] ?? (neutralSportsBar ? "#f4b942" : "#16324f");
           const selected = selectedVenueId === venue.id || openVenueId === venue.id;
           const shouldAnimate = animatedVenueIds.includes(venue.id);
 
@@ -206,20 +255,41 @@ export function NYCFlagPinMap({
                 markerRefs.current[venue.id] = marker;
               }}
               eventHandlers={{
-                click: () => {
+                click: (event) => {
+                  if ("originalEvent" in event && event.originalEvent) {
+                    L.DomEvent.stopPropagation(event.originalEvent);
+                  }
                   setOpenVenueId(venue.id);
                   onSelectVenue?.(venue);
                 }
               }}
             >
               <Popup
+                autoPan={false}
+                closeButton={false}
+                keepInView={false}
                 eventHandlers={{
                   remove: () => {
                     setOpenVenueId((current) => (current === venue.id ? null : current));
                   }
                 }}
               >
-                <VenuePreviewCard venue={venue} countries={countries} />
+                <VenuePreviewCard
+                  venue={venue}
+                  countries={countries}
+                  activeCountrySlug={activeCountrySlug}
+                  activeVenueIntent={activeVenueIntent}
+                  activeVenueType={activeVenueType}
+                  reservationsOnly={reservationsOnly}
+                  openNowOnly={openNowOnly}
+                  highAtmosphereOnly={highAtmosphereOnly}
+                  onToggleCountry={onToggleCountry}
+                  onToggleVenueIntent={onToggleVenueIntent}
+                  onToggleVenueType={onToggleVenueType}
+                  onToggleReservations={onToggleReservations}
+                  onToggleOpenNow={onToggleOpenNow}
+                  onToggleHighAtmosphere={onToggleHighAtmosphere}
+                />
               </Popup>
             </Marker>
           );

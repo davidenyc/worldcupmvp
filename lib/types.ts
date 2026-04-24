@@ -169,6 +169,7 @@ export interface Venue {
   sourceName: string;
   sourceExternalId?: string;
   sourceConfidence: number;
+  sourceNote?: string | null;
   isRealVenue?: boolean;
   verificationStatus: VerificationStatus;
   isFeatured: boolean;
