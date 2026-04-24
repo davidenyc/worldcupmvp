@@ -1,6 +1,7 @@
 import "server-only";
 
 import { demoBoroughs, demoNeighborhoods, demoMatches } from "@/lib/data/demo";
+import { worldCup2026Matches } from "@/lib/data/matches";
 import { dedupeVenues } from "@/lib/data/dedupe";
 import { getCachedProviderResult, getActiveVenueProvider } from "@/lib/providers";
 import { rankVenues } from "@/lib/ranking/venues";
@@ -100,17 +101,30 @@ export async function getVenueDetails(slug: string) {
       .filter((item) => item.slug !== slug)
       .slice(0, 4);
 
-    const matches = demoMatches.filter(
-      (match) =>
-        match.homeCountry === country?.name ||
-        match.awayCountry === country?.name ||
-        venue.associatedCountries.some(
-          (item) =>
-            match.homeCountry.toLowerCase() === item || match.awayCountry.toLowerCase() === item
-        )
-    ).sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+    const supporterCountrySlug = venue.likelySupporterCountry ?? venue.associatedCountries[0];
+    const upcomingMatches = worldCup2026Matches
+      .filter(
+        (match) =>
+          match.homeCountry === supporterCountrySlug ||
+          match.awayCountry === supporterCountrySlug ||
+          venue.associatedCountries.includes(match.homeCountry) ||
+          venue.associatedCountries.includes(match.awayCountry)
+      )
+      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+      .slice(0, 3);
 
-    return { venue, country, related, matches };
+    const nearby = rankVenues(await provider.listVenues(), {
+      countrySlug: supporterCountrySlug
+    })
+      .filter((item) => item.slug !== slug)
+      .sort((a, b) => {
+        const distA = Math.hypot(a.lat - venue.lat, a.lng - venue.lng);
+        const distB = Math.hypot(b.lat - venue.lat, b.lng - venue.lng);
+        return distA - distB;
+      })
+      .slice(0, 3);
+
+    return { venue, country, related, matches: upcomingMatches, nearby };
   });
 }
 

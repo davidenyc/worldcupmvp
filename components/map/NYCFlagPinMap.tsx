@@ -11,11 +11,11 @@ import { CountrySummary, RankedVenue } from "@/lib/types";
 const NYC_CENTER: [number, number] = [40.742, -73.968];
 const NYC_ZOOM = 11;
 
-function createFlagPinIcon(flagEmoji: string, selected: boolean, shouldAnimate: boolean) {
+function createFlagPinIcon(flagEmoji: string, selected: boolean, shouldAnimate: boolean, accentColor: string) {
   return L.divIcon({
     className: "",
     html: `
-      <div class="flag-pin ${selected ? "is-selected" : ""} ${shouldAnimate ? "animate-fade-in" : ""}">
+      <div class="flag-pin ${selected ? "is-selected" : ""} ${shouldAnimate ? "animate-fade-in" : ""}" style="--flag-pin-accent: ${accentColor};">
         <div class="flag-pin__flag-shell">
           <span class="flag-pin__flag">${flagEmoji}</span>
         </div>
@@ -109,9 +109,9 @@ export function NYCFlagPinMap({
         <TileLayer attribution={leafletMapProvider.attribution} url={leafletMapProvider.tileUrl} />
         <MapEvents onMove={onMapChanged} />
         {venues.map((venue) => {
-          const flagEmoji = venue.likelySupporterCountry
-            ? countryLookup.get(venue.likelySupporterCountry)?.flagEmoji ?? "📍"
-            : "📍";
+          const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) : null;
+          const flagEmoji = country?.flagEmoji ?? "📍";
+          const accentColor = country?.primaryColors[0] ?? "#16324f";
           const selected = selectedVenueId === venue.id || openVenueId === venue.id;
           const shouldAnimate = animatedVenueIds.includes(venue.id);
 
@@ -119,7 +119,7 @@ export function NYCFlagPinMap({
             <Marker
               key={venue.id}
               position={[venue.lat, venue.lng]}
-              icon={createFlagPinIcon(flagEmoji, selected, shouldAnimate)}
+              icon={createFlagPinIcon(flagEmoji, selected, shouldAnimate, accentColor)}
               eventHandlers={{
                 click: () => {
                   setOpenVenueId(venue.id);

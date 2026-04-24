@@ -1,20 +1,109 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { MapBreadcrumbs } from "@/components/map/MapBreadcrumbs";
 import { FlagFilterBar } from "@/components/map/FlagFilterBar";
+import { MatchdayBanner } from "@/components/map/MatchdayBanner";
 import { MapLegend } from "@/components/map/MapLegend";
 import { MapResultsPanel } from "@/components/map/MapResultsPanel";
 import { MapShell } from "@/components/map/MapShell";
 import { MapToolbar } from "@/components/map/MapToolbar";
+import { getMatchDateKey, worldCup2026Matches } from "@/lib/data/matches";
 import { buildGeoHierarchy } from "@/lib/maps/geoHierarchy";
 import { MapPageData, MapSortKey } from "@/lib/maps/types";
 import { RankedVenue, VenueIntentKey } from "@/lib/types";
 
 const defaultVenueIntents: VenueIntentKey[] = ["watch_party", "sports_bar", "both"];
+const emptySearchParams = new URLSearchParams();
+
+function parseCsvParam(value: string | null) {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseBooleanParam(value: string | null) {
+  return value === "1" || value === "true";
+}
+
+function parseIntentParam(value: string | null) {
+  const parsed = parseCsvParam(value).filter((item): item is VenueIntentKey =>
+    ["watch_party", "sports_bar", "cultural_dining", "both"].includes(item)
+  );
+  return parsed.length ? parsed : defaultVenueIntents;
+}
+
+function normalizeSelectedCountries(params: URLSearchParams) {
+  const countries = parseCsvParam(params.get("countries"));
+  if (countries.length > 0) return countries;
+
+  return [params.get("country"), params.get("vsCountry")].filter(Boolean) as string[];
+}
+
+function serializeFilterState({
+  selectedCountrySlugs,
+  selectedVenueIntents,
+  soccerBarsMode,
+  venueType,
+  borough,
+  neighborhood,
+  acceptsReservations,
+  capacityBucket,
+  familyFriendly,
+  outdoorSeating,
+  sortKey,
+  query,
+  showAllVenues
+}: {
+  selectedCountrySlugs: string[];
+  selectedVenueIntents: VenueIntentKey[];
+  soccerBarsMode: boolean;
+  venueType: string;
+  borough: string;
+  neighborhood: string;
+  acceptsReservations: boolean;
+  capacityBucket: string;
+  familyFriendly: boolean;
+  outdoorSeating: boolean;
+  sortKey: MapSortKey;
+  query: string;
+  showAllVenues: boolean;
+}) {
+  const params = new URLSearchParams();
+  const countries = selectedCountrySlugs.filter(Boolean);
+
+  if (countries.length === 1) {
+    params.set("country", countries[0]);
+  } else if (countries.length === 2) {
+    params.set("country", countries[0]);
+    params.set("vsCountry", countries[1]);
+  } else if (countries.length > 2) {
+    params.set("countries", countries.join(","));
+  }
+
+  if (selectedVenueIntents.length !== defaultVenueIntents.length || selectedVenueIntents.includes("cultural_dining")) {
+    params.set("intents", selectedVenueIntents.join(","));
+  }
+
+  if (soccerBarsMode) params.set("soccerBars", "1");
+  if (venueType) params.set("venueType", venueType);
+  if (borough) params.set("borough", borough);
+  if (neighborhood) params.set("neighborhood", neighborhood);
+  if (acceptsReservations) params.set("reservations", "1");
+  if (capacityBucket) params.set("capacityBucket", capacityBucket);
+  if (familyFriendly) params.set("familyFriendly", "1");
+  if (outdoorSeating) params.set("outdoorSeating", "1");
+  if (sortKey !== "matchday") params.set("sort", sortKey);
+  if (query.trim()) params.set("q", query.trim());
+  if (showAllVenues) params.set("expanded", "1");
+
+  return params;
+}
 
 const NYCFlagPinMap = dynamic(
   () => import("@/components/map/NYCFlagPinMap").then((mod) => mod.NYCFlagPinMap),
@@ -54,31 +143,111 @@ const intentOptions: Array<{
 ];
 
 export function MapPageClient({ data }: { data: MapPageData }) {
+  const router = useRouter();
+  const pathname = usePathname() ?? "/map";
   const searchParams = useSearchParams();
+  const params = searchParams ?? emptySearchParams;
   const [selectedVenue, setSelectedVenue] = useState<RankedVenue | null>(data.venues[0] ?? null);
-  const [selectedCountrySlugs, setSelectedCountrySlugs] = useState<string[]>([]);
-  const [selectedVenueIntents, setSelectedVenueIntents] = useState<VenueIntentKey[]>(defaultVenueIntents);
-  const [soccerBarsMode, setSoccerBarsMode] = useState(false);
-  const [showAllVenues, setShowAllVenues] = useState(false);
-  const [venueType, setVenueType] = useState("");
-  const [borough, setBorough] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [acceptsReservations, setAcceptsReservations] = useState(false);
-  const [capacityBucket, setCapacityBucket] = useState("");
-  const [familyFriendly, setFamilyFriendly] = useState(false);
-  const [outdoorSeating, setOutdoorSeating] = useState(false);
-  const [sortKey, setSortKey] = useState<MapSortKey>("matchday");
+  const [selectedCountrySlugs, setSelectedCountrySlugs] = useState<string[]>(
+    normalizeSelectedCountries(params)
+  );
+  const [selectedVenueIntents, setSelectedVenueIntents] = useState<VenueIntentKey[]>(
+    parseIntentParam(params.get("intents"))
+  );
+  const [soccerBarsMode, setSoccerBarsMode] = useState(parseBooleanParam(params.get("soccerBars")));
+  const [showAllVenues, setShowAllVenues] = useState(parseBooleanParam(params.get("expanded")));
+  const [venueType, setVenueType] = useState(params.get("venueType") ?? "");
+  const [borough, setBorough] = useState(params.get("borough") ?? "");
+  const [neighborhood, setNeighborhood] = useState(params.get("neighborhood") ?? "");
+  const [acceptsReservations, setAcceptsReservations] = useState(parseBooleanParam(params.get("reservations")));
+  const [capacityBucket, setCapacityBucket] = useState(params.get("capacityBucket") ?? "");
+  const [familyFriendly, setFamilyFriendly] = useState(parseBooleanParam(params.get("familyFriendly")));
+  const [outdoorSeating, setOutdoorSeating] = useState(parseBooleanParam(params.get("outdoorSeating")));
+  const [sortKey, setSortKey] = useState<MapSortKey>((params.get("sort") as MapSortKey) ?? "matchday");
   const [venueLayerVisible, setVenueLayerVisible] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(params.get("q") ?? "");
   const deferredQuery = useDeferredValue(query);
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.742, -73.968]);
   const [mapZoom, setMapZoom] = useState<number>(11);
+  const countryLookup = useMemo(
+    () => new Map(data.countries.map((country) => [country.slug, country] as const)),
+    [data.countries]
+  );
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
-    const countrySlug = searchParams?.get("country");
-    setSelectedCountrySlugs(countrySlug ? [countrySlug] : []);
-    if (countrySlug) setSoccerBarsMode(false);
-  }, [searchParams]);
+    const nextIntents = parseIntentParam(params.get("intents"));
+    const nextSoccerBars = parseBooleanParam(params.get("soccerBars"));
+    const nextCountries = nextSoccerBars ? [] : normalizeSelectedCountries(params);
+    const nextExpanded = parseBooleanParam(params.get("expanded"));
+    const nextVenueType = params.get("venueType") ?? "";
+    const nextBorough = params.get("borough") ?? "";
+    const nextNeighborhood = params.get("neighborhood") ?? "";
+    const nextReservations = parseBooleanParam(params.get("reservations"));
+    const nextCapacity = params.get("capacityBucket") ?? "";
+    const nextFamilyFriendly = parseBooleanParam(params.get("familyFriendly"));
+    const nextOutdoorSeating = parseBooleanParam(params.get("outdoorSeating"));
+    const nextSort = (params.get("sort") as MapSortKey) ?? "matchday";
+    const nextQuery = params.get("q") ?? "";
+
+    setSelectedCountrySlugs(nextCountries);
+    setSelectedVenueIntents(nextIntents);
+    setSoccerBarsMode(nextSoccerBars);
+    setShowAllVenues(nextExpanded);
+    setVenueType(nextVenueType);
+    setBorough(nextBorough);
+    setNeighborhood(nextNeighborhood);
+    setAcceptsReservations(nextReservations);
+    setCapacityBucket(nextCapacity);
+    setFamilyFriendly(nextFamilyFriendly);
+    setOutdoorSeating(nextOutdoorSeating);
+    setSortKey(nextSort);
+    setQuery(nextQuery);
+    hydratedRef.current = true;
+  }, [params]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+
+    const nextParams = serializeFilterState({
+      selectedCountrySlugs,
+      selectedVenueIntents,
+      soccerBarsMode,
+      venueType,
+      borough,
+      neighborhood,
+      acceptsReservations,
+      capacityBucket,
+      familyFriendly,
+      outdoorSeating,
+      sortKey,
+      query,
+      showAllVenues
+    });
+    const nextQueryString = nextParams.toString();
+    const currentQueryString = searchParams?.toString() ?? "";
+
+    if (nextQueryString !== currentQueryString) {
+      router.replace(nextQueryString ? `${pathname}?${nextQueryString}` : pathname, { scroll: false });
+    }
+  }, [
+    acceptsReservations,
+    borough,
+    capacityBucket,
+    familyFriendly,
+    neighborhood,
+    outdoorSeating,
+    pathname,
+    query,
+    router,
+    searchParams,
+    selectedCountrySlugs,
+    selectedVenueIntents,
+    showAllVenues,
+    soccerBarsMode,
+    sortKey,
+    venueType
+  ]);
 
   const hasCustomVenueIntentSelection =
     selectedVenueIntents.length !== defaultVenueIntents.length ||
@@ -173,6 +342,19 @@ export function MapPageClient({ data }: { data: MapPageData }) {
     [filteredVenues, stageOnePopularMode]
   );
 
+  const todayMatch = useMemo(() => {
+    const todayKey = getMatchDateKey(new Date());
+    return worldCup2026Matches.find((match) => getMatchDateKey(match.startsAt) === todayKey) ?? null;
+  }, []);
+
+  const comparisonBannerCountries =
+    selectedCountrySlugs.length >= 2
+      ? selectedCountrySlugs
+          .slice(0, 2)
+          .map((slug) => countryLookup.get(slug))
+          .filter(Boolean)
+      : [];
+
   useEffect(() => {
     if (stageOnePopularMode) {
       setVenueLayerVisible(true);
@@ -222,6 +404,13 @@ export function MapPageClient({ data }: { data: MapPageData }) {
   return (
     <div className="container-shell py-10">
       <div className="mb-6 space-y-3">
+        <MatchdayBanner
+          countries={data.countries}
+          match={todayMatch}
+          onApplyMatch={(match) => {
+            router.push(`/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`);
+          }}
+        />
         <div className="text-sm uppercase tracking-[0.2em] text-mist">Flagship map</div>
         <h1 className="text-5xl font-semibold tracking-tight text-deep">NYC map built first, every country routed here.</h1>
         <p className="max-w-3xl text-lg leading-8 text-navy/72">
@@ -383,6 +572,20 @@ export function MapPageClient({ data }: { data: MapPageData }) {
           }
           results={
             <div className={`transition-opacity duration-300 ${venueLayerVisible ? "opacity-100" : "opacity-0"}`}>
+              {comparisonBannerCountries.length === 2 && (
+                <div className="mb-3 rounded-3xl border border-sky-200 bg-white/90 px-4 py-3 text-sm font-semibold text-deep shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{comparisonBannerCountries[0]?.flagEmoji ?? "🏁"}</span>
+                    <span>{comparisonBannerCountries[0]?.name}</span>
+                    <span className="text-navy/40">vs</span>
+                    <span className="text-lg">{comparisonBannerCountries[1]?.flagEmoji ?? "🏁"}</span>
+                    <span>{comparisonBannerCountries[1]?.name}</span>
+                  </div>
+                  <div className="mt-1 text-xs font-normal text-navy/65">
+                    Watching spots for both sets of fans
+                  </div>
+                </div>
+              )}
               <MapResultsPanel
                 venues={displayedVenues}
                 countries={data.countries}

@@ -67,6 +67,7 @@ export function rankVenues(venues: Venue[], context: RankingContext): RankedVenu
       const verificationSignal = verificationBoost(venue);
       const editorialSignal = venue.editorialBoost;
       const distanceSignal = distanceBoost(venue, context);
+      const sourceMultiplier = venue.isRealVenue === false ? 0.2 : 2;
 
       if (countryStrength > 1.5 && countryLabel) reasons.push(`Strong ${countryLabel} match`);
       if (largeGroupStrength > 0.6) reasons.push("Good for large watch parties");
@@ -94,7 +95,7 @@ export function rankVenues(venues: Venue[], context: RankingContext): RankedVenu
 
       return {
         ...venue,
-        rankScore,
+        rankScore: rankScore * sourceMultiplier,
         rankingReasons: reasons.slice(0, 4)
       };
     })

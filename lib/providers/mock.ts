@@ -1,4 +1,4 @@
-import { demoCountries, demoImportJobs, demoSubmissions } from "@/lib/data/demo";
+import { demoCountries, demoImportJobs, demoSubmissions, demoVenues } from "@/lib/data/demo";
 import { CsvVenueProvider } from "@/lib/providers/csv";
 import { VenueProvider, VenueSearchParams } from "@/lib/providers/types";
 import { CountrySummary, ImportJobRecord, SubmissionRecord, Venue } from "@/lib/types";
@@ -18,7 +18,16 @@ export class MockVenueProvider implements VenueProvider {
   }
 
   async listVenues(params?: VenueSearchParams): Promise<Venue[]> {
-    let results = await csvProvider.listVenues();
+    const realVenues = (await csvProvider.listVenues()).map((venue) => ({
+      ...venue,
+      isRealVenue: true
+    }));
+    const demoGeneratedVenues = demoVenues.map((venue) => ({
+      ...venue,
+      isRealVenue: false
+    }));
+
+    let results = [...realVenues, ...demoGeneratedVenues];
 
     if (params?.countrySlug) {
       results = results.filter((venue) => venue.associatedCountries.includes(params.countrySlug!));

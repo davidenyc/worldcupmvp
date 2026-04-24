@@ -1,10 +1,35 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CountryBrowser } from "@/components/country/country-browser";
 import { RankedVenueList } from "@/components/venue/ranked-venue-list";
 import { VenueCard } from "@/components/venue/venue-card";
 import { Badge } from "@/components/ui/badge";
-import { getCountryPageData } from "@/lib/data/repository";
+import { getAllCountries, getCountryPageData } from "@/lib/data/repository";
+
+export async function generateMetadata({
+  params
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const countries = await getAllCountries();
+  const country = countries.find((item) => item.slug === params.slug);
+
+  if (!country) {
+    return {
+      title: "GameDay Map",
+      description: "NYC World Cup 2026 watch spots."
+    };
+  }
+
+  return {
+    title: `${country.name} fans in NYC · World Cup 2026 watch spots`,
+    description: `NYC venue discovery for ${country.supportersLabel}, with reservations, supporter hubs, and match-day spots across the city.`,
+    openGraph: {
+      images: [`/api/og?country=${country.slug}`]
+    }
+  };
+}
 
 export default async function CountryPage({
   params

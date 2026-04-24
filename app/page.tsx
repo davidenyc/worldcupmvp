@@ -2,11 +2,13 @@ import Link from "next/link";
 import { ArrowRight, Building2, CalendarCheck2, Users2 } from "lucide-react";
 
 import { FeaturedCountries } from "@/components/country/featured-countries";
+import { CountryFlagsBanner } from "@/components/country/CountryFlagsBanner";
 import { CountrySearch } from "@/components/country/country-search";
 import { HeroWorldExplorer } from "@/components/map/hero-world-explorer";
+import { MatchScheduleStrip } from "@/components/map/MatchScheduleStrip";
 import { Badge } from "@/components/ui/badge";
 import { RankedVenueList } from "@/components/venue/ranked-venue-list";
-import { demoMatches } from "@/lib/data/demo";
+import { getUpcomingMatches, worldCup2026Matches } from "@/lib/data/matches";
 import { getAllCountries, getFeaturedCountries, getMapPageData } from "@/lib/data/repository";
 
 export default async function HomePage() {
@@ -15,6 +17,7 @@ export default async function HomePage() {
     getFeaturedCountries(),
     getMapPageData()
   ]);
+  const upcomingMatches = getUpcomingMatches().slice(0, 5);
 
   return (
     <div>
@@ -24,6 +27,8 @@ export default async function HomePage() {
         venueCount={mapPageData.venues.length}
         reservableCount={mapPageData.venues.filter((venue) => venue.acceptsReservations).length}
       />
+      <CountryFlagsBanner countries={countries} />
+      <MatchScheduleStrip countries={countries} matches={upcomingMatches} />
 
       <section className="container-shell py-8">
         <div className="mb-5 flex items-end justify-between gap-4">
@@ -116,7 +121,7 @@ export default async function HomePage() {
             Use the schedule to jump into the right country page, then pick the best NYC spot for the match you want to watch.
           </p>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {demoMatches
+            {worldCup2026Matches
               .slice()
               .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
               .slice(0, 3)

@@ -8,7 +8,7 @@ import { ReservationRequestForm } from "@/components/venue/reservation-request-f
 import { VenueHero } from "@/components/venue/venue-hero";
 import { VenueCard } from "@/components/venue/venue-card";
 import { Badge } from "@/components/ui/badge";
-import { getVenueDetails } from "@/lib/data/repository";
+import { getAllCountries, getVenueDetails } from "@/lib/data/repository";
 
 export default async function VenuePage({
   params
@@ -16,7 +16,7 @@ export default async function VenuePage({
   params: { slug: string };
 }) {
   const { slug } = params;
-  const data = await getVenueDetails(slug);
+  const [data, countries] = await Promise.all([getVenueDetails(slug), getAllCountries()]);
 
   if (!data) {
     notFound();
@@ -35,6 +35,47 @@ export default async function VenuePage({
   return (
     <div>
       <VenueHero venue={rankedVenue} />
+      <section className="container-shell -mt-2 py-4">
+        <div className="surface p-6">
+          <div className="text-sm uppercase tracking-[0.2em] text-mist">Upcoming matches to watch here</div>
+          <h2 className="mt-2 text-2xl font-semibold text-deep">Matches that fit this crowd</h2>
+          <div className="mt-4 grid gap-4">
+            {data.matches.map((match) => {
+              const home = countries.find((country) => country.slug === match.homeCountry);
+              const away = countries.find((country) => country.slug === match.awayCountry);
+              return (
+                <a
+                  key={match.id}
+                  href={`/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                  className="rounded-3xl border border-line bg-gray-950 px-4 py-4 text-white transition hover:bg-gray-900"
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                    <span className="text-2xl">{home?.flagEmoji ?? "🏁"}</span>
+                    <span>{home?.name ?? match.homeCountry}</span>
+                    <span className="text-white/40">vs</span>
+                    <span className="text-2xl">{away?.flagEmoji ?? "🏁"}</span>
+                    <span>{away?.name ?? match.awayCountry}</span>
+                    <span className="ml-auto rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/70">
+                      {match.stage}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs text-white/60">
+                    {new Date(match.startsAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                      timeZone: "America/New_York"
+                    })}
+                    <span className="mx-2 text-white/30">·</span>
+                    {match.venue.stadium}, {match.venue.city}
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-white/75">{match.note}</p>
+                  <div className="mt-3 text-sm font-semibold text-white">Find NYC spots →</div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </section>
       <div className="container-shell grid gap-8 pb-12 lg:grid-cols-[0.7fr,0.3fr]">
         <div className="space-y-6">
           <section className="surface p-6">
@@ -193,6 +234,43 @@ export default async function VenuePage({
           </div>
         </aside>
       </div>
+      <section className="container-shell pb-12">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-deep">More spots near this one</h2>
+          <div className="text-sm text-navy/60">Closest venues by lat/lng</div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {data.nearby.map((venue) => {
+            const flagEmoji = countries.find((country) => country.slug === venue.likelySupporterCountry)?.flagEmoji ?? "📍";
+            const intentLabel =
+              venue.venueIntent === "watch_party"
+                ? "📺 Watch party"
+                : venue.venueIntent === "sports_bar"
+                  ? "⚽ Sports bar"
+                  : venue.venueIntent === "both"
+                    ? "🏆 Both"
+                    : "🍽️ Authentic dining";
+            return (
+              <Link
+                key={venue.id}
+                href={`/venue/${venue.slug}`}
+                className="surface p-4 transition hover:border-accent/30"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 text-deep">
+                    <span className="text-2xl">{flagEmoji}</span>
+                    <div className="font-semibold">{venue.name}</div>
+                  </div>
+                  <Badge className="bg-sky-100 text-sky-800">{intentLabel}</Badge>
+                </div>
+                <div className="mt-2 text-sm text-navy/70">
+                  {venue.neighborhood}, {venue.borough}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

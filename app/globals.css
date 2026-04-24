@@ -103,6 +103,7 @@ body::before {
   justify-content: center;
   border-radius: 9999px;
   background: white;
+  border: 1px solid var(--flag-pin-accent, #16324f);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
@@ -119,7 +120,7 @@ body::before {
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  background: #16324f;
+  background: var(--flag-pin-accent, #16324f);
   border: 2px solid white;
   box-shadow: 0 8px 16px rgba(36, 78, 117, 0.16);
 }
@@ -132,7 +133,7 @@ body::before {
   min-width: 40px;
   height: 40px;
   border-radius: 9999px;
-  border: 2px solid white;
+  border: 2px solid var(--flag-marker-accent, white);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 14px 28px rgba(36, 78, 117, 0.18);
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
@@ -141,7 +142,7 @@ body::before {
 .flag-marker.is-hovered,
 .flag-marker.is-selected {
   transform: translateY(-2px) scale(1.06);
-  background: #5eb6ff;
+  background: var(--flag-marker-accent, #5eb6ff);
   color: white;
 }
 
@@ -194,6 +195,26 @@ body::before {
   to {
     opacity: 1;
   }
+}
+
+@keyframes flagScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.flag-banner-track {
+  animation: flagScroll 40s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.flag-banner-track:hover {
+  animation-play-state: paused;
 }
 
 @media (max-width: 768px) {

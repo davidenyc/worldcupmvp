@@ -1,15 +1,77 @@
+"use client";
+
 import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Share2, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { RankedVenue } from "@/lib/types";
 import { formatPriceLevel } from "@/lib/utils";
 
+function intentBanner(venueIntent: RankedVenue["venueIntent"]) {
+  if (venueIntent === "watch_party") {
+    return {
+      label: "📺 This is a dedicated match venue",
+      className: "bg-emerald-950 text-emerald-50"
+    };
+  }
+
+  if (venueIntent === "sports_bar") {
+    return {
+      label: "⚽ Sports bar — games always on",
+      className: "bg-sky-700 text-white"
+    };
+  }
+
+  if (venueIntent === "both") {
+    return {
+      label: "🏆 Authentic dining + match coverage",
+      className: "bg-violet-700 text-white"
+    };
+  }
+
+  return {
+    label: "🍽️ Authentic dining — call ahead for game coverage",
+    className: "bg-amber-500 text-white"
+  };
+}
+
 export function VenueHero({ venue }: { venue: RankedVenue }) {
+  const [toastVisible, setToastVisible] = useState(false);
+  const banner = intentBanner(venue.venueIntent);
+
+  async function copyShareLink() {
+    const url = window.location.href;
+    await navigator.clipboard.writeText(url);
+    setToastVisible(true);
+    window.setTimeout(() => setToastVisible(false), 1500);
+  }
+
   return (
     <section className="container-shell py-10">
-      <div className="grid gap-6 lg:grid-cols-[1.15fr,0.85fr]">
+      <div className="relative grid gap-6 lg:grid-cols-[1.15fr,0.85fr]">
+        <div className="absolute right-0 top-0 z-20">
+          {toastVisible && (
+            <div className="mb-3 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-card">
+              Link copied!
+            </div>
+          )}
+        </div>
         <div className="surface-strong overflow-hidden p-4">
+          <div className={`mb-4 rounded-3xl px-4 py-3 text-sm font-semibold ${banner.className}`}>
+            {banner.label}
+          </div>
+          <div className="flex items-center justify-between gap-4 pb-4">
+            <div className="text-sm uppercase tracking-[0.2em] text-mist">Venue spotlight</div>
+            <button
+              type="button"
+              onClick={copyShareLink}
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-navy transition hover:bg-sky/50"
+            >
+              <Share2 className="h-4 w-4" />
+              Share this spot
+            </button>
+          </div>
           <div className="grid gap-4 md:grid-cols-[1.1fr,0.9fr]">
             <div className="relative min-h-[360px] overflow-hidden rounded-[28px]">
               <Image

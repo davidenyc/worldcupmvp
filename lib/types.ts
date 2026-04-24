@@ -168,6 +168,7 @@ export interface Venue {
   sourceName: string;
   sourceExternalId?: string;
   sourceConfidence: number;
+  isRealVenue?: boolean;
   verificationStatus: VerificationStatus;
   isFeatured: boolean;
   isOfficialFanHub: boolean;
