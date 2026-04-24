@@ -138,6 +138,7 @@ export interface Venue {
   neighborhood: string;
   phone?: string;
   website?: string;
+  googleMapsUrl?: string;
   instagramUrl?: string;
   venueTypes: VenueTypeKey[];
   associatedCountries: string[];

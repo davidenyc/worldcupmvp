@@ -78,7 +78,7 @@ export function CountryBrowser({
           className="xl:col-span-2"
         />
         <Select value={borough} onChange={(event) => setBorough(event.target.value)}>
-          <option value="">Borough</option>
+          <option value="">Neighborhood</option>
           <option value="Manhattan">Manhattan</option>
           <option value="Brooklyn">Brooklyn</option>
           <option value="Queens">Queens</option>
@@ -101,7 +101,7 @@ export function CountryBrowser({
           <option value="neighborhood">Closest to selected neighborhood</option>
         </Select>
         <Select value={venueType} onChange={(event) => setVenueType(event.target.value)}>
-          <option value="">Venue type</option>
+          <option value="">All venue types</option>
           <option value="bar">Bar</option>
           <option value="restaurant">Restaurant</option>
           <option value="cafe">Cafe</option>

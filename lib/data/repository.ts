@@ -1,16 +1,11 @@
 import "server-only";
 
-import { demoBoroughs, demoNeighborhoods, demoMatches } from "@/lib/data/demo";
+import { demoBoroughs, demoNeighborhoods } from "@/lib/data/demo";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { dedupeVenues } from "@/lib/data/dedupe";
 import { getCachedProviderResult, getActiveVenueProvider } from "@/lib/providers";
 import { rankVenues } from "@/lib/ranking/venues";
 import { CountryFilters, CountrySortKey, RankedVenue } from "@/lib/types";
-import { slugify } from "@/lib/utils";
-
-function venueCountrySlugMatches(countrySlug: string, countryName: string) {
-  return slugify(countryName) === countrySlug;
-}
 
 export async function getFeaturedCountries() {
   const provider = getActiveVenueProvider();
@@ -25,12 +20,12 @@ export async function getAllCountries() {
   return getCachedProviderResult("all-countries", () => provider.listCountries());
 }
 
-export async function getMapPageData() {
+export async function getMapPageData(city = "nyc") {
   const provider = getActiveVenueProvider();
-  return getCachedProviderResult("map-page", async () => {
+  return getCachedProviderResult(`map-page:${city}`, async () => {
     const [countries, venues] = await Promise.all([
       provider.listCountries(),
-      provider.listVenues()
+      provider.listVenues({ city })
     ]);
 
     const deduped = dedupeVenues(venues);
@@ -63,12 +58,8 @@ export async function getCountryPageData(countrySlug: string) {
 
     const venues = dedupeVenues(await provider.listVenues({ countrySlug }));
     const ranked = rankVenues(venues, { countrySlug });
-    const matches = demoMatches.filter(
-      (match) =>
-        match.homeCountry === country.name ||
-        match.awayCountry === country.name ||
-        venueCountrySlugMatches(countrySlug, match.homeCountry) ||
-        venueCountrySlugMatches(countrySlug, match.awayCountry)
+    const matches = worldCup2026Matches.filter(
+      (match) => match.homeCountry === countrySlug || match.awayCountry === countrySlug
     );
 
     return {

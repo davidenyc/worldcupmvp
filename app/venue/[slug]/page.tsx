@@ -2,13 +2,15 @@ import Link from "next/link";
 import { ExternalLink, Phone } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { NycMapPanel } from "@/components/map/nyc-map-panel";
 import { ReportUpdateForm } from "@/components/venue/report-update-form";
 import { ReservationRequestForm } from "@/components/venue/reservation-request-form";
+import { SingleVenueLeafletMap } from "@/components/venue/SingleVenueLeafletMap";
 import { VenueHero } from "@/components/venue/venue-hero";
 import { VenueCard } from "@/components/venue/venue-card";
 import { Badge } from "@/components/ui/badge";
+import { formatMatchStage } from "@/lib/data/matches";
 import { getAllCountries, getVenueDetails } from "@/lib/data/repository";
+import { toTitleCase } from "@/lib/utils";
 
 export default async function VenuePage({
   params
@@ -46,30 +48,31 @@ export default async function VenuePage({
               return (
                 <a
                   key={match.id}
-                  href={`/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
-                  className="rounded-3xl border border-line bg-gray-950 px-4 py-4 text-white transition hover:bg-gray-900"
+                  // TODO: make city-aware when multi-city is live
+                  href={`/nyc/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                  className="rounded-3xl border border-[#d8e3f5] bg-white px-4 py-4 text-[#0a1628] transition hover:bg-[#f8fbff] dark:border-white/10 dark:bg-[#161b22] dark:text-white dark:hover:bg-white/5"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                     <span className="text-2xl">{home?.flagEmoji ?? "🏁"}</span>
                     <span>{home?.name ?? match.homeCountry}</span>
-                    <span className="text-white/40">vs</span>
+                    <span className="text-[#0a1628]/40">vs</span>
                     <span className="text-2xl">{away?.flagEmoji ?? "🏁"}</span>
                     <span>{away?.name ?? match.awayCountry}</span>
-                    <span className="ml-auto rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/70">
-                      {match.stage}
+                    <span className="ml-auto rounded-full border border-[#d8e3f5] px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0a1628]/70">
+                      {match.stageLabel ?? formatMatchStage(match.stage)}
                     </span>
                   </div>
-                  <div className="mt-2 text-xs text-white/60">
+                  <div className="mt-2 text-xs text-[#0a1628]/60 dark:text-white/60">
                     {new Date(match.startsAt).toLocaleString("en-US", {
                       dateStyle: "medium",
                       timeStyle: "short",
                       timeZone: "America/New_York"
                     })}
-                    <span className="mx-2 text-white/30">·</span>
-                    {match.venue.stadium}, {match.venue.city}
+                    <span className="mx-2 text-[#0a1628]/30">·</span>
+                    {match.stadiumName}, {match.city}
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-white/75">{match.note}</p>
-                  <div className="mt-3 text-sm font-semibold text-white">Find NYC spots →</div>
+                  <p className="mt-2 text-sm leading-6 text-[#0a1628]/75 dark:text-white/75">{match.note}</p>
+                  <div className="mt-3 text-sm font-semibold text-[#0a1628] dark:text-white">Find watch spots →</div>
                 </a>
               );
             })}
@@ -112,7 +115,7 @@ export default async function VenuePage({
                     href={data.venue.reservationUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
                   >
                     Reserve a spot
                     <ExternalLink className="h-4 w-4" />
@@ -135,7 +138,7 @@ export default async function VenuePage({
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Amenities</div>
             <div className="mt-4 flex flex-wrap gap-2">
               {data.venue.venueTypes.map((type) => (
-                <Badge key={type}>{type.replace(/_/g, " ")}</Badge>
+                <Badge key={type}>{toTitleCase(type.replace(/_/g, " "))}</Badge>
               ))}
               {data.venue.cuisineTags.map((tag) => (
                 <Badge key={tag}>{tag}</Badge>
@@ -150,27 +153,35 @@ export default async function VenuePage({
             <p className="mt-4 text-sm text-navy/72">{data.venue.matchdayNotes}</p>
           </section>
 
-          <NycMapPanel venues={[rankedVenue]} title="Single venue map" height="h-[380px]" />
+          <SingleVenueLeafletMap venue={rankedVenue} countries={countries} />
 
           <section className="surface p-6">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Best matches to watch here</div>
             <h2 className="mt-2 text-2xl font-semibold text-deep">Upcoming games tied to this venue</h2>
             <div className="mt-4 grid gap-4">
-              {data.matches.map((match) => (
-                <div key={match.id} className="rounded-2xl bg-white p-4">
-                  <div className="font-semibold text-deep">
-                    {match.homeCountry} vs {match.awayCountry}
+              {data.matches.map((match) => {
+                const home = countries.find((country) => country.slug === match.homeCountry);
+                const away = countries.find((country) => country.slug === match.awayCountry);
+                return (
+                  <div key={match.id} className="rounded-2xl bg-white p-4 dark:bg-white/5">
+                    <div className="font-semibold text-deep dark:text-white">
+                      <span className="mr-1">{home?.flagEmoji ?? "🏁"}</span>
+                      {home?.name ?? match.homeCountry}
+                      <span className="mx-2 text-navy/40">vs</span>
+                      <span className="mr-1">{away?.flagEmoji ?? "🏁"}</span>
+                      {away?.name ?? match.awayCountry}
+                    </div>
+                    <div className="mt-2 text-sm text-navy/65 dark:text-white/65">
+                      {new Date(match.startsAt).toLocaleString("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                      })}{" "}
+                      · {match.stageLabel ?? formatMatchStage(match.stage)}
+                    </div>
+                    <p className="mt-2 text-sm text-navy/72 dark:text-white/72">{match.note}</p>
                   </div>
-                  <div className="mt-2 text-sm text-navy/65">
-                    {new Date(match.startsAt).toLocaleString("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short"
-                    })}{" "}
-                    · {match.competition}
-                  </div>
-                  <p className="mt-2 text-sm text-navy/72">{match.note}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
@@ -214,22 +225,45 @@ export default async function VenuePage({
           <div className="surface p-5">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Links</div>
             <div className="mt-4 grid gap-2 text-sm">
+              <div className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white">
+                {data.venue.openNow ? "Open now" : "Hours vary"}
+              </div>
               {data.venue.website && (
-                <a href={data.venue.website} className="rounded-2xl bg-white px-4 py-3 text-navy">
+                <a href={data.venue.website} className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white">
                   Website
                 </a>
               )}
               {data.venue.instagramUrl && (
-                <a href={data.venue.instagramUrl} className="rounded-2xl bg-white px-4 py-3 text-navy">
+                <a href={data.venue.instagramUrl} className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white">
                   Instagram
                 </a>
               )}
-              <a
-                href={`https://maps.apple.com/?q=${encodeURIComponent(data.venue.address)}`}
-                className="rounded-2xl bg-white px-4 py-3 text-navy"
-              >
-                Directions
-              </a>
+              {data.venue.address && (
+                <a
+                  href={`https://maps.apple.com/?q=${encodeURIComponent(data.venue.address)}`}
+                  className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white"
+                >
+                  Directions
+                </a>
+              )}
+              {(data.venue.reservationPhone || data.venue.phone) && (
+                <a
+                  href={`tel:${data.venue.reservationPhone ?? data.venue.phone ?? ""}`}
+                  className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white"
+                >
+                  Call
+                </a>
+              )}
+              {data.venue.acceptsReservations && data.venue.reservationUrl && (
+                <a
+                  href={data.venue.reservationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white"
+                >
+                  Reserve
+                </a>
+              )}
             </div>
           </div>
         </aside>
@@ -263,9 +297,7 @@ export default async function VenuePage({
                   </div>
                   <Badge className="bg-sky-100 text-sky-800">{intentLabel}</Badge>
                 </div>
-                <div className="mt-2 text-sm text-navy/70">
-                  {venue.neighborhood}, {venue.borough}
-                </div>
+                <div className="mt-2 text-sm text-navy/70">{venue.neighborhood}</div>
               </Link>
             );
           })}

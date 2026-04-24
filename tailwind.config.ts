@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -9,24 +10,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#16324f",
-        field: "#f5fbff",
-        sky: "#dff2ff",
+        ink: "var(--ink)",
+        "ink-55": "var(--ink-55)",
+        "ink-45": "var(--ink-45)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        "surface-3": "var(--surface-3)",
+        bg: "var(--bg)",
+        border: "var(--border)",
+        gold: "var(--gold)",
+        field: "#f7fafc",
+        surfaceHigh: "#eef4ff",
+        accent: "#f4b942",
+        red: "#e63946",
         cloud: "#ffffff",
-        mist: "#8aa7c2",
-        line: "#bfdcf2",
-        navy: "#214b73",
-        accent: "#5eb6ff",
-        deep: "#0d3252",
-        card: "#eff8ff"
+        card: "#ffffff",
+        muted: "rgba(10,22,40,0.55)",
+        subtle: "rgba(10,22,40,0.25)",
+        navy: "var(--ink)",
+        deep: "var(--ink)",
+        sky: "var(--surface-3)",
+        mist: "var(--ink-55)",
+        line: "var(--border-2)"
       },
       boxShadow: {
-        glow: "0 20px 50px rgba(94, 182, 255, 0.18)",
-        card: "0 18px 50px rgba(36, 78, 117, 0.12)"
-      },
-      backgroundImage: {
-        "pitch-grid":
-          "linear-gradient(rgba(33,75,115,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(33,75,115,0.06) 1px, transparent 1px)"
+        glow: "0 20px 60px rgba(10,22,40,0.12)",
+        card: "0 8px 32px rgba(10,22,40,0.08)",
+        gold: "0 4px 20px rgba(244,185,66,0.25)"
       }
     }
   },

@@ -14,7 +14,9 @@ import {
   VenueIntentKey,
   VenueTypeKey
 } from "@/lib/types";
+import { VenueSearchParams } from "./types";
 import { rateLimit } from "@/lib/providers/rateLimit";
+import { slugify } from "@/lib/utils";
 
 type CsvVenueOverride = {
   slug: string;
@@ -130,7 +132,7 @@ function buildVenueFromCsvRow(row: CsvVenueOverride): Venue {
     id: row.slug,
     slug: row.slug,
     name: row.name,
-    description: row.notes || `${row.name} in ${row.neighborhood}, New York City.`,
+    description: row.notes || `${row.name} in ${row.neighborhood}, one of the US host cities.`,
     address: row.address,
     city: "New York",
     state: "NY",
@@ -292,6 +294,12 @@ export async function loadRealVenueCsvOverrides(csvPath = defaultCsvPath): Promi
   return promise;
 }
 
+function isNewYorkCitySearch(city?: string) {
+  if (!city) return true;
+  const normalized = slugify(city);
+  return normalized === "nyc" || normalized === "new-york" || normalized === "new-york-city";
+}
+
 export function clearRealVenueCsvCache(csvPath = defaultCsvPath) {
   csvOverrideCache.delete(csvPath);
 }
@@ -312,10 +320,20 @@ export class CsvVenueProvider implements VenueProvider {
     return demoCountries.find((country) => country.slug === slug) ?? null;
   }
 
-  async listVenues(): Promise<Venue[]> {
+  async listVenues(params?: VenueSearchParams): Promise<Venue[]> {
     await rateLimit(this.id);
     const overrides = await loadRealVenueCsvOverrides(this.csvPath);
-    return overrides.map((row) => buildVenueFromCsvRow(row));
+    const venues = overrides.map((row) => buildVenueFromCsvRow(row));
+
+    if (params?.city && !isNewYorkCitySearch(params.city)) {
+      return [];
+    }
+
+    if (params?.countrySlug) {
+      return venues.filter((venue) => venue.associatedCountries.includes(params.countrySlug!));
+    }
+
+    return venues;
   }
 
   async getVenueBySlug(slug: string): Promise<Venue | null> {

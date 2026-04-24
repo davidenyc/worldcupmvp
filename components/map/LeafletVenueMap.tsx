@@ -1,20 +1,15 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  useMap,
-  useMapEvents
-} from "react-leaflet";
+import { useEffect, useMemo, useRef } from "react";
+import { MapContainer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
 
 import { createClusterIcon } from "@/lib/maps/markerFactory";
 import { MapCluster, MapProviderConfig } from "@/lib/maps/types";
 import { CountrySummary, RankedVenue } from "@/lib/types";
 import { VenuePreviewCard } from "@/components/map/VenuePreviewCard";
 import { FlagMarker } from "@/components/map/FlagMarker";
+import { useTheme } from "@/lib/store/theme";
 
 function clusterVenues(venues: RankedVenue[], zoom: number): MapCluster[] {
   const threshold = zoom <= 10 ? 0.03 : zoom <= 12 ? 0.015 : 0.008;
@@ -90,6 +85,43 @@ function MapSync({
   return null;
 }
 
+function ThemeTileLayer({
+  provider,
+  isDark
+}: {
+  provider: MapProviderConfig;
+  isDark: boolean;
+}) {
+  const map = useMap();
+  const layerRef = useRef<L.TileLayer | null>(null);
+  const tileUrl = isDark && provider.darkTileUrl ? provider.darkTileUrl : provider.tileUrl;
+
+  useEffect(() => {
+    if (layerRef.current) {
+      map.removeLayer(layerRef.current);
+      layerRef.current = null;
+    }
+
+    layerRef.current = L.tileLayer(tileUrl, {
+      attribution: provider.attribution
+    }).addTo(map);
+
+    map.invalidateSize();
+  }, [map, provider.attribution, tileUrl]);
+
+  useEffect(
+    () => () => {
+      if (layerRef.current) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+    },
+    [map]
+  );
+
+  return null;
+}
+
 export function LeafletVenueMap({
   provider,
   countries,
@@ -112,6 +144,7 @@ export function LeafletVenueMap({
   heightClassName?: string;
 }) {
   const clusters = useMemo(() => clusterVenues(venues, zoom), [venues, zoom]);
+  const { isDark } = useTheme();
 
   return (
     <div className={`surface-strong overflow-hidden p-2 ${heightClassName}`}>
@@ -121,7 +154,7 @@ export function LeafletVenueMap({
         scrollWheelZoom
         className="h-full w-full"
       >
-        <TileLayer attribution={provider.attribution} url={provider.tileUrl} />
+        <ThemeTileLayer provider={provider} isDark={isDark} />
         <MapSync center={center} zoom={zoom} selectedVenue={selectedVenue} onMapChanged={onMapChanged} />
         {clusters.map((cluster) =>
           cluster.venues.length === 1 ? (
