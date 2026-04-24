@@ -8,6 +8,7 @@ export function MapShell({
   results,
   resultsCountLabel,
   filterDrawerOpen = false,
+  hideMobileResultsButton = false,
   hasActiveFilters = false,
   onClearFilters,
   onOpenFilters,
@@ -22,6 +23,7 @@ export function MapShell({
   results: ReactNode;
   resultsCountLabel?: string;
   filterDrawerOpen?: boolean;
+  hideMobileResultsButton?: boolean;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
   onOpenFilters?: () => void;
@@ -111,24 +113,19 @@ export function MapShell({
         </button>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-        <div className="pointer-events-none flex items-end justify-between px-4 pb-4">
-          <button
-            type="button"
-            onClick={onOpenFilters}
-            className="pointer-events-auto rounded-full border border-[#d7e4f8] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
-          >
-            ⚙ Filters
-          </button>
-          <button
-            type="button"
-            onClick={onOpenResults}
-            className="pointer-events-auto rounded-full border border-[#d7e4f8] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
-          >
-            ▸ {resultsCountLabel ?? "Results"}
-          </button>
+      {!hideMobileResultsButton ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
+          <div className="pointer-events-none flex items-end justify-end px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={onOpenResults}
+              className="pointer-events-auto rounded-full border border-[#d7e4f8] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+            >
+              ▸ Results
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div
         className={`fixed inset-0 z-40 bg-[#0a1628]/12 transition-opacity duration-300 lg:hidden ${
@@ -138,10 +135,13 @@ export function MapShell({
       />
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-[#f8fbff]/95 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-white/8 dark:bg-[#161b22]/95 dark:text-white lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-50 max-h-[94vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-[#f8fbff]/95 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-white/8 dark:bg-[#161b22]/95 dark:text-white lg:hidden ${
           mobileResultsOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
+        <div className="flex justify-center pt-3">
+          <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
+        </div>
         <div className="flex items-center justify-between border-b border-[#eef4ff] px-4 py-3 dark:border-white/8">
           <div>
             <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Results</div>
@@ -155,7 +155,7 @@ export function MapShell({
             Close
           </button>
         </div>
-        <div className="max-h-[calc(90vh-3.5rem)] overflow-y-auto p-3">{results}</div>
+        <div className="max-h-[calc(94vh-3.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{results}</div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getHostCity } from "@/lib/data/hostCities";
 
 const STORAGE_KEY = "userCity";
+const MANUAL_STORAGE_KEY = "userCityManual";
 
 export function useUserCity() {
   const [userCity, setUserCityState] = useState<string | null>(null);
@@ -17,11 +18,17 @@ export function useUserCity() {
     //   localStorage.removeItem("userCity")
     // in your browser console, then refresh.
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const storedWasManual = window.localStorage.getItem(MANUAL_STORAGE_KEY) === "1";
+
+    if (stored && storedWasManual) {
       setUserCityState(stored);
       setHasChosenCity(true);
       setGeolocationAttempted(true);
       return;
+    }
+
+    if (stored && !storedWasManual) {
+      window.localStorage.removeItem(STORAGE_KEY);
     }
 
     fetch("/api/detect-city")
@@ -46,6 +53,7 @@ export function useUserCity() {
 
   function setUserCity(cityKey: string) {
     window.localStorage.setItem(STORAGE_KEY, cityKey);
+    window.localStorage.setItem(MANUAL_STORAGE_KEY, "1");
     setUserCityState(cityKey);
     setHasChosenCity(true);
   }

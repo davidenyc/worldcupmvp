@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useUserCity } from "@/lib/hooks/useUserCity";
 import { CountrySummary } from "@/lib/types";
 
 export function CountryFlagsBanner({ countries }: { countries: CountrySummary[] }) {
   const router = useRouter();
+  const { userCity, suggestedCity } = useUserCity();
   const loopedCountries = [...countries, ...countries];
+  const targetCity = userCity ?? suggestedCity ?? "nyc";
 
   return (
     <section className="overflow-hidden bg-gray-950 py-3">
@@ -14,7 +17,7 @@ export function CountryFlagsBanner({ countries }: { countries: CountrySummary[] 
           <button
             key={`${country.slug}-${index}`}
             type="button"
-            onClick={() => router.push(`/nyc/map?country=${country.slug}`)}
+            onClick={() => router.push(`/${targetCity}/map?country=${country.slug}`)}
             className="group flex w-16 shrink-0 cursor-pointer flex-col items-center gap-1 px-2 text-white transition-transform duration-200 hover:scale-[1.15]"
             aria-label={`Explore ${country.name} supporter spots`}
           >

@@ -29,6 +29,7 @@ function getNearestCity(lat: number, lng: number) {
 }
 
 export async function GET(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
   const latHeader = request.headers.get("x-vercel-ip-latitude");
   const lngHeader = request.headers.get("x-vercel-ip-longitude");
 
@@ -45,6 +46,10 @@ export async function GET(request: NextRequest) {
         source: "vercel-ip"
       });
     }
+  }
+
+  if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    return NextResponse.json({ cityKey: "nyc", cityLabel: "New York", source: "localhost-default" });
   }
 
   try {

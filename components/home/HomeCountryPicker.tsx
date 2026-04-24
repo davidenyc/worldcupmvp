@@ -3,11 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useUserCity } from "@/lib/hooks/useUserCity";
 import { CountrySummary } from "@/lib/types";
 
 export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }) {
   const router = useRouter();
+  const { userCity, suggestedCity } = useUserCity();
   const [search, setSearch] = useState("");
+  const targetCity = userCity ?? suggestedCity ?? "nyc";
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -28,7 +31,7 @@ export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }
           <button
             key={country.slug}
             type="button"
-            onClick={() => router.push(`/nyc/map?country=${country.slug}`)}
+            onClick={() => router.push(`/${targetCity}/map?country=${country.slug}`)}
             className="flex flex-col items-center rounded-xl border border-line bg-white px-2 py-3 text-center transition hover:border-[#f4b942] hover:bg-[#fff8e7] dark:border-white/10 dark:bg-[#161b22] dark:hover:bg-white/10"
           >
             <div className="text-2xl">{country.flagEmoji}</div>

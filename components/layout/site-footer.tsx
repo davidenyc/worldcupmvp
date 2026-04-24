@@ -19,15 +19,15 @@ export function SiteFooter() {
 
           <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#0a1628]/70 dark:text-white/60">
             <Link href="/" className="hover:text-[#0a1628] dark:hover:text-white">Home</Link>
-            <Link href="/nyc/map" className="hover:text-[#0a1628] dark:hover:text-white">Explore map</Link>
-            <Link href="/nyc/matches" className="hover:text-[#0a1628] dark:hover:text-white">Matches</Link>
+            <Link href="/map" className="hover:text-[#0a1628] dark:hover:text-white">Explore map</Link>
+            <Link href="/matches" className="hover:text-[#0a1628] dark:hover:text-white">Matches</Link>
             <Link href="/submit" className="hover:text-[#0a1628] dark:hover:text-white">Submit a venue</Link>
           </nav>
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef4ff] pt-6 text-xs text-[#0a1628]/40 dark:border-white/6 dark:text-white/30">
           <span>© 2026 GameDay Map. Built for discovery, not scraping.</span>
-          <span>Data: demo/mock · Provider: {process.env.DATA_PROVIDER ?? "mock"} mode</span>
+          <span>Curated supporter spots across World Cup 2026 host cities.</span>
         </div>
       </div>
     </footer>

@@ -22,9 +22,11 @@ function isToday(value: string) {
 }
 
 export function MatchSchedule({
+  cityKey = "nyc",
   countries,
   matches
 }: {
+  cityKey?: string;
   countries: CountrySummary[];
   matches: WorldCupMatch[];
 }) {
@@ -137,7 +139,7 @@ export function MatchSchedule({
                     <p className="mt-3 text-sm leading-6 text-navy/65">{match.note}</p>
                     <div className="mt-4">
                       <Link
-                        href={`/nyc/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                        href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
                         className="inline-flex items-center justify-center rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#f0c86b]"
                       >
                         Find watch spots →

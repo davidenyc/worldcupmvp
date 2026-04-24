@@ -33,6 +33,7 @@ export default async function VenuePage({
       data.venue.goodForGroups ? "Good for large watch parties" : "Neighborhood-scale vibe"
     ]
   };
+  const venueCityKey = data.venue.city ?? "nyc";
 
   return (
     <div>
@@ -48,8 +49,7 @@ export default async function VenuePage({
               return (
                 <a
                   key={match.id}
-                  // TODO: make city-aware when multi-city is live
-                  href={`/nyc/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                  href={`/${venueCityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
                   className="rounded-3xl border border-[#d8e3f5] bg-white px-4 py-4 text-[#0a1628] transition hover:bg-[#f8fbff] dark:border-white/10 dark:bg-[#161b22] dark:text-white dark:hover:bg-white/5"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">

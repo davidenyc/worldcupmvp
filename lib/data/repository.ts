@@ -7,6 +7,10 @@ import { getCachedProviderResult, getActiveVenueProvider } from "@/lib/providers
 import { rankVenues } from "@/lib/ranking/venues";
 import { CountryFilters, CountrySortKey, RankedVenue } from "@/lib/types";
 
+function isSportsBarVenue(venue: { venueIntent: string; venueTypes: string[] }) {
+  return venue.venueIntent === "sports_bar" || venue.venueTypes.includes("sports_bar");
+}
+
 export async function getFeaturedCountries() {
   const provider = getActiveVenueProvider();
   return getCachedProviderResult("featured-countries", async () => {
@@ -30,7 +34,9 @@ export async function getMapPageData(city = "nyc") {
 
     const deduped = dedupeVenues(venues);
     const ranked = deduped
-      .map((venue) => rankVenues([venue], { countrySlug: venue.associatedCountries[0] })[0])
+      .map((venue) =>
+        rankVenues([venue], { countrySlug: venue.likelySupporterCountry ?? "" })[0]
+      )
       .sort((a, b) => b.rankScore - a.rankScore);
 
     return {
@@ -84,29 +90,38 @@ export async function getVenueDetails(slug: string) {
     const venue = await provider.getVenueBySlug(slug);
     if (!venue) return null;
 
-    const country = await provider.getCountryBySlug(venue.associatedCountries[0]);
-    const related = rankVenues(
-      dedupeVenues(await provider.listVenues({ countrySlug: venue.associatedCountries[0] })),
-      { countrySlug: venue.associatedCountries[0] }
-    )
+    const primaryCountrySlug =
+      venue.likelySupporterCountry ?? (!isSportsBarVenue(venue) ? venue.associatedCountries[0] : null);
+    const country = primaryCountrySlug ? await provider.getCountryBySlug(primaryCountrySlug) : null;
+    const relatedPool = dedupeVenues(
+      await provider.listVenues(primaryCountrySlug ? { countrySlug: primaryCountrySlug } : { city: venue.city })
+    );
+    const related = rankVenues(relatedPool, { countrySlug: primaryCountrySlug ?? "" })
       .filter((item) => item.slug !== slug)
+      .filter((item) =>
+        primaryCountrySlug
+          ? item.associatedCountries.includes(primaryCountrySlug)
+          : isSportsBarVenue(item) && !item.likelySupporterCountry
+      )
       .slice(0, 4);
 
-    const supporterCountrySlug = venue.likelySupporterCountry ?? venue.associatedCountries[0];
+    const supporterCountrySlug = venue.likelySupporterCountry;
     const upcomingMatches = worldCup2026Matches
       .filter(
         (match) =>
-          match.homeCountry === supporterCountrySlug ||
-          match.awayCountry === supporterCountrySlug ||
+          (supporterCountrySlug
+            ? match.homeCountry === supporterCountrySlug || match.awayCountry === supporterCountrySlug
+            : false) ||
           venue.associatedCountries.includes(match.homeCountry) ||
           venue.associatedCountries.includes(match.awayCountry)
       )
       .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
       .slice(0, 3);
 
-    const nearby = rankVenues(await provider.listVenues(), {
-      countrySlug: supporterCountrySlug
-    })
+    const nearby = rankVenues(
+      await provider.listVenues(),
+      { countrySlug: supporterCountrySlug ?? "" }
+    )
       .filter((item) => item.slug !== slug)
       .sort((a, b) => {
         const distA = Math.hypot(a.lat - venue.lat, a.lng - venue.lng);

@@ -30,9 +30,9 @@ export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
   const activeCityKey = userCity ?? suggestedCity ?? null;
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-[#cfe0ff] bg-[#eef4ff] p-4 shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none">
-      <div className="rounded-[1.5rem] border border-[#cfe0ff] bg-white p-4 dark:border-white/10 dark:bg-[#1c2330]">
-        <div className="mb-4 flex items-center justify-between gap-4 px-2">
+    <div className="overflow-hidden border-y border-[#cfe0ff] bg-[#eef4ff] shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none sm:rounded-[2rem] sm:border sm:p-4">
+      <div className="bg-white dark:bg-[#1c2330] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:p-4 sm:dark:border-white/10">
+        <div className="mb-4 flex items-center justify-between gap-4 px-4 pt-4 sm:px-2 sm:pt-0">
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">North America host map</div>
             <div className="mt-1 text-sm font-semibold text-[#0a1628] dark:text-white">Tap a city to jump straight to its watch spots</div>
@@ -42,12 +42,12 @@ export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[1.5rem] border border-[#cfe0ff] bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:border-white/10 dark:bg-[#111827]">
+        <div className="overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:bg-[#111827] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{ scale: 640, center: [-98, 38] }}
             style={{ width: "100%", height: "100%" }}
-            className="h-[560px] w-full md:h-[640px]"
+            className="h-[100svh] w-full sm:h-[720px] md:h-[760px]"
           >
             <Geographies geography={geoUrl}>
               {({ geographies }) =>

@@ -58,7 +58,7 @@ export async function USAHomepage() {
             <HomeHeroActions />
           </div>
 
-          <div className="order-2 w-full self-center">
+          <div className="order-2 -mx-4 w-auto self-center sm:mx-0 sm:w-full">
             <NorthAmericaMap cityCards={cityCards} />
           </div>
         </div>
