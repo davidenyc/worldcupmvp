@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { demoCountries, demoImportJobs, demoSubmissions } from "@/lib/data/demo";
 import { VenueProvider } from "@/lib/providers/types";
+import { LegacyVenueIntentKey, normalizeVenueIntent } from "@/lib/venueIntents";
 import {
   BoroughKey,
   CapacityBucket,
@@ -28,7 +29,7 @@ type CsvVenueOverride = {
   lng: number;
   likelySupporterCountry: string | null;
   venueTypes: VenueTypeKey[];
-  venueIntent: VenueIntentKey;
+  venueIntent: LegacyVenueIntentKey;
   showsSoccer: boolean;
   rating?: number;
   gameDayScore?: number;
@@ -60,8 +61,9 @@ function capacityBucketFromValue(value?: number): CapacityBucket {
 
 function atmosphereForOverride(row: CsvVenueOverride) {
   const tags = new Set<string>();
+  const normalizedIntent = normalizeVenueIntent(row.venueIntent);
 
-  if (row.venueIntent === "cultural_dining") {
+  if (normalizedIntent === "cultural_restaurant") {
     tags.add("authentic-food");
     tags.add("casual");
   } else {
@@ -72,10 +74,10 @@ function atmosphereForOverride(row: CsvVenueOverride) {
   if (row.venueTypes.some((type) => type === "supporter_club")) tags.add("supporters-club");
   if (row.venueTypes.some((type) => type === "bakery" || type === "cafe")) tags.add("brunch");
   if (row.venueTypes.some((type) => type === "lounge" || type === "bar")) tags.add("late-night");
-  if (row.venueIntent !== "cultural_dining" && row.approximateCapacity && row.approximateCapacity >= 80) {
+  if (normalizedIntent !== "cultural_restaurant" && row.approximateCapacity && row.approximateCapacity >= 80) {
     tags.add("big-groups");
   }
-  if (row.venueIntent !== "cultural_dining" && row.venueTypes.some((type) => type === "bar" || type === "lounge")) {
+  if (normalizedIntent !== "cultural_restaurant" && row.venueTypes.some((type) => type === "bar" || type === "lounge")) {
     tags.add("outdoor");
   }
 
@@ -85,13 +87,14 @@ function atmosphereForOverride(row: CsvVenueOverride) {
 function cuisineTagsForOverride(row: CsvVenueOverride) {
   const countryName = row.likelySupporterCountry ? countryNameBySlug.get(row.likelySupporterCountry) : null;
   const tags = new Set<string>();
+  const normalizedIntent = normalizeVenueIntent(row.venueIntent);
 
   if (countryName) {
     tags.add(countryName.toLowerCase());
     tags.add(`${countryName.toLowerCase()} cuisine`);
   }
 
-  if (row.venueIntent === "cultural_dining") tags.add("authentic food");
+  if (normalizedIntent === "cultural_restaurant") tags.add("authentic food");
   if (row.venueTypes.some((type) => type === "bar" || type === "lounge")) tags.add("match-day drinks");
   if (row.venueTypes.some((type) => type === "bakery" || type === "cafe")) tags.add("coffee");
 
@@ -107,19 +110,20 @@ function numberOfScreensForOverride(row: CsvVenueOverride) {
 
 function buildVenueFromCsvRow(row: CsvVenueOverride): Venue {
   const now = "2026-04-23T00:00:00.000Z";
+  const normalizedIntent = normalizeVenueIntent(row.venueIntent);
   const gameDayScore = row.gameDayScore ?? 6.5;
   const reviewCount = Math.max(12, Math.round((row.rating ?? 4.3) * 18));
   const sourceConfidence = row.notes?.toLowerCase().includes("low_confidence") ? 0.68 : 0.96;
-  const approximateCapacity = row.approximateCapacity ?? (row.venueIntent === "cultural_dining" ? 54 : 90);
+  const approximateCapacity = row.approximateCapacity ?? (normalizedIntent === "cultural_restaurant" ? 54 : 90);
   const reservationType = row.reservationType ?? "none";
   const acceptsReservations = reservationType !== "none";
   const numberOfScreens = numberOfScreensForOverride(row);
   const hasProjector = row.showsSoccer && row.venueTypes.some((type) => type === "bar" || type === "lounge" || type === "supporter_club");
   const hasOutdoorViewing = row.venueTypes.some((type) => type === "lounge" || type === "bar") && row.showsSoccer;
-  const familyFriendly = row.venueIntent === "cultural_dining" || row.venueTypes.some((type) => type === "cafe" || type === "bakery" || type === "restaurant");
+  const familyFriendly = normalizedIntent === "cultural_restaurant" || row.venueTypes.some((type) => type === "cafe" || type === "bakery" || type === "restaurant");
   const standingRoomFriendly = row.showsSoccer || row.venueTypes.some((type) => type === "bar" || type === "lounge" || type === "supporter_club");
   const privateEventsAvailable = acceptsReservations || row.venueTypes.includes("supporter_club");
-  const goodForGroups = approximateCapacity >= 75 || row.venueIntent !== "cultural_dining";
+  const goodForGroups = approximateCapacity >= 75 || normalizedIntent !== "cultural_restaurant";
   const capacityBucket = capacityBucketFromValue(approximateCapacity);
   const isFeatured = gameDayScore >= 8.1 || row.showsSoccer;
   const isOfficialFanHub = row.showsSoccer && gameDayScore >= 8.6;
@@ -147,12 +151,12 @@ function buildVenueFromCsvRow(row: CsvVenueOverride): Venue {
     venueTypes: row.venueTypes,
     associatedCountries: row.likelySupporterCountry ? [row.likelySupporterCountry] : [],
     likelySupporterCountry: row.likelySupporterCountry,
-    venueIntent: row.venueIntent,
+    venueIntent: normalizedIntent,
     cuisineTags: cuisineTagsForOverride(row),
     atmosphereTags: atmosphereForOverride(row),
     showsSoccer: row.showsSoccer,
     openNow: true,
-    priceLevel: row.venueIntent === "cultural_dining" ? 3 : 2,
+    priceLevel: normalizedIntent === "cultural_restaurant" ? 3 : 2,
     rating: row.rating,
     reviewCount,
     numberOfScreens,

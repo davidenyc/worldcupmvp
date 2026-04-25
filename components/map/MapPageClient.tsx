@@ -454,7 +454,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const hasCustomVenueIntentSelection =
     selectedVenueIntents.length !== defaultVenueIntents.length ||
     defaultVenueIntents.some((intent) => !selectedVenueIntents.includes(intent)) ||
-    selectedVenueIntents.includes("cultural_dining");
+    selectedVenueIntents.includes("cultural_restaurant");
 
   const hasActiveFilters =
     selectedCountrySlugs.length > 0 ||

@@ -1,4 +1,5 @@
 import { slugify } from "../utils";
+import { LegacyVenueIntentKey, normalizeVenueIntent } from "../venueIntents";
 import {
   AtmosphereKey,
   BoroughKey,
@@ -742,23 +743,24 @@ function isGermanBeerHall(seed: VenueCredibilitySeed) {
 
 function resolveVenueIntent(seed: VenueCredibilitySeed): VenueIntentKey {
   const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
-  if (override?.venueIntent) return override.venueIntent;
-  if (SPECIFIC_CULTURAL_DINING_VENUES.has(seed.name)) return "cultural_dining";
-  if (seed.venueIntent === "cultural_dining") return "cultural_dining";
+  if (override?.venueIntent) return normalizeVenueIntent(override.venueIntent);
+  if (SPECIFIC_CULTURAL_DINING_VENUES.has(seed.name)) return "cultural_restaurant";
+  if (seed.venueIntent === "cultural_dining" || seed.venueIntent === "cultural_restaurant") return "cultural_restaurant";
   if (isRestaurantOnly(seed) && !isDedicatedSoccerBar(seed) && !isBritishIrishPub(seed) && seed.numberOfScreens < 4) {
-    return "cultural_dining";
+    return "cultural_restaurant";
   }
   if (seed.venueIntent === "sports_bar" && !isDedicatedSoccerBar(seed)) {
-    if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) return "watch_party";
-    return "both";
+    if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) return "cultural_bar";
+    return "cultural_restaurant";
   }
-  return (seed.venueIntent ?? "both") as VenueIntentKey;
+  return normalizeVenueIntent(seed.venueIntent ?? "cultural_bar");
 }
 
 function resolveShowsSoccer(seed: VenueCredibilitySeed, venueIntent: VenueIntentKey) {
   const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
   if (typeof override?.showsSoccer === "boolean") return override.showsSoccer;
-  if (venueIntent === "cultural_dining") return false;
+  if (venueIntent === "cultural_restaurant") return false;
+  if (venueIntent === "sports_bar" || venueIntent === "fan_fest") return true;
   if (seed.numberOfScreens >= 4) return true;
   if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge") || isDedicatedSoccerBar(seed) || isBritishIrishPub(seed)) {
     return true;
@@ -771,7 +773,7 @@ function resolveGameDayScore(seed: VenueCredibilitySeed, venueIntent: VenueInten
   const override = VENUE_CREDIBILITY_OVERRIDES[seed.name];
   if (typeof override?.gameDayScore === "number") return override.gameDayScore;
   if (SPECIFIC_CULTURAL_DINING_VENUES.has(seed.name)) return 6.5;
-  if (venueIntent === "cultural_dining" || !showsSoccer) {
+  if (venueIntent === "cultural_restaurant" || !showsSoccer) {
     if (hasVenueType(seed, "bar") || hasVenueType(seed, "lounge") || seed.numberOfScreens >= 3) {
       return Math.min(seed.gameDayScore, 7.8);
     }
@@ -787,7 +789,7 @@ function resolveSourceConfidence(seed: VenueCredibilitySeed, venueIntent: VenueI
   if (typeof override?.sourceConfidence === "number") return override.sourceConfidence;
   if (isDedicatedSoccerBar(seed)) return 0.9;
   if (isBritishIrishPub(seed)) return 0.88;
-  if (venueIntent === "cultural_dining" || !showsSoccer) {
+  if (venueIntent === "cultural_restaurant" || !showsSoccer) {
     return isRestaurantOnly(seed) ? 0.4 : 0.55;
   }
   if (isGermanBeerHall(seed) || isLatinBarRestaurant(seed) || isAsianBarForward(seed) || ((hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) && seed.numberOfScreens >= 4)) {
@@ -820,7 +822,7 @@ function resolveSourceNote(seed: VenueCredibilitySeed, venueIntent: VenueIntentK
   if (isLatinBarRestaurant(seed)) {
     return `Latin bar-restaurant with ${screenLabel}; known for lively World Cup crowds, especially Mexico and South America matches`;
   }
-  if (venueIntent === "cultural_dining" || !showsSoccer) {
+  if (venueIntent === "cultural_restaurant" || !showsSoccer) {
     return "Cultural community restaurant — included for its connection to the supporter community; may set up a screen for major matches but is primarily a dining destination";
   }
   if ((hasVenueType(seed, "bar") || hasVenueType(seed, "lounge")) && seed.numberOfScreens > 0) {

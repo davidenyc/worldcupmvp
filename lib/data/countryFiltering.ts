@@ -15,7 +15,7 @@ export function filterAndSortCountryVenues(
     if (filters.capacityBucket && venue.capacityBucket !== filters.capacityBucket) return false;
     if (filters.atmosphere && !venue.atmosphereTags.includes(filters.atmosphere)) return false;
     if (filters.minRating && (venue.rating ?? 0) < filters.minRating) return false;
-    if (filters.goodForWatchingGames && venue.venueIntent === "cultural_dining") return false;
+    if (filters.goodForWatchingGames && venue.venueIntent === "cultural_restaurant") return false;
     if (filters.query) {
       const q = filters.query.toLowerCase();
       const haystack = [
