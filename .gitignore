@@ -7,4 +7,4 @@ prisma/dev.db
 .DS_Store
 .codex-seed-build
 tsconfig.tsbuildinfo
-lib/cache/places/*.json
+# lib/cache/places/*.json
