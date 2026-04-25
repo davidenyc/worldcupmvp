@@ -80,11 +80,11 @@ function selectVenueImagePool(
     | Pick<Venue, "slug" | "imageUrls"> & Partial<Pick<Venue, "venueTypes" | "venueIntent">>
     | Pick<RankedVenue, "slug" | "imageUrls"> & Partial<Pick<RankedVenue, "venueTypes" | "venueIntent">>
 ) {
-  if (venue.venueIntent === "sports_bar" || venue.venueIntent === "watch_party") {
+  if (venue.venueIntent === "sports_bar" || venue.venueIntent === "fan_fest") {
     return SPORTS_BAR_IMAGES;
   }
 
-  if (venue.venueIntent === "cultural_dining") {
+  if (venue.venueIntent === "cultural_restaurant") {
     return RESTAURANT_IMAGES;
   }
 
