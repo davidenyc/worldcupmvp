@@ -904,13 +904,13 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const resultsPanel = (
     <div className="space-y-3">
       {canToggleShowAllMapVenues ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
+        <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
           <div>
             {showAllMapVenues
               ? `Showing all ${candidateMapVenues.length} spots on the map right now.`
               : `Showing ${mapVenues.length} spots on the map right now.`}
           </div>
-          <div className="mt-1 text-xs font-normal text-white/60">
+          <div className="mt-1 text-xs font-normal text-[#0a1628]/60 dark:text-white/60">
             {showAllMapVenues
               ? "Too crowded? Switch back to a lighter map view any time."
               : shouldShowRegionalVenues
@@ -920,15 +920,15 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
         </div>
       ) : null}
       {comparisonBannerCountries.length === 2 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
+        <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
           <div className="flex items-center gap-2">
             <span className="text-lg">{comparisonBannerCountries[0]?.flagEmoji ?? "🏁"}</span>
             <span>{comparisonBannerCountries[0]?.name}</span>
-            <span className="text-white/40">vs</span>
+            <span className="text-[#0a1628]/40 dark:text-white/40">vs</span>
             <span className="text-lg">{comparisonBannerCountries[1]?.flagEmoji ?? "🏁"}</span>
             <span>{comparisonBannerCountries[1]?.name}</span>
           </div>
-          <div className="mt-1 text-xs font-normal text-white/60">Watching spots for both sets of fans</div>
+          <div className="mt-1 text-xs font-normal text-[#0a1628]/60 dark:text-white/60">Watching spots for both sets of fans</div>
         </div>
       ) : null}
       <MapResultsPanel

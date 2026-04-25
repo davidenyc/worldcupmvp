@@ -62,19 +62,19 @@ export function MapShell({
             desktopResultsExpanded ? "w-[min(34rem,calc(100vw-2rem))]" : "w-72"
           }`}
         >
-          <div className="pointer-events-auto flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#161b22]/96 text-white backdrop-blur-md">
-            <div className="border-b border-white/10 px-4 py-3">
+          <div className="pointer-events-auto flex h-full flex-col overflow-hidden rounded-2xl border border-[#d8e3f5] bg-white text-[#0a1628] shadow-2xl dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white">
+            <div className="border-b border-[#d8e3f5] px-4 py-3 dark:border-white/10">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/45">Results</div>
-                  <div className="text-sm font-semibold text-white">{resultsCountLabel ?? "Venues in view"}</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Results</div>
+                  <div className="text-sm font-semibold text-[#0a1628] dark:text-white">{resultsCountLabel ?? "Venues in view"}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {hasActiveFilters && onClearFilters ? (
                     <button
                       type="button"
                       onClick={onClearFilters}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                      className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                     >
                       Clear all
                     </button>
@@ -82,7 +82,7 @@ export function MapShell({
                   <button
                     type="button"
                     onClick={() => onDesktopResultsExpandedChange?.(!desktopResultsExpanded)}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                   >
                     {desktopResultsExpanded ? "Compact" : "Expand"}
                   </button>
@@ -92,7 +92,7 @@ export function MapShell({
                       setDesktopResultsCollapsed(true);
                       onDesktopResultsExpandedChange?.(false);
                     }}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                   >
                     Hide
                   </button>
