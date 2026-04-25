@@ -11,9 +11,9 @@ import { formatPriceLevel, getSoccerAtmosphereRating } from "@/lib/utils";
 import { getVenueImageSet } from "@/lib/utils/venueImages";
 
 function intentBanner(venueIntent: RankedVenue["venueIntent"]) {
-  if (venueIntent === "watch_party") {
+  if (venueIntent === "fan_fest") {
     return {
-      label: "📺 This is a dedicated match venue",
+      label: "🏆 Fan Fest venue",
       className: "bg-emerald-950 text-emerald-50"
     };
   }
@@ -25,15 +25,15 @@ function intentBanner(venueIntent: RankedVenue["venueIntent"]) {
     };
   }
 
-  if (venueIntent === "both") {
+  if (venueIntent === "cultural_bar") {
     return {
-      label: "🏆 Authentic dining + match coverage",
+      label: "🍺 Cultural bar with match coverage",
       className: "bg-violet-700 text-white"
     };
   }
 
   return {
-    label: "🍽️ Authentic dining — call ahead for game coverage",
+    label: "🍽️ Cultural restaurant — call ahead for game coverage",
     className: "bg-amber-500 text-white"
   };
 }
