@@ -62,10 +62,10 @@ export type AtmosphereKey =
   | "watch-party";
 
 export type VenueIntentKey =
-  | "watch_party"
   | "sports_bar"
-  | "cultural_dining"
-  | "both";
+  | "cultural_restaurant"
+  | "cultural_bar"
+  | "fan_fest";
 
 export interface CountrySummary {
   slug: string;
