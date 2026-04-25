@@ -9,10 +9,10 @@ import { MapSortKey } from "@/lib/maps/types";
 import { CountrySummary, VenueIntentKey } from "@/lib/types";
 
 const intentButtons: Array<{ key: VenueIntentKey; label: string }> = [
-  { key: "watch_party", label: "📺 Watch party" },
   { key: "sports_bar", label: "⚽ Sports bar" },
-  { key: "cultural_dining", label: "🍽️ Authentic dining" },
-  { key: "both", label: "🏆 Both" }
+  { key: "cultural_restaurant", label: "🍽️ Cultural restaurants" },
+  { key: "cultural_bar", label: "🍺 Cultural bars" },
+  { key: "fan_fest", label: "🏆 Fan Fest" }
 ];
 
 export function FilterDrawer({

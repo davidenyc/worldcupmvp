@@ -15,8 +15,9 @@ import { WorldCupMatch, getMatchDateKey, worldCup2026Matches } from "@/lib/data/
 import { MapPageData, MapSortKey } from "@/lib/maps/types";
 import { RankedVenue, VenueIntentKey } from "@/lib/types";
 import { getSoccerAtmosphereRating } from "@/lib/utils";
+import { DEFAULT_GAMES_FOCUSED_VENUE_INTENTS } from "@/lib/venueIntents";
 
-const defaultVenueIntents: VenueIntentKey[] = ["watch_party", "sports_bar", "both"];
+const defaultVenueIntents: VenueIntentKey[] = DEFAULT_GAMES_FOCUSED_VENUE_INTENTS;
 const emptySearchParams = new URLSearchParams();
 const INITIAL_MAP_VENUE_COUNT = 42;
 const MID_MAP_VENUE_COUNT = 72;
@@ -83,9 +84,9 @@ function getVenuePriorityScore(venue: RankedVenue, center: [number, number]) {
   const intentSignal =
     venue.venueIntent === "sports_bar"
       ? 18
-      : venue.venueIntent === "watch_party"
-        ? 16
-        : venue.venueIntent === "both"
+      : venue.venueIntent === "fan_fest"
+        ? 17
+        : venue.venueIntent === "cultural_bar"
           ? 11
           : -10;
   const soccerSignal = venue.showsSoccer ? 10 : -10;
@@ -250,7 +251,7 @@ function parseBooleanParam(value: string | null) {
 
 function parseIntentParam(value: string | null) {
   const parsed = parseCsvParam(value).filter((item): item is VenueIntentKey =>
-    ["watch_party", "sports_bar", "cultural_dining", "both"].includes(item)
+    ["sports_bar", "cultural_restaurant", "cultural_bar", "fan_fest"].includes(item)
   );
   return parsed.length ? parsed : defaultVenueIntents;
 }
@@ -305,7 +306,7 @@ function serializeFilterState({
     params.set("countries", countries.join(","));
   }
 
-  if (selectedVenueIntents.length !== defaultVenueIntents.length || selectedVenueIntents.includes("cultural_dining")) {
+  if (selectedVenueIntents.length !== defaultVenueIntents.length || selectedVenueIntents.includes("cultural_restaurant")) {
     params.set("intents", selectedVenueIntents.join(","));
   }
 

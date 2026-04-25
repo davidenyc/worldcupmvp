@@ -7,40 +7,11 @@ import { Clock3, Star } from "lucide-react";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CountrySummary, RankedVenue } from "@/lib/types";
 import { getSoccerAtmosphereRating, toTitleCase } from "@/lib/utils";
+import { getVenueIntentMeta } from "@/lib/venueIntents";
 
 function getCountryName(countries: CountrySummary[], slug: string | null) {
   if (!slug) return null;
   return countries.find((country) => country.slug === slug)?.name ?? null;
-}
-
-function intentBadge(venueIntent: RankedVenue["venueIntent"]) {
-  switch (venueIntent) {
-    case "watch_party":
-      return {
-        label: "📺 Watch party",
-        className: "border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
-      };
-    case "sports_bar":
-      return {
-        label: "⚽ Sports bar",
-        className: "border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
-      };
-    case "cultural_dining":
-      return {
-        label: "🍽️ Authentic dining",
-        className: "border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
-      };
-    case "both":
-      return {
-        label: "🏆 Both",
-        className: "border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
-      };
-    default:
-      return {
-        label: "📺 Watch party",
-        className: "border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
-      };
-  }
 }
 
 function isNeutralSportsBar(venue: RankedVenue) {
@@ -102,7 +73,7 @@ export function MapResultsPanel({
         const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) ?? null : null;
         const countryName = getCountryName(countries, venue.likelySupporterCountry);
         const neutralSportsBar = isNeutralSportsBar(venue);
-        const intent = intentBadge(venue.venueIntent);
+        const intent = getVenueIntentMeta(venue.venueIntent, countryName);
         const reservationsLabel = venue.acceptsReservations ? "Reservations" : "Walk-in";
         const reviewCountLabel = typeof venue.reviewCount === "number" ? venue.reviewCount.toLocaleString() : "0";
         const primaryVenueType = venue.venueTypes[0];
@@ -143,7 +114,7 @@ export function MapResultsPanel({
           >
             <div className="flex items-start gap-3 transition">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)]">
-                {neutralSportsBar ? <span className="text-sm leading-none">⚽</span> : <CountryFlag country={country} size="sm" />}
+                {neutralSportsBar ? <span className="text-sm leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

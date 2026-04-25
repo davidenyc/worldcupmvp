@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { CountrySummary, RankedVenue } from "@/lib/types";
 import { getSoccerAtmosphereRating, toTitleCase } from "@/lib/utils";
+import { getVenueIntentMeta } from "@/lib/venueIntents";
 
 const popupChipBaseClass =
   "inline-flex h-7 items-center justify-center rounded-full px-2.5 text-[10px] font-semibold tracking-[0.08em]";
@@ -18,36 +19,6 @@ const popupSecondaryChipClass =
 
 const popupActionClass =
   "flex h-10 items-center justify-center rounded-full px-3 text-center text-[13px] font-semibold transition";
-
-function intentBadge(venueIntent: RankedVenue["venueIntent"]) {
-  switch (venueIntent) {
-    case "watch_party":
-      return {
-        label: "📺 Watch party",
-        className: `${popupChipBaseClass} w-full border border-[#d8e3f5] border-l-emerald-400 bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`
-      };
-    case "sports_bar":
-      return {
-        label: "⚽ Sports bar",
-        className: `${popupChipBaseClass} w-full border border-[#d8e3f5] border-l-emerald-400 bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`
-      };
-    case "cultural_dining":
-      return {
-        label: "🍽️ Authentic dining",
-        className: `${popupChipBaseClass} w-full border border-[#d8e3f5] border-l-amber-400 bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`
-      };
-    case "both":
-      return {
-        label: "🏆 Both",
-        className: `${popupChipBaseClass} w-full border border-[#d8e3f5] border-l-[#f4b942] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`
-      };
-    default:
-      return {
-        label: "📺 Watch party",
-        className: `${popupChipBaseClass} w-full border border-[#d8e3f5] border-l-emerald-400 bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`
-      };
-  }
-}
 
 function isNeutralSportsBar(venue: RankedVenue) {
   return (
@@ -87,10 +58,11 @@ export function VenuePreviewCard({
   onToggleOpenNow?: () => void;
   onToggleHighAtmosphere?: () => void;
 }) {
-  const intent = intentBadge(venue.venueIntent);
   const country = venue.likelySupporterCountry
     ? countries.find((item) => item.slug === venue.likelySupporterCountry) ?? null
     : null;
+  const countryName = country?.name ?? null;
+  const intent = getVenueIntentMeta(venue.venueIntent, countryName);
   const neutralSportsBar = isNeutralSportsBar(venue);
   const primaryVenueType = venue.venueTypes[0];
   const soccerAtmosphere = getSoccerAtmosphereRating(venue);
@@ -136,7 +108,7 @@ export function VenuePreviewCard({
               event.stopPropagation();
               onToggleVenueIntent?.(venue.venueIntent);
             }}
-            className={chipButtonClass(activeIntent)}
+            className={`${popupChipBaseClass} w-full transition ${intent.className} ${activeIntent ? "ring-2 ring-[#f4b942]/70 ring-offset-1 ring-offset-transparent" : ""}`}
           >
             {intent.label}
           </button>
@@ -190,7 +162,7 @@ export function VenuePreviewCard({
 
         <div className="grid grid-cols-[34px_minmax(0,1fr)] items-start gap-2.5">
           <div className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)] dark:bg-white/10">
-            {neutralSportsBar ? <span className="text-base leading-none">⚽</span> : <CountryFlag country={country} size="sm" />}
+            {neutralSportsBar ? <span className="text-base leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
           </div>
           <div className="min-w-0 space-y-1">
             <div className="text-[0.88rem] font-semibold leading-tight text-[#0a1628] dark:text-white">

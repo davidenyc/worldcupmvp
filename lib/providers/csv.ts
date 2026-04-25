@@ -12,7 +12,6 @@ import {
   ReservationType,
   SubmissionRecord,
   Venue,
-  VenueIntentKey,
   VenueTypeKey
 } from "@/lib/types";
 import { VenueSearchParams } from "./types";
@@ -268,7 +267,7 @@ function hydrateOverride(row: Record<string, string>): CsvVenueOverride {
       .split("|")
       .map((item) => item.trim())
       .filter(Boolean) as VenueTypeKey[],
-    venueIntent: row.venueIntent as VenueIntentKey,
+    venueIntent: row.venueIntent as LegacyVenueIntentKey,
     showsSoccer: parseBoolean(row.showsSoccer),
     rating: parseNumber(row.rating),
     gameDayScore: parseNumber(row.gameDayScore),

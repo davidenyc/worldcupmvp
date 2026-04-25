@@ -12,13 +12,16 @@ function getCountry(countries: CountrySummary[], slug: string | null) {
 }
 
 function intentLabel(venueIntent: Venue["venueIntent"]) {
-  if (venueIntent === "cultural_dining") {
-    return "🍽️ Authentic dining";
+  if (venueIntent === "cultural_restaurant") {
+    return "🍽️ Cultural restaurant";
   }
-  if (venueIntent === "both") {
-    return "🏆 Both";
+  if (venueIntent === "cultural_bar") {
+    return "🍺 Cultural bar";
   }
-  return "📺 Showing games";
+  if (venueIntent === "fan_fest") {
+    return "🏆 Fan Fest";
+  }
+  return "⚽ Sports bar";
 }
 
 export function WatchSpotsDrawer({

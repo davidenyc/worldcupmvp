@@ -2,6 +2,7 @@ import { readPlacesCache, isFreshPlacesCache, writePlacesCache } from "../cache/
 import { demoCountries } from "../data/demo";
 import { getHostCity } from "../data/hostCities";
 import { slugify } from "../utils";
+import { classifyPlaceForCountry, buildImportedVenueDescription } from "../venues/googleClassification";
 import { rateLimit } from "./rateLimit";
 import { VenueProvider, VenueSearchParams } from "./types";
 import {
@@ -76,10 +77,7 @@ function venueIntentFromTypes(types: VenueTypeKey[]): VenueIntentKey {
   if (types.includes("bar") || types.includes("lounge") || types.includes("supporter_club")) {
     return "sports_bar";
   }
-  if (types.length === 1 && types[0] === "restaurant") {
-    return "cultural_dining";
-  }
-  return "both";
+  return "cultural_restaurant";
 }
 
 function capacityBucketFromEstimate(value?: number): CapacityBucket {
@@ -94,10 +92,17 @@ function deriveBorough(_cityKey: string): BoroughKey {
   return "Manhattan";
 }
 
-function calculateGameDayScore(rating?: number, reviewCount?: number, intent: VenueIntentKey = "both") {
+function calculateGameDayScore(rating?: number, reviewCount?: number, intent: VenueIntentKey = "sports_bar") {
   const ratingBoost = rating ? Math.max(0, rating - 3.6) * 1.15 : 0.5;
   const reviewBoost = reviewCount ? Math.min(reviewCount / 250, 1.5) : 0.25;
-  const intentBoost = intent === "sports_bar" ? 1.3 : intent === "both" ? 1 : 0.25;
+  const intentBoost =
+    intent === "fan_fest"
+      ? 1.5
+      : intent === "sports_bar"
+        ? 1.25
+        : intent === "cultural_bar"
+          ? 0.8
+          : 0.15;
   return Math.min(10, Math.max(3.5, 4.2 + ratingBoost + reviewBoost + intentBoost));
 }
 
@@ -175,14 +180,16 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
   }
 
   const venueTypes = venueTypesFromGoogleTypes(place.types ?? []);
-  const venueIntent = venueIntentFromTypes(venueTypes);
+  const classification = classifyPlaceForCountry(place, params.countrySlug ?? "");
+  const venueIntent = classification.venueIntent || venueIntentFromTypes(venueTypes);
   const reviewCount = place.userRatingCount ?? 0;
   const rating = place.rating ?? 4;
   const gameDayScore = calculateGameDayScore(rating, reviewCount, venueIntent);
   const slug = slugify(`${city?.key ?? params.city ?? "city"}-${params.countrySlug}-${name}`);
   const borough = deriveBorough(city?.key ?? params.city ?? "nyc");
   const address = place.formattedAddress?.trim() || `${city?.label ?? params.city ?? "Host city"} venue`;
-  const countryName = params.countrySlug ? countryNameBySlug.get(params.countrySlug) ?? params.countrySlug : "country";
+  const countrySlug = classification.likelySupporterCountry;
+  const countryName = countrySlug ? countryNameBySlug.get(countrySlug) ?? countrySlug : null;
   const approximateCapacity = venueTypes.includes("supporter_club")
     ? 120
     : venueTypes.includes("bar") || venueTypes.includes("lounge")
@@ -197,9 +204,9 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     id: slug,
     slug,
     name,
-    description: `${name} in ${city?.label ?? params.city ?? "the host city"} for ${countryName}.`,
+    description: buildImportedVenueDescription(name, city?.key ?? params.city ?? "nyc", countrySlug, venueIntent),
     address,
-    city: city?.label ?? params.city ?? "",
+    city: city?.key ?? params.city ?? "",
     state: city?.state ?? "NY",
     postalCode: parsePostalCode(address),
     lat: latitude,
@@ -211,25 +218,30 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     googleMapsUrl: place.googleMapsUri,
     instagramUrl: undefined,
     venueTypes,
-    associatedCountries: params.countrySlug ? [params.countrySlug] : [],
-    likelySupporterCountry: params.countrySlug ?? null,
+    associatedCountries: classification.associatedCountries,
+    likelySupporterCountry: classification.likelySupporterCountry,
     venueIntent,
-    cuisineTags: params.countrySlug ? [countryName.toLowerCase(), `${countryName.toLowerCase()} cuisine`] : [],
+    cuisineTags: countryName ? [countryName.toLowerCase(), `${countryName.toLowerCase()} cuisine`] : [],
     atmosphereTags: (
-      venueIntent === "cultural_dining" ? ["casual", "authentic-food"] : ["watch-party", "loud", "big-groups"]
+      venueIntent === "cultural_restaurant"
+        ? ["casual", "authentic-food"]
+        : venueIntent === "cultural_bar"
+          ? ["authentic-food", "casual", "watch-party"]
+          : ["watch-party", "loud", "big-groups"]
     ) as Venue["atmosphereTags"],
-    showsSoccer: venueIntent !== "cultural_dining",
+    showsSoccer: classification.showsSoccer,
     openNow,
-    priceLevel: typeof place.priceLevel === "number" ? place.priceLevel : venueIntent === "cultural_dining" ? 3 : 2,
+    priceLevel: typeof place.priceLevel === "number" ? place.priceLevel : venueIntent === "cultural_restaurant" ? 3 : 2,
     rating,
     reviewCount,
-    numberOfScreens: venueIntent === "cultural_dining" ? 1 : venueIntent === "both" ? 3 : 5,
-    hasProjector: venueIntent !== "cultural_dining",
-    hasOutdoorViewing: venueIntent !== "cultural_dining" && venueTypes.includes("bar"),
-    familyFriendly: venueIntent === "cultural_dining" || venueTypes.includes("cafe") || venueTypes.includes("bakery"),
-    standingRoomFriendly: venueIntent !== "cultural_dining",
+    numberOfScreens:
+      venueIntent === "fan_fest" ? 8 : venueIntent === "sports_bar" ? 5 : venueIntent === "cultural_bar" ? 3 : 1,
+    hasProjector: venueIntent === "sports_bar" || venueIntent === "fan_fest",
+    hasOutdoorViewing: venueIntent !== "cultural_restaurant" && venueTypes.includes("bar"),
+    familyFriendly: venueIntent === "cultural_restaurant" || venueTypes.includes("cafe") || venueTypes.includes("bakery"),
+    standingRoomFriendly: venueIntent !== "cultural_restaurant",
     privateEventsAvailable: acceptsReservations,
-    goodForGroups: venueIntent !== "cultural_dining" || approximateCapacity >= 80,
+    goodForGroups: venueIntent !== "cultural_restaurant" || approximateCapacity >= 80,
     acceptsReservations,
     reservationType,
     reservationUrl: place.websiteUri,
@@ -244,13 +256,16 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     verificationStatus: "imported",
     isRealVenue: true,
     isFeatured: gameDayScore >= 8,
-    isOfficialFanHub: gameDayScore >= 8.7 && venueIntent !== "cultural_dining",
+    isOfficialFanHub: venueIntent === "fan_fest" || (gameDayScore >= 8.7 && venueIntent !== "cultural_restaurant"),
     gameDayScore,
-    fanLikelihoodScore: Math.min(10, gameDayScore + (params.countrySlug ? 0.8 : 0.25)),
+    fanLikelihoodScore: Math.min(10, gameDayScore + (countrySlug ? 0.8 : 0.25)),
     editorialBoost: 0.15,
-    editorialNotes: undefined,
+    editorialNotes:
+      classification.reason.kind === "none"
+        ? "Imported from Google Places with no verified country match; kept as a general venue."
+        : `Imported from Google Places with ${classification.reason.kind} match: ${classification.reason.value}.`,
     matchdayNotes: undefined,
-    supporterNotes: undefined,
+    supporterNotes: countryName ? `Country assignment verified via ${classification.reason.kind} match.` : undefined,
     imageUrls: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()

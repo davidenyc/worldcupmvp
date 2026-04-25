@@ -49,7 +49,7 @@ type CuratedVenueSeed = {
   lng: number;
   likelySupporterCountry?: string | null;
   venueTypes: VenueTypeKey[];
-  venueIntent: VenueIntentKey;
+  venueIntent: LegacyVenueIntentKey;
   rating: number;
   gameDayScore: number;
   note: string;
@@ -216,11 +216,11 @@ const reservationTypeLabels: Record<ReservationType, string> = {
 };
 
 function intentForBlueprint(blueprint: VenueBlueprint): VenueIntentKey {
-  if (blueprint.venueTypes.includes("supporter_club")) return "both";
-  if (blueprint.venueTypes.includes("lounge") || blueprint.venueTypes.includes("bar")) return "watch_party";
-  if (blueprint.venueTypes.includes("cultural_center")) return "both";
-  if (blueprint.venueTypes.includes("bakery") || blueprint.venueTypes.includes("cafe")) return "cultural_dining";
-  return blueprint.screenBase >= 6 ? "sports_bar" : "both";
+  if (blueprint.venueTypes.includes("supporter_club")) return "fan_fest";
+  if (blueprint.venueTypes.includes("lounge") || blueprint.venueTypes.includes("bar")) return "cultural_bar";
+  if (blueprint.venueTypes.includes("cultural_center")) return "cultural_bar";
+  if (blueprint.venueTypes.includes("bakery") || blueprint.venueTypes.includes("cafe")) return "cultural_restaurant";
+  return blueprint.screenBase >= 6 ? "sports_bar" : "cultural_bar";
 }
 
 function capacityBucketFromValue(value: number): CapacityBucket {
@@ -321,7 +321,7 @@ function buildVenue(country: CountrySummary, countryIndex: number, venueIndex: n
     venueIntent,
     cuisineTags: [country.name, ...confederationCuisine(country.confederation)],
     atmosphereTags: blueprint.atmospheres,
-    showsSoccer: venueIntent !== "cultural_dining",
+    showsSoccer: venueIntent !== "cultural_restaurant",
     openNow: (countryIndex + venueIndex) % 2 === 0,
     priceLevel: blueprint.priceLevel,
     rating,
@@ -399,9 +399,9 @@ function buildCuratedVenue(country: CountrySummary, index: number, seed: Curated
     showsSoccer: showGames,
     openNow: true,
     priceLevel:
-      resolvedVenueIntent === "watch_party" ? 3 : resolvedVenueIntent === "sports_bar" ? 2 : 3,
+      resolvedVenueIntent === "fan_fest" ? 3 : resolvedVenueIntent === "sports_bar" ? 2 : 3,
     rating: seed.rating,
-    reviewCount: resolvedVenueIntent === "cultural_dining" ? 1200 : 860,
+    reviewCount: resolvedVenueIntent === "cultural_restaurant" ? 1200 : 860,
     numberOfScreens: seed.numberOfScreens,
     hasProjector: seed.hasProjector,
     hasOutdoorViewing: seed.hasOutdoorViewing,
@@ -425,14 +425,14 @@ function buildCuratedVenue(country: CountrySummary, index: number, seed: Curated
     isOfficialFanHub: seed.isOfficialFanHub ?? false,
     gameDayScore: resolvedGameDayScore,
     fanLikelihoodScore:
-      resolvedVenueIntent === "cultural_dining"
+      resolvedVenueIntent === "cultural_restaurant"
         ? Number((resolvedGameDayScore - 1.2).toFixed(1))
         : Number((resolvedGameDayScore + 0.4).toFixed(1)),
     editorialBoost: seed.editorialBoost,
     editorialNotes: seed.note,
     matchdayNotes: seed.note,
     supporterNotes:
-      resolvedVenueIntent === "cultural_dining"
+      resolvedVenueIntent === "cultural_restaurant"
         ? `Best for authentic ${country.name} dining rather than a guaranteed watch party.`
         : `Likely ${country.name} supporters gather here during marquee matches.`,
     imageUrls: imageSet(index + country.slug.length),
@@ -464,7 +464,7 @@ type VenueCredibilityOverride = {
   sourceNote?: string;
   sourceConfidence?: number;
   gameDayScore?: number;
-  venueIntent?: VenueIntentKey;
+  venueIntent?: LegacyVenueIntentKey;
   showsSoccer?: boolean;
 };
 
