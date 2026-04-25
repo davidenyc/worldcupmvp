@@ -17,6 +17,7 @@ function getCountryName(countries: CountrySummary[], slug: string | null) {
 function isNeutralSportsBar(venue: RankedVenue) {
   return (
     venue.venueIntent === "sports_bar" ||
+    venue.venueIntent === "bar_with_tv" ||
     (venue.venueTypes as string[]).includes("sports_bar")
   ) && !venue.likelySupporterCountry;
 }
@@ -48,11 +49,11 @@ export function MapResultsPanel({
   if (!venues.length) {
     return (
       <div className="flex min-h-[42vh] flex-col items-center justify-center px-6 py-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#eef4ff] text-5xl shadow-inner">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-5xl">
           <CountryFlag country={emptyCountry} size="lg" />
         </div>
-        <h3 className="mt-6 text-2xl font-semibold text-[#0a1628] dark:text-white">No spots found</h3>
-        <p className="mt-2 max-w-xs text-sm leading-6 text-[#0a1628]/55 dark:text-white/55">
+        <h3 className="mt-6 text-2xl font-semibold text-white">No spots found</h3>
+        <p className="mt-2 max-w-xs text-sm leading-6 text-white/55">
           Try a different city or clear a filter to see results.
         </p>
         <button
@@ -106,43 +107,43 @@ export function MapResultsPanel({
             key={venue.id}
             type="button"
             onClick={() => onSelect(venue)}
-            className={`group w-full rounded-2xl border border-[#d8e3f5] border-l-4 border-l-transparent bg-white p-3 text-left shadow-sm transition sm:p-4 dark:border-white/8 dark:bg-[#1c2330] ${
+            className={`group w-full rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition sm:p-4 ${
               selected
-                ? "border-[#f4b942] border-l-[#f4b942] bg-[#eef4ff] dark:border-[#f4b942] dark:bg-[#1c2330]"
-                : "hover:border-[#cdd9ef] hover:bg-[#f8fbff] dark:hover:border-white/20 dark:hover:bg-[#1f2836]"
+                ? "border-white/20 bg-white/[0.06]"
+                : "hover:border-white/15 hover:bg-white/[0.05]"
             }`}
           >
             <div className="flex items-start gap-3 transition">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/8">
                 {neutralSportsBar ? <span className="text-sm leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="font-semibold text-[#0a1628] dark:text-white">{venue.name}</div>
+                  <div className="font-semibold text-white">{venue.name}</div>
                   <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${intent.className}`}>
                     {intent.label}
                   </span>
                 </div>
-                <div className="mt-1 text-sm text-[#0a1628]/55 dark:text-white/55">{venue.neighborhood}</div>
-                <div className="mt-1 text-xs text-[#0a1628]/40 dark:text-white/40">
+                <div className="mt-1 text-sm text-white/58">{venue.neighborhood}</div>
+                <div className="mt-1 text-xs text-white/42">
                   {neutralSportsBar ? "Mixed crowd" : countryName ?? venue.borough}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2.5 text-sm">
-                  <span className="inline-flex items-center gap-1 text-[#0a1628]/75 dark:text-white/75">
+                  <span className="inline-flex items-center gap-1 text-white/78">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     {Number(venue.rating ?? 0).toFixed(1)}
-                    <span className="text-xs text-[#0a1628]/40 dark:text-white/40">({reviewCountLabel})</span>
+                    <span className="text-xs text-white/40">({reviewCountLabel})</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[#0a1628]/75 dark:text-white/75">
-                    <span className={`h-2.5 w-2.5 rounded-full ${venue.acceptsReservations ? "bg-emerald-500" : "bg-[#0a1628]/30"}`} />
+                  <span className="inline-flex items-center gap-1 text-white/78">
+                    <span className={`h-2.5 w-2.5 rounded-full ${venue.acceptsReservations ? "bg-emerald-500" : "bg-white/20"}`} />
                     {reservationsLabel}
                   </span>
                   {primaryVenueType ? (
-                    <span className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/40 dark:text-white/40">
+                    <span className="text-xs uppercase tracking-[0.18em] text-white/40">
                       {toTitleCase(primaryVenueType.replace(/_/g, " "))}
                     </span>
                   ) : null}
-                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${venue.openNow ? "text-emerald-600 dark:text-emerald-400" : "text-[#0a1628]/45 dark:text-white/45"}`}>
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${venue.openNow ? "text-emerald-400" : "text-white/45"}`}>
                     <Clock3 className="h-3.5 w-3.5" />
                     {venue.openNow ? "Open now" : "Hours vary"}
                   </span>
@@ -151,7 +152,7 @@ export function MapResultsPanel({
                       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                       : soccerAtmosphere === "Medium"
                         ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                        : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-white/70"
+                        : "bg-white/10 text-white/72"
                   }`}>
                     {soccerAtmosphere} atmosphere
                   </span>
@@ -160,7 +161,7 @@ export function MapResultsPanel({
                   <Link
                     href={`/venue/${venue.slug}`}
                     onClick={(event) => event.stopPropagation()}
-                    className="inline-flex items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] sm:text-xs dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-white/10 sm:text-xs"
                   >
                     Details
                   </Link>
@@ -173,7 +174,7 @@ export function MapResultsPanel({
                       className={`inline-flex items-center justify-center rounded-full px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
                         secondaryAction.highlight
                           ? "bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]"
-                          : "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f8fbff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                          : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
                       }`}
                     >
                       {secondaryAction.label}
@@ -185,7 +186,7 @@ export function MapResultsPanel({
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center justify-center rounded-full border border-[#d8e3f5] bg-white px-3 py-2 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#f8fbff] sm:text-xs dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                      className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-white/10 sm:text-xs"
                     >
                       Directions
                     </a>

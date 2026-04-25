@@ -20,6 +20,10 @@ import {
 export type GooglePlacesSearchParams = VenueSearchParams & {
   cityLat?: number;
   cityLng?: number;
+  cacheKey?: string;
+  queryOverrides?: string[];
+  searchCountrySlug?: string | null;
+  verifiedCountryOnly?: boolean;
 };
 
 type GooglePlace = {
@@ -74,8 +78,11 @@ function venueTypesFromGoogleTypes(types: string[] = []) {
 }
 
 function venueIntentFromTypes(types: VenueTypeKey[]): VenueIntentKey {
-  if (types.includes("bar") || types.includes("lounge") || types.includes("supporter_club")) {
+  if (types.includes("supporter_club")) {
     return "sports_bar";
+  }
+  if (types.includes("bar") || types.includes("lounge")) {
+    return "bar_with_tv";
   }
   return "cultural_restaurant";
 }
@@ -100,22 +107,12 @@ function calculateGameDayScore(rating?: number, reviewCount?: number, intent: Ve
       ? 1.5
       : intent === "sports_bar"
         ? 1.25
+        : intent === "bar_with_tv"
+          ? 0.65
         : intent === "cultural_bar"
           ? 0.8
           : 0.15;
   return Math.min(10, Math.max(3.5, 4.2 + ratingBoost + reviewBoost + intentBoost));
-}
-
-function buildSearchQueries(params: GooglePlacesSearchParams, cityLabel?: string, cityCountry?: string) {
-  const resolvedLabel = cityLabel ?? params.city ?? "city";
-  const countryName = params.countrySlug ? countryNameBySlug.get(params.countrySlug) ?? params.countrySlug : "country";
-  const english = `${countryName} bar restaurant soccer watch party ${resolvedLabel}`;
-
-  if (cityCountry === "mexico") {
-    return [english, `${countryName} bar restaurante futbol ver partido ${resolvedLabel}`];
-  }
-
-  return [english];
 }
 
 async function fetchGooglePlacesForQuery(params: GooglePlacesSearchParams, textQuery: string): Promise<Venue[]> {
@@ -180,7 +177,10 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
   }
 
   const venueTypes = venueTypesFromGoogleTypes(place.types ?? []);
-  const classification = classifyPlaceForCountry(place, params.countrySlug ?? "");
+  const classification = classifyPlaceForCountry(place, params.searchCountrySlug ?? params.countrySlug ?? null);
+  if (params.verifiedCountryOnly && params.searchCountrySlug && classification.likelySupporterCountry !== params.searchCountrySlug) {
+    return null;
+  }
   const venueIntent = classification.venueIntent || venueIntentFromTypes(venueTypes);
   const reviewCount = place.userRatingCount ?? 0;
   const rating = place.rating ?? 4;
@@ -225,6 +225,8 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     atmosphereTags: (
       venueIntent === "cultural_restaurant"
         ? ["casual", "authentic-food"]
+        : venueIntent === "bar_with_tv"
+          ? ["casual", "watch-party"]
         : venueIntent === "cultural_bar"
           ? ["authentic-food", "casual", "watch-party"]
           : ["watch-party", "loud", "big-groups"]
@@ -235,7 +237,7 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     rating,
     reviewCount,
     numberOfScreens:
-      venueIntent === "fan_fest" ? 8 : venueIntent === "sports_bar" ? 5 : venueIntent === "cultural_bar" ? 3 : 1,
+      venueIntent === "fan_fest" ? 8 : venueIntent === "sports_bar" ? 5 : venueIntent === "bar_with_tv" ? 3 : venueIntent === "cultural_bar" ? 3 : 1,
     hasProjector: venueIntent === "sports_bar" || venueIntent === "fan_fest",
     hasOutdoorViewing: venueIntent !== "cultural_restaurant" && venueTypes.includes("bar"),
     familyFriendly: venueIntent === "cultural_restaurant" || venueTypes.includes("cafe") || venueTypes.includes("bakery"),
@@ -256,7 +258,9 @@ function buildVenueFromGooglePlace(params: GooglePlacesSearchParams, place: Goog
     verificationStatus: "imported",
     isRealVenue: true,
     isFeatured: gameDayScore >= 8,
-    isOfficialFanHub: venueIntent === "fan_fest" || (gameDayScore >= 8.7 && venueIntent !== "cultural_restaurant"),
+    isOfficialFanHub:
+      venueIntent === "fan_fest" ||
+      (gameDayScore >= 8.7 && (venueIntent === "sports_bar" || venueIntent === "cultural_bar")),
     gameDayScore,
     fanLikelihoodScore: Math.min(10, gameDayScore + (countrySlug ? 0.8 : 0.25)),
     editorialBoost: 0.15,
@@ -276,14 +280,14 @@ export async function searchGooglePlacesVenues(params: GooglePlacesSearchParams)
   const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim();
   const resolvedCity = getHostCity(params.city);
   const cityKey = slugify(resolvedCity?.key ?? params.city ?? "");
-  const countrySlug = params.countrySlug?.trim();
+  const cacheKey = (params.cacheKey ?? params.countrySlug)?.trim();
 
-  if (!cityKey || !countrySlug) {
+  if (!cityKey || !cacheKey) {
     return [];
   }
 
-  const fresh = await isFreshPlacesCache(cityKey, countrySlug);
-  const cached = fresh ? await readPlacesCache(cityKey, countrySlug) : null;
+  const fresh = await isFreshPlacesCache(cityKey, cacheKey);
+  const cached = fresh ? await readPlacesCache(cityKey, cacheKey) : null;
   if (cached !== null) {
     return cached;
   }
@@ -293,7 +297,11 @@ export async function searchGooglePlacesVenues(params: GooglePlacesSearchParams)
     return [];
   }
 
-  const queries = buildSearchQueries(params, resolvedCity?.label, resolvedCity?.country);
+  const queries = params.queryOverrides?.length
+    ? params.queryOverrides
+    : params.countrySlug
+      ? [`${countryNameBySlug.get(params.countrySlug) ?? params.countrySlug} ${resolvedCity?.label ?? params.city ?? "city"}`]
+      : [];
   const resultsById = new Map<string, Venue>();
 
   for (const query of queries) {
@@ -307,7 +315,7 @@ export async function searchGooglePlacesVenues(params: GooglePlacesSearchParams)
   }
 
   const venues = Array.from(resultsById.values());
-  await writePlacesCache(cityKey, countrySlug, venues);
+  await writePlacesCache(cityKey, cacheKey, venues);
   return venues;
 }
 

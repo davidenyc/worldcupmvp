@@ -63,6 +63,7 @@ export type AtmosphereKey =
 
 export type VenueIntentKey =
   | "sports_bar"
+  | "bar_with_tv"
   | "cultural_restaurant"
   | "cultural_bar"
   | "fan_fest";

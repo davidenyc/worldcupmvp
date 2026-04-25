@@ -23,54 +23,54 @@ export type VenueClassification = {
 const countryNameBySlug = new Map(demoCountries.map((country) => [country.slug, country.name] as const));
 
 const COUNTRY_VARIANTS: Record<string, string[]> = {
-  "algeria": ["algeria", "algerian", "algiers", "oran", "maghreb"],
-  "argentina": ["argentina", "argentine", "argentino", "buenos aires", "parrilla", "asado", "empanada", "porteno", "porteño"],
-  "australia": ["australia", "australian", "aussie", "sydney", "melbourne"],
-  "austria": ["austria", "austrian", "vienna", "viennese", "wiener"],
-  "belgium": ["belgium", "belgian", "brussels", "belgique", "belgisch", "moules", "frites"],
-  "bosnia-and-herzegovina": ["bosnia", "bosnian", "sarajevo", "herzegovina", "cevapi", "ćevapi", "burek"],
-  "brazil": ["brazil", "brazilian", "brasileiro", "brasil", "rio", "sao paulo", "são paulo", "churrascaria", "boteco", "buteco", "caipirinha"],
+  "algeria": ["algeria", "algerian", "algiers", "oran", "maghreb", "north african"],
+  "argentina": ["argentina", "argentine", "argentino", "argentinian", "parrilla", "asado", "empanada", "chimichurri", "buenos aires", "porteno", "porteño", "gaucho", "malbec", "balvanera", "palermo"],
+  "australia": ["australia", "australian", "aussie", "sydney", "melbourne", "flat white"],
+  "austria": ["austria", "austrian", "vienna", "viennese", "wiener", "viennese cafe"],
+  "belgium": ["belgium", "belgian", "belge", "belgique", "moules", "frites", "waffle", "waffles", "bxl", "bruges", "ghent", "antwerp", "liege", "trappist", "abbey ale", "saison"],
+  "bosnia-and-herzegovina": ["bosnia", "bosnian", "sarajevo", "herzegovina", "balkan", "cevapi", "ćevapi", "burek"],
+  "brazil": ["brazil", "brazilian", "brasileiro", "brasileira", "brasil", "churrascaria", "churrasco", "caipirinha", "boteco", "buteco", "ipanema", "copacabana", "rio", "rio de janeiro", "samba", "berimbau"],
   "canada": ["canada", "canadian", "montreal", "toronto", "quebec", "québec", "poutine"],
-  "c-te-d-ivoire": ["cote d'ivoire", "côte d'ivoire", "ivory coast", "ivoirian", "abidjan"],
-  "cabo-verde": ["cabo verde", "cape verde", "cape verdean", "praia", "morna"],
-  "colombia": ["colombia", "colombian", "colombiano", "bogota", "bogotá", "medellin", "medellín", "arepa", "bandeja"],
-  "congo-dr": ["dr congo", "congo dr", "congolese", "kinshasa"],
-  "croatia": ["croatia", "croatian", "zagreb", "dubrovnik", "dalmatian"],
-  "cura-ao": ["curaçao", "curacao", "willemstad", "antillean"],
-  "czechia": ["czechia", "czech", "prague", "bohemian", "pilsner"],
-  "ecuador": ["ecuador", "ecuadorian", "quito", "guayaquil", "hornado"],
-  "egypt": ["egypt", "egyptian", "cairo", "alexandria", "koshary"],
-  "england": ["england", "english", "british", "london", "manchester", "ye olde", "churchill", "shakespeare", "baker street", "fish and chips", "carragher"],
-  "france": ["france", "french", "francais", "français", "paris", "parisian", "brasserie", "bistro", "frenchette"],
-  "germany": ["germany", "german", "deutsch", "berlin", "munich", "münchen", "biergarten", "bierhaus", "brauhaus", "bratwurst", "schnitzel", "zum ", "zur "],
-  "ghana": ["ghana", "ghanaian", "accra", "kumasi", "jollof", "banku", "kelewele"],
-  "haiti": ["haiti", "haitian", "haitian", "griot", "tassot", "port-au-prince"],
-  "ir-iran": ["iran", "iranian", "persian", "tehran", "shiraz", "isfahan"],
-  "iraq": ["iraq", "iraqi", "baghdad", "mosul", "basra"],
-  "japan": ["japan", "japanese", "tokyo", "osaka", "ramen", "sushi", "izakaya", "yakitori", "sakura"],
-  "jordan": ["jordan", "jordanian", "amman", "petra", "mansaf"],
-  "korea-republic": ["korea", "korean", "seoul", "busan", "kbbq", "k-bbq", "bulgogi", "bibimbap", "soju", "kimchi"],
-  "mexico": ["mexico", "mexican", "mexicano", "mexico city", "cdmx", "oaxaca", "guadalajara", "taqueria", "taquería", "cantina"],
-  "morocco": ["morocco", "moroccan", "marocain", "casablanca", "marrakesh", "tagine", "couscous", "riad"],
-  "netherlands": ["netherlands", "dutch", "holland", "amsterdam", "rotterdam", "stroopwafel"],
-  "new-zealand": ["new zealand", "new zealander", "kiwi", "auckland", "wellington"],
-  "norway": ["norway", "norwegian", "oslo", "bergen", "aquavit"],
-  "panama": ["panama", "panamanian", "panameno", "panameño"],
-  "paraguay": ["paraguay", "paraguayan", "asuncion", "asunción"],
-  "portugal": ["portugal", "portuguese", "portugues", "português", "lisbon", "porto", "nata", "pasteis", "pastéis", "bacalhau", "fado"],
+  "c-te-d-ivoire": ["cote d'ivoire", "côte d'ivoire", "cote divoire", "cote-divoire", "ivory coast", "ivoirian", "abidjan", "ivorian"],
+  "cabo-verde": ["cabo verde", "cape verde", "cape verdean", "cape verdean", "praia", "morna", "portuguese african"],
+  "colombia": ["colombia", "colombian", "colombiano", "arepa", "bandeja", "bogota", "bogotá", "medellin", "medellín"],
+  "congo-dr": ["dr congo", "congo dr", "congolese", "kinshasa", "african"],
+  "croatia": ["croatia", "croatian", "zagreb", "dubrovnik", "dalmatian", "balkan"],
+  "cura-ao": ["curaçao", "curacao", "dutch caribbean", "caribbean", "antillean", "willemstad"],
+  "czechia": ["czech", "czechia", "bohemian", "slovak", "pilsner", "pilsener", "budvar", "kozel", "koliba", "prague", "brno", "bratislava"],
+  "ecuador": ["ecuador", "ecuadorian", "quito", "guayaquil", "hornado", "latin"],
+  "egypt": ["egypt", "egyptian", "cairo", "alexandria", "koshary", "middle eastern"],
+  "england": ["england", "english", "british", "brit", "pig n whistle", "pig & whistle", "crown", "lion", "rose", "lamb", "anchor", "red lion", "white hart", "royal oak", "george", "victoria", "winston", "churchill", "shakespeare", "chippy", "fish and chip", "ye old", "ye olde", "carragher", "beckham", "rooney", "gerrard", "baker street", "jones wood foundry", "lord's", "lords"],
+  "france": ["france", "french", "français", "francais", "brasserie", "bistro", "patisserie", "boulangerie", "cafe de", "café de", "le ", "la ", "les ", "petit paris", "paris", "parisian", "lyon", "provence", "burgundy", "bordeaux", "normandy", "alsace", "frenchette"],
+  "germany": ["german", "germany", "deutsch", "biergarten", "beer garden", "bierhaus", "bratwurst", "schnitzel", "sauerkraut", "oktoberfest", "zum ", "zur ", "haus", "berg", "münchen", "munich", "berlin", "frankfurt", "heidelberg", "bavaria", "bavarian", "brauhaus"],
+  "ghana": ["ghana", "ghanaian", "jollof", "banku", "kelewele", "accra", "kumasi", "west african"],
+  "haiti": ["haiti", "haitian", "haïtien", "griot", "tassot", "caribbean", "port-au-prince"],
+  "ir-iran": ["iran", "iranian", "persian", "tehran", "shiraz", "isfahan", "persian grill"],
+  "iraq": ["iraq", "iraqi", "baghdad", "mosul", "basra", "middle eastern"],
+  "japan": ["japan", "japanese", "nippon", "nihon", "ramen", "sushi", "izakaya", "yakitori", "tempura", "sakura", "tokyo", "osaka", "kyoto", "samurai", "ippudo", "ichiran", "katsu", "udon", "tonkatsu"],
+  "jordan": ["jordan", "jordanian", "amman", "petra", "mansaf", "levantine"],
+  "korea-republic": ["korea", "korean", "hanjeongsik", "kbbq", "k-bbq", "bulgogi", "bibimbap", "soju", "makgeolli", "jongro", "koreatown", "han ", "seoul", "busan", "kimchi"],
+  "mexico": ["mexico", "mexican", "mexicano", "mexicana", "taqueria", "taco", "cantina", "hacienda", "casa mex", "el ", "la ", "los ", "las ", "oaxaca", "jalisco", "puebla", "veracruz", "guanajuato", "cdmx"],
+  "morocco": ["morocco", "moroccan", "maroc", "marocain", "tagine", "couscous", "tajine", "souk", "mogador", "casablanca", "marrakech", "fez", "zerza", "mourad", "kasbah", "north african"],
+  "netherlands": ["netherlands", "dutch", "holland", "amsterdam", "rotterdam", "dutch caribbean", "stroopwafel"],
+  "new-zealand": ["new zealand", "new zealand cafe", "kiwi", "auckland", "wellington"],
+  "norway": ["norway", "norwegian", "oslo", "bergen", "aquavit", "scandinavian", "nordic"],
+  "panama": ["panama", "panamanian", "panameño", "panameno", "panama city", "latin american"],
+  "paraguay": ["paraguay", "paraguayan", "asuncion", "asunción", "south american"],
+  "portugal": ["portugal", "portuguese", "português", "portugues", "pastel de nata", "pasteis", "pastéis", "bacalhau", "tasca", "taberna", "fado", "lisbon", "porto", "lavrador", "joey bats", "nata"],
   "qatar": ["qatar", "qatari", "doha"],
-  "saudi-arabia": ["saudi arabia", "saudi", "saudi arabian", "riyadh", "jeddah"],
-  "scotland": ["scotland", "scottish", "glasgow", "edinburgh", "caledonia", "tartan", "whisky"],
-  "senegal": ["senegal", "senegalese", "senegalais", "sénégalais", "dakar", "teranga", "thiebou"],
+  "saudi-arabia": ["saudi arabia", "saudi", "saudi arabian", "riyadh", "jeddah", "arabic", "middle eastern"],
+  "scotland": ["scotland", "scottish", "scotch", "highlands", "highland", "thistle", "edinburgh", "glasgow", "tartan", "clan", "burns", "wallace", "braveheart", "caledonian"],
+  "senegal": ["senegal", "senegalese", "sénégalais", "senegalais", "thiebou", "teranga", "dakar", "west african"],
   "south-africa": ["south africa", "south african", "cape town", "johannesburg", "durban", "braai"],
-  "spain": ["spain", "spanish", "espanol", "español", "madrid", "barcelona", "tapas", "paella", "taberna", "bodega"],
-  "sweden": ["sweden", "swedish", "stockholm", "gothenburg", "fika"],
+  "spain": ["spain", "spanish", "español", "española", "espanol", "tapas", "paella", "sangria", "tortilla española", "bodega", "taberna", "boqueria", "mercado", "barcelona", "madrid", "sevilla", "valencia", "iberian"],
+  "sweden": ["sweden", "swedish", "stockholm", "gothenburg", "scandinavian", "fika"],
   "switzerland": ["switzerland", "swiss", "zurich", "zürich", "geneva", "fondue", "raclette"],
-  "tunisia": ["tunisia", "tunisian", "tunis", "sfax", "brik"],
-  "t-rkiye": ["turkiye", "türkiye", "turkey", "turkish", "istanbul", "ankara", "meyhane", "baklava"],
-  "uruguay": ["uruguay", "uruguayan", "montevideo", "chivito"],
-  "usa": ["usmnt", "usa soccer", "american outlaws", "yankee stadium"],
-  "uzbekistan": ["uzbek", "uzbekistan", "tashkent", "plov", "samsa"]
+  "tunisia": ["tunisia", "tunisian", "tunis", "sfax", "brik", "north african"],
+  "t-rkiye": ["turkish", "turkey", "turkiye", "türkiye", "kebab", "istanbul", "ankara", "meyhane", "baklava"],
+  "uruguay": ["uruguay", "uruguayan", "montevideo", "chivito", "south american"],
+  "usa": ["american sports bar", "american", "usmnt", "usa soccer", "american outlaws", "grill"],
+  "uzbekistan": ["uzbek", "uzbekistan", "central asian", "uzbek plov", "tashkent", "plov", "samsa"]
 };
 
 const COUNTRY_CUISINE_TYPES: Record<string, string[]> = {
@@ -119,6 +119,39 @@ const BAR_TYPES = new Set([
   "british_pub",
   "tapas_bar"
 ]);
+
+const SPORTS_BAR_NAME_PATTERNS = [
+  "sports",
+  "sport",
+  "soccer",
+  "football",
+  "football factory",
+  "world cup",
+  "watch party",
+  "fan fest",
+  "fan zone",
+  "standings",
+  "legends",
+  "smithfield",
+  "banter",
+  "soccer republic",
+  "nevada smith",
+  "mchale",
+  "kent ale house"
+];
+
+const GENERAL_BAR_NAME_PATTERNS = [
+  "bar",
+  "pub",
+  "tavern",
+  "lounge",
+  "ale house",
+  "taproom",
+  "beer hall",
+  "beer garden",
+  "brewery",
+  "cocktail"
+];
 
 const PURE_RESTAURANT_EXCLUSION_TYPES = new Set([
   "restaurant",
@@ -176,6 +209,10 @@ function hasBarSignal(types: string[]) {
   return types.some((type) => BAR_TYPES.has(type));
 }
 
+function hasRestaurantSignal(types: string[]) {
+  return types.some((type) => PURE_RESTAURANT_EXCLUSION_TYPES.has(type) || type.includes("restaurant"));
+}
+
 function isPureRestaurant(types: string[]) {
   return !hasBarSignal(types) && types.every((type) => PURE_RESTAURANT_EXCLUSION_TYPES.has(type));
 }
@@ -184,13 +221,25 @@ function hasSoccerKeyword(name: string) {
   return /(sports|bar|pub|tavern|lounge|grill|soccer|football|watch party|fan fest)/i.test(name);
 }
 
+function hasSportsBarNameSignal(name: string) {
+  return SPORTS_BAR_NAME_PATTERNS.some((pattern) => name.includes(pattern));
+}
+
+function hasGeneralBarNameSignal(name: string) {
+  return GENERAL_BAR_NAME_PATTERNS.some((pattern) => name.includes(pattern));
+}
+
 function isFanFest(name: string, types: string[]) {
   return /(fan fest|watch party|supporters club|supporter club|official fan zone|fan zone)/i.test(name) || types.includes("event_venue");
 }
 
-export function inferCountryFromPlace(place: GoogleLikePlace, searchCountry: string): CountryMatchReason {
+export function inferCountryFromPlace(place: GoogleLikePlace, searchCountry?: string | null): CountryMatchReason {
   const name = normalizeText(place.displayName?.text ?? "");
   const types = (place.types ?? []).map((type) => type.toLowerCase());
+
+  if (!searchCountry) {
+    return { kind: "none" };
+  }
 
   const variantMatch = findNameVariantMatch(name, getCountryNameVariants(searchCountry));
   if (variantMatch) {
@@ -205,29 +254,55 @@ export function inferCountryFromPlace(place: GoogleLikePlace, searchCountry: str
   return { kind: "none" };
 }
 
-export function classifyPlaceForCountry(place: GoogleLikePlace, searchCountry: string): VenueClassification {
+function classifyWithoutCountryIdentity(place: GoogleLikePlace): Pick<VenueClassification, "venueIntent" | "showsSoccer"> {
+  const types = (place.types ?? []).map((type) => type.toLowerCase());
+  const barLike = hasBarSignal(types);
+  const restaurantLike = hasRestaurantSignal(types);
+  const name = normalizeText(place.displayName?.text ?? "");
+  const sportsSpecific = hasSportsBarNameSignal(name);
+  const generalBar = hasGeneralBarNameSignal(name);
+  const venueIntent: VenueIntentKey = isFanFest(name, types)
+    ? "fan_fest"
+    : sportsSpecific
+      ? "sports_bar"
+      : barLike
+        ? "bar_with_tv"
+      : restaurantLike
+        ? "cultural_restaurant"
+        : generalBar
+          ? "bar_with_tv"
+          : "cultural_restaurant";
+  const showsSoccer =
+    venueIntent === "sports_bar" ||
+    venueIntent === "bar_with_tv" ||
+    venueIntent === "fan_fest" ||
+    (hasSoccerKeyword(name) && !isPureRestaurant(types));
+
+  return { venueIntent, showsSoccer };
+}
+
+export function classifyPlaceForCountry(place: GoogleLikePlace, searchCountry?: string | null): VenueClassification {
   const types = (place.types ?? []).map((type) => type.toLowerCase());
   const name = place.displayName?.text ?? "";
+  const resolvedCountry = searchCountry ?? null;
   const reason = inferCountryFromPlace(place, searchCountry);
   const hasCountryIdentity = reason.kind !== "none";
   const barLike = hasBarSignal(types);
+  const uncategorized = classifyWithoutCountryIdentity(place);
   const venueIntent = isFanFest(name, types)
     ? "fan_fest"
     : hasCountryIdentity
       ? barLike
         ? "cultural_bar"
         : "cultural_restaurant"
-      : barLike
-        ? "sports_bar"
-        : "cultural_restaurant";
-  const showsSoccer =
-    venueIntent === "sports_bar" ||
-    venueIntent === "fan_fest" ||
-    (hasSoccerKeyword(name) && !isPureRestaurant(types));
+      : uncategorized.venueIntent;
+  const showsSoccer = hasCountryIdentity
+    ? venueIntent === "cultural_bar" || uncategorized.showsSoccer
+    : uncategorized.showsSoccer;
 
   return {
-    likelySupporterCountry: hasCountryIdentity ? searchCountry : null,
-    associatedCountries: hasCountryIdentity ? [searchCountry] : [],
+    likelySupporterCountry: hasCountryIdentity ? resolvedCountry : null,
+    associatedCountries: hasCountryIdentity && resolvedCountry ? [resolvedCountry] : [],
     venueIntent,
     showsSoccer,
     reason
@@ -266,7 +341,7 @@ function googleishTypesFromVenue(venue: Venue) {
   return Array.from(types);
 }
 
-export function classifyCachedVenueForCountry(venue: Venue, searchCountry: string): VenueClassification {
+export function classifyCachedVenueForCountry(venue: Venue, searchCountry?: string | null): VenueClassification {
   return classifyPlaceForCountry(
     {
       displayName: { text: venue.name },
@@ -304,6 +379,10 @@ export function buildImportedVenueDescription(name: string, cityKey: string, cou
 
   if (venueIntent === "sports_bar") {
     return `${name} is a general sports bar in ${city?.label ?? cityKey}, with no verified country affiliation.`;
+  }
+
+  if (venueIntent === "bar_with_tv") {
+    return `${name} is a general bar with TVs in ${city?.label ?? cityKey}, with no verified country affiliation.`;
   }
 
   if (venueIntent === "fan_fest") {

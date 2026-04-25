@@ -25,6 +25,13 @@ function intentBanner(venueIntent: RankedVenue["venueIntent"]) {
     };
   }
 
+  if (venueIntent === "bar_with_tv") {
+    return {
+      label: "📺 Bar with TVs",
+      className: "bg-cyan-700 text-white"
+    };
+  }
+
   if (venueIntent === "cultural_bar") {
     return {
       label: "🍺 Cultural bar with match coverage",

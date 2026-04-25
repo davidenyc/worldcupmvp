@@ -25,6 +25,10 @@ const LATE_MAP_VENUE_COUNT = 110;
 const MID_MAP_REVEAL_ZOOM = 12;
 const LATE_MAP_REVEAL_ZOOM = 13;
 const FULL_MAP_REVEAL_ZOOM = 14;
+const REGIONAL_REVEAL_ZOOM = 10.6;
+const QUICK_MATCH_LIMIT = 4;
+
+type QuickMatchBucket = "today" | "tomorrow" | "upcoming";
 
 function isSportsBarVenue(venue: RankedVenue) {
   return venue.venueIntent === "sports_bar" || (venue.venueTypes as string[]).includes("sports_bar");
@@ -84,6 +88,8 @@ function getVenuePriorityScore(venue: RankedVenue, center: [number, number]) {
   const intentSignal =
     venue.venueIntent === "sports_bar"
       ? 18
+      : venue.venueIntent === "bar_with_tv"
+        ? 12
       : venue.venueIntent === "fan_fest"
         ? 17
         : venue.venueIntent === "cultural_bar"
@@ -249,9 +255,36 @@ function parseBooleanParam(value: string | null) {
   return value === "1" || value === "true";
 }
 
+function isSameLocalDay(date: Date, compare: Date) {
+  return (
+    date.getFullYear() === compare.getFullYear() &&
+    date.getMonth() === compare.getMonth() &&
+    date.getDate() === compare.getDate()
+  );
+}
+
+function addDays(date: Date, days: number) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function getQuickMatchBuckets(matches: WorldCupMatch[], now: Date) {
+  const upcomingMatches = matches
+    .filter((match) => Date.parse(match.startsAt) >= now.getTime())
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  const tomorrow = addDays(now, 1);
+
+  return {
+    today: upcomingMatches.filter((match) => isSameLocalDay(new Date(match.startsAt), now)).slice(0, QUICK_MATCH_LIMIT),
+    tomorrow: upcomingMatches.filter((match) => isSameLocalDay(new Date(match.startsAt), tomorrow)).slice(0, QUICK_MATCH_LIMIT),
+    upcoming: upcomingMatches.slice(0, QUICK_MATCH_LIMIT)
+  };
+}
+
 function parseIntentParam(value: string | null) {
   const parsed = parseCsvParam(value).filter((item): item is VenueIntentKey =>
-    ["sports_bar", "cultural_restaurant", "cultural_bar", "fan_fest"].includes(item)
+    ["sports_bar", "bar_with_tv", "cultural_restaurant", "cultural_bar", "fan_fest"].includes(item)
   );
   return parsed.length ? parsed : defaultVenueIntents;
 }
@@ -366,6 +399,9 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const [mobileResultsOpen, setMobileResultsOpen] = useState(false);
   const [desktopResultsExpanded, setDesktopResultsExpanded] = useState(false);
   const [showAllMapVenues, setShowAllMapVenues] = useState(false);
+  const [quickMatchBucket, setQuickMatchBucket] = useState<QuickMatchBucket>("upcoming");
+  const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
+  const [mobileGamesPage, setMobileGamesPage] = useState(0);
   const countryLookup = useMemo(
     () => new Map(data.countries.map((country) => [country.slug, country] as const)),
     [data.countries]
@@ -492,8 +528,8 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     sortKey !== "matchday"
   ].filter(Boolean).length;
 
-  const filteredVenues = useMemo(() => {
-    const filtered = data.venues.filter((venue) => {
+  const filterVenues = (venues: RankedVenue[]) => {
+    const filtered = venues.filter((venue) => {
       if (selectedCountrySlugs.length && !venue.associatedCountries.some((slug) => selectedCountrySlugs.includes(slug))) return false;
       if (selectedVenueIntents.length && !selectedVenueIntents.includes(venue.venueIntent)) return false;
       if (soccerBarsMode && !(isSportsBarVenue(venue) && venue.showsSoccer)) return false;
@@ -536,11 +572,32 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     }
 
     return sorted;
-  }, [
+  };
+
+  const filteredVenues = useMemo(() => filterVenues(data.venues), [
     acceptsReservations,
     borough,
     capacityBucket,
     data.venues,
+    deferredQuery,
+    familyFriendly,
+    highAtmosphereOnly,
+    mapCenter,
+    neighborhood,
+    openNowOnly,
+    outdoorSeating,
+    selectedCountrySlugs,
+    selectedVenueIntents,
+    soccerBarsMode,
+    sortKey,
+    venueType
+  ]);
+
+  const regionalFilteredVenues = useMemo(() => filterVenues(data.regionalVenues), [
+    acceptsReservations,
+    borough,
+    capacityBucket,
+    data.regionalVenues,
     deferredQuery,
     familyFriendly,
     highAtmosphereOnly,
@@ -598,31 +655,46 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     venueType
   ]);
 
+  useEffect(() => {
+    if (!citySelectorOpen) return;
+    setFilterDrawerOpen(false);
+    setMobileResultsOpen(false);
+  }, [citySelectorOpen]);
+
+  const shouldShowRegionalVenues = mapZoom <= REGIONAL_REVEAL_ZOOM && regionalFilteredVenues.length > 0;
+  const candidateMapVenues = useMemo(
+    () =>
+      shouldShowRegionalVenues
+        ? [...filteredVenues, ...regionalFilteredVenues]
+        : filteredVenues,
+    [filteredVenues, regionalFilteredVenues, shouldShowRegionalVenues]
+  );
+
   const mapRevealCount = showAllMapVenues
-    ? filteredVenues.length
+    ? candidateMapVenues.length
     : mapZoom >= FULL_MAP_REVEAL_ZOOM
-      ? filteredVenues.length
+      ? candidateMapVenues.length
       : mapZoom >= LATE_MAP_REVEAL_ZOOM
         ? LATE_MAP_VENUE_COUNT
-        : mapZoom >= MID_MAP_REVEAL_ZOOM
+      : mapZoom >= MID_MAP_REVEAL_ZOOM
           ? MID_MAP_VENUE_COUNT
           : INITIAL_MAP_VENUE_COUNT;
 
   const prioritizedMapVenues = useMemo(
     () =>
       pickDistributedVenues(
-        filteredVenues,
-        Math.min(mapRevealCount, filteredVenues.length),
+        candidateMapVenues,
+        Math.min(mapRevealCount, candidateMapVenues.length),
         mapCenter,
         mapZoom,
         selectedVenue?.id
       ),
-    [filteredVenues, mapCenter, mapRevealCount, mapZoom, selectedVenue?.id]
+    [candidateMapVenues, mapCenter, mapRevealCount, mapZoom, selectedVenue?.id]
   );
 
   const mapVenues = useMemo(() => prioritizedMapVenues, [prioritizedMapVenues]);
   const displayedVenues = filteredVenues;
-  const canToggleShowAllMapVenues = filteredVenues.length > INITIAL_MAP_VENUE_COUNT;
+  const canToggleShowAllMapVenues = candidateMapVenues.length > INITIAL_MAP_VENUE_COUNT;
 
   const comparisonBannerCountries =
     selectedCountrySlugs.length >= 2
@@ -640,6 +712,37 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
         .slice(0, 8),
     [city]
   );
+
+  const quickMatchBuckets = useMemo(
+    () => getQuickMatchBuckets(cityMatches, new Date()),
+    [cityMatches]
+  );
+
+  const quickMatchOptions = useMemo(
+    () =>
+      [
+        { key: "today", label: "Today's games", matches: quickMatchBuckets.today },
+        { key: "tomorrow", label: "Tomorrow's games", matches: quickMatchBuckets.tomorrow },
+        { key: "upcoming", label: "Popular upcoming", matches: quickMatchBuckets.upcoming }
+      ] as Array<{ key: QuickMatchBucket; label: string; matches: WorldCupMatch[] }>,
+    [quickMatchBuckets]
+  );
+
+  const activeQuickMatchOption =
+    quickMatchOptions.find((option) => option.key === quickMatchBucket && option.matches.length > 0) ??
+    quickMatchOptions.find((option) => option.matches.length > 0) ??
+    null;
+
+  useEffect(() => {
+    if (!activeQuickMatchOption) return;
+    if (activeQuickMatchOption.key !== quickMatchBucket) {
+      setQuickMatchBucket(activeQuickMatchOption.key);
+    }
+  }, [activeQuickMatchOption, quickMatchBucket]);
+
+  useEffect(() => {
+    setMobileGamesPage(0);
+  }, [quickMatchBucket, mobileGamesOpen]);
 
   const topCountries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -662,6 +765,12 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
       return null;
     });
   }, [displayedVenues]);
+
+  useEffect(() => {
+    if (filterDrawerOpen || mobileResultsOpen || selectedVenue || citySelectorOpen) {
+      setMobileGamesOpen(false);
+    }
+  }, [citySelectorOpen, filterDrawerOpen, mobileResultsOpen, selectedVenue]);
 
   const visibleNeighborhoods = useMemo(
     () => Array.from(new Set(filteredVenues.map((venue) => venue.neighborhood))).sort(),
@@ -701,6 +810,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const handleSelectVenue = (venue: RankedVenue) => {
     setSelectedVenue(venue);
     setCitySelectorOpen(false);
+    setMobileGamesOpen(false);
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -759,10 +869,28 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     });
   };
 
+  const clearCountryFilters = () => {
+    setSelectedCountrySlugs([]);
+  };
+
   const handleApplyMatch = (match: WorldCupMatch) => {
-    setSelectedCountrySlugs([match.homeCountry, match.awayCountry]);
+    const nextCountries = [match.homeCountry, match.awayCountry];
+    const isSameMatchSelection =
+      selectedCountrySlugs.length === 2 &&
+      selectedCountrySlugs[0] === nextCountries[0] &&
+      selectedCountrySlugs[1] === nextCountries[1];
+
+    if (isSameMatchSelection) {
+      clearCountryFilters();
+      setMobileGamesOpen(false);
+      setFilterDrawerOpen(false);
+      return;
+    }
+
+    setSelectedCountrySlugs(nextCountries);
     setSoccerBarsMode(false);
     setFilterDrawerOpen(false);
+    setMobileGamesOpen(false);
     router.replace(`/${city}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`, { scroll: false });
   };
 
@@ -776,29 +904,31 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const resultsPanel = (
     <div className="space-y-3">
       {canToggleShowAllMapVenues ? (
-        <div className="rounded-2xl border border-[#d7dce8] bg-[#edf3ff] px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/8 dark:text-white">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
           <div>
             {showAllMapVenues
-              ? `Showing all ${filteredVenues.length} spots on the map right now.`
+              ? `Showing all ${candidateMapVenues.length} spots on the map right now.`
               : `Showing ${mapVenues.length} spots on the map right now.`}
           </div>
-          <div className="mt-1 text-xs font-normal text-[#0a1628]/65 dark:text-white/65">
+          <div className="mt-1 text-xs font-normal text-white/60">
             {showAllMapVenues
               ? "Too crowded? Switch back to a lighter map view any time."
-              : `Zoom in to reveal more, or show all ${filteredVenues.length} now.`}
+              : shouldShowRegionalVenues
+                ? `Regional host-city spots are in view. Show all ${candidateMapVenues.length} now if you want the full spread.`
+                : `Zoom in to reveal more, or show all ${candidateMapVenues.length} now.`}
           </div>
         </div>
       ) : null}
       {comparisonBannerCountries.length === 2 ? (
-        <div className="rounded-2xl border border-[#d7dce8] bg-[#edf3ff] px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/8 dark:text-white">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
           <div className="flex items-center gap-2">
             <span className="text-lg">{comparisonBannerCountries[0]?.flagEmoji ?? "🏁"}</span>
             <span>{comparisonBannerCountries[0]?.name}</span>
-            <span className="text-[#0a1628]/40 dark:text-white/40">vs</span>
+            <span className="text-white/40">vs</span>
             <span className="text-lg">{comparisonBannerCountries[1]?.flagEmoji ?? "🏁"}</span>
             <span>{comparisonBannerCountries[1]?.name}</span>
           </div>
-          <div className="mt-1 text-xs font-normal text-[#0a1628]/65 dark:text-white/65">Watching spots for both sets of fans</div>
+          <div className="mt-1 text-xs font-normal text-white/60">Watching spots for both sets of fans</div>
         </div>
       ) : null}
       <MapResultsPanel
@@ -837,9 +967,10 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
         onOpenResults={() => setMobileResultsOpen(true)}
         mobileResultsOpen={mobileResultsOpen}
         onCloseResults={() => setMobileResultsOpen(false)}
-        hideMobileResultsButton={Boolean(selectedVenue) || filterDrawerOpen || mobileResultsOpen}
+        hideMobileResultsButton={Boolean(selectedVenue) || filterDrawerOpen || mobileResultsOpen || mobileGamesOpen}
         desktopResultsExpanded={desktopResultsExpanded}
         onDesktopResultsExpandedChange={setDesktopResultsExpanded}
+        hideDesktopResults={citySelectorOpen}
         map={
           <div className="relative h-full">
             <NYCFlagPinMap
@@ -890,18 +1021,38 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCitySelectorOpen((current) => !current)}
+                  onClick={() =>
+                    setCitySelectorOpen((current) => {
+                      const next = !current;
+                      if (next) {
+                        setFilterDrawerOpen(false);
+                        setMobileResultsOpen(false);
+                        setMobileGamesOpen(false);
+                      }
+                      return next;
+                    })
+                  }
                   className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
                 >
                   📍 {selectedCityConfig.label} ▾
                 </button>
                 {hasActiveFilters ? (
-                  <span className="inline-flex items-center rounded-full bg-[#f4b942] px-3 py-2 text-xs font-bold text-[#0a1628] shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedCountrySlugs.length > 0) {
+                        clearCountryFilters();
+                      } else {
+                        clearAllFilters();
+                      }
+                    }}
+                    className="inline-flex items-center rounded-full bg-[#f4b942] px-3 py-2 text-xs font-bold text-[#0a1628] shadow-lg"
+                  >
                     {selectedCountrySlugs.length > 0
                       ? selectedCountrySlugs.map((slug) => countryLookup.get(slug)?.flagEmoji ?? slug).join(" ")
                       : "Filtered"}
                     {` · ${filteredVenues.length} spots`}
-                  </span>
+                  </button>
                 ) : null}
               </div>
 
@@ -921,7 +1072,10 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
 
               <button
                 type="button"
-                onClick={() => setFilterDrawerOpen(true)}
+                onClick={() => {
+                  setMobileGamesOpen(false);
+                  setFilterDrawerOpen(true);
+                }}
                 className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
               >
                 ⚙ Filters{hasActiveFilters ? ` · ${activeFilterCount}` : ""}
@@ -933,12 +1087,93 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                   onClick={handleToggleShowAllMapVenues}
                   className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
                 >
-                  {showAllMapVenues ? "Show fewer" : "Show all"}
+                  {showAllMapVenues ? "Show fewer" : shouldShowRegionalVenues ? "Show all regional" : "Show all"}
                 </button>
+              ) : null}
+
+              {activeQuickMatchOption ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCitySelectorOpen(false);
+                      setFilterDrawerOpen(false);
+                      setMobileResultsOpen(false);
+                      setMobileGamesOpen((current) => !current);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                  >
+                    🏟 Games
+                  </button>
+
+                  <div className="hidden w-[min(92vw,22rem)] rounded-2xl border border-[#d8e3f5] bg-white/95 p-3 text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
+                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/55 dark:text-white">
+                      Games
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {quickMatchOptions.map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => setQuickMatchBucket(option.key)}
+                          disabled={!option.matches.length}
+                          className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                            option.key === activeQuickMatchOption.key
+                              ? "bg-[#f4b942] text-[#0a1628]"
+                              : option.matches.length
+                                ? "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                                : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35 dark:border-white/10 dark:bg-white/5 dark:text-white/35"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {activeQuickMatchOption.matches.map((match) => {
+                        const home = countryLookup.get(match.homeCountry);
+                        const away = countryLookup.get(match.awayCountry);
+
+                        return (
+                          <button
+                            key={match.id}
+                            type="button"
+                            onClick={() => handleApplyMatch(match)}
+                            className="w-full rounded-2xl border border-[#d8e3f5] bg-white px-3 py-3 text-left transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                          >
+                            <div className="text-sm font-semibold text-[#0a1628] dark:text-white">
+                              <span className="inline-flex items-center gap-1">
+                                <span>{home?.flagEmoji ?? "🏁"}</span>
+                                <span>{home?.name ?? match.homeCountry}</span>
+                              </span>
+                              <span className="mx-2 text-[#0a1628]/40 dark:text-white">vs</span>
+                              <span className="inline-flex items-center gap-1">
+                                <span>{away?.flagEmoji ?? "🏁"}</span>
+                                <span>{away?.name ?? match.awayCountry}</span>
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
+                              {new Date(match.startsAt).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                timeZone: "America/New_York"
+                              })}{" "}
+                              ET
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </>
               ) : null}
             </div>
 
-            {!hasActiveFilters && filteredVenues.length > 0 && !selectedVenue ? (
+            {!hasActiveFilters && filteredVenues.length > 0 && !selectedVenue && !mobileGamesOpen ? (
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:bottom-4">
                 {showAllMapVenues || !canToggleShowAllMapVenues
                   ? "All spots visible"
@@ -948,6 +1183,93 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
           </div>
         }
       />
+
+      {activeQuickMatchOption && mobileGamesOpen ? (
+        <div className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 lg:hidden">
+          <div className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#161b22]/96 text-white shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2 px-2 py-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const available = quickMatchOptions.filter((option) => option.matches.length > 0);
+                  const currentIndex = available.findIndex((option) => option.key === activeQuickMatchOption.key);
+                  const next = available[(currentIndex + 1) % available.length];
+                  if (next) setQuickMatchBucket(next.key);
+                }}
+                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold text-white"
+              >
+                {activeQuickMatchOption.label}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileGamesPage((current) => Math.max(0, current - 1))}
+                disabled={mobileGamesPage === 0}
+                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white disabled:opacity-35"
+              >
+                ←
+              </button>
+
+              <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+                {activeQuickMatchOption.matches
+                  .slice(mobileGamesPage * 2, mobileGamesPage * 2 + 2)
+                  .map((match) => {
+                    const home = countryLookup.get(match.homeCountry);
+                    const away = countryLookup.get(match.awayCountry);
+
+                    return (
+                      <button
+                        key={match.id}
+                        type="button"
+                        onClick={() => handleApplyMatch(match)}
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-2.5 py-2 text-left transition hover:bg-white/10"
+                      >
+                        <div className="truncate text-[12px] font-semibold text-white">
+                          <span>{home?.flagEmoji ?? "🏁"}</span>
+                          <span className="mx-1">{home?.name ?? match.homeCountry}</span>
+                          <span className="text-white/40">vs</span>
+                          <span className="ml-1">{away?.flagEmoji ?? "🏁"}</span>
+                        </div>
+                        <div className="mt-1 truncate text-[10px] text-white/65">
+                          {new Date(match.startsAt).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                            timeZone: "America/New_York"
+                          })}{" "}
+                          ET
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileGamesPage((current) => {
+                    const maxPage = Math.max(0, Math.ceil(activeQuickMatchOption.matches.length / 2) - 1);
+                    return Math.min(maxPage, current + 1);
+                  })
+                }
+                disabled={mobileGamesPage >= Math.max(0, Math.ceil(activeQuickMatchOption.matches.length / 2) - 1)}
+                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white disabled:opacity-35"
+              >
+                →
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileGamesOpen(false)}
+                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] font-semibold text-white"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <FilterDrawer
         open={filterDrawerOpen}

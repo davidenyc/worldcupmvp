@@ -1,6 +1,7 @@
 import "server-only";
 
 import { demoBoroughs, demoNeighborhoods } from "@/lib/data/demo";
+import { HOST_CITIES } from "@/lib/data/hostCities";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { dedupeVenues } from "@/lib/data/dedupe";
 import { getCachedProviderResult, getActiveVenueProvider } from "@/lib/providers";
@@ -9,6 +10,47 @@ import { CountryFilters, CountrySortKey, RankedVenue } from "@/lib/types";
 
 function isSportsBarVenue(venue: { venueIntent: string; venueTypes: string[] }) {
   return venue.venueIntent === "sports_bar" || venue.venueTypes.includes("sports_bar");
+}
+
+const REGIONAL_CITY_RADIUS_MILES = 260;
+
+function toRadians(value: number) {
+  return (value * Math.PI) / 180;
+}
+
+function getDistanceMiles(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+) {
+  const earthRadiusMiles = 3958.8;
+  const dLat = toRadians(to.lat - from.lat);
+  const dLng = toRadians(to.lng - from.lng);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(from.lat)) *
+      Math.cos(toRadians(to.lat)) *
+      Math.sin(dLng / 2) ** 2;
+  return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getRegionalCityKeys(city: string) {
+  const currentCity = HOST_CITIES.find((item) => item.key === city);
+  if (!currentCity) return [];
+
+  return HOST_CITIES.filter((candidate) => candidate.key !== city)
+    .filter(
+      (candidate) =>
+        candidate.country === currentCity.country &&
+        getDistanceMiles(currentCity, candidate) <= REGIONAL_CITY_RADIUS_MILES
+    )
+    .map((candidate) => candidate.key);
+}
+
+function rankVenueSet(venues: Awaited<ReturnType<ReturnType<typeof getActiveVenueProvider>["listVenues"]>>) {
+  const deduped = dedupeVenues(venues);
+  return deduped
+    .map((venue) => rankVenues([venue], { countrySlug: venue.likelySupporterCountry ?? "" })[0])
+    .sort((a, b) => b.rankScore - a.rankScore);
 }
 
 export async function getFeaturedCountries() {
@@ -27,21 +69,20 @@ export async function getAllCountries() {
 export async function getMapPageData(city = "nyc") {
   const provider = getActiveVenueProvider();
   return getCachedProviderResult(`map-page:${city}`, async () => {
-    const [countries, venues] = await Promise.all([
+    const regionalCityKeys = getRegionalCityKeys(city);
+    const [countries, venues, regionalVenueGroups] = await Promise.all([
       provider.listCountries(),
-      provider.listVenues({ city })
+      provider.listVenues({ city }),
+      Promise.all(regionalCityKeys.map((regionalCity) => provider.listVenues({ city: regionalCity })))
     ]);
 
-    const deduped = dedupeVenues(venues);
-    const ranked = deduped
-      .map((venue) =>
-        rankVenues([venue], { countrySlug: venue.likelySupporterCountry ?? "" })[0]
-      )
-      .sort((a, b) => b.rankScore - a.rankScore);
+    const ranked = rankVenueSet(venues);
+    const regionalVenues = rankVenueSet(regionalVenueGroups.flat());
 
     return {
       countries,
       venues: ranked,
+      regionalVenues,
       neighborhoods: Array.from(new Set(ranked.map((venue) => venue.neighborhood))).sort()
     };
   });

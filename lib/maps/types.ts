@@ -50,6 +50,7 @@ export type MapSortKey =
 export interface MapPageData {
   countries: CountrySummary[];
   venues: RankedVenue[];
+  regionalVenues: RankedVenue[];
   neighborhoods: string[];
 }
 

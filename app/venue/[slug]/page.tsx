@@ -281,6 +281,8 @@ export default async function VenuePage({
                 ? "🏆 Fan Fest"
                 : venue.venueIntent === "sports_bar"
                   ? "⚽ Sports bar"
+                  : venue.venueIntent === "bar_with_tv"
+                    ? "📺 Bar with TVs"
                   : venue.venueIntent === "cultural_bar"
                     ? "🍺 Cultural bar"
                     : "🍽️ Cultural restaurant";

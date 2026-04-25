@@ -128,6 +128,62 @@ export function SiteHeader() {
         </div>
       </div>
 
+      <div className="container-shell pb-3 md:hidden">
+        <nav className="flex items-center gap-2 overflow-x-auto">
+          <Link
+            href="/"
+            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              pathname === "/"
+                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            }`}
+          >
+            Home
+          </Link>
+          <Link
+            href={mapHref}
+            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              pathname?.includes("/map")
+                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            }`}
+          >
+            Map
+          </Link>
+          <Link
+            href={matchesHref}
+            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              pathname?.includes("/matches")
+                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            }`}
+          >
+            Matches
+          </Link>
+          <Link
+            href="/saved"
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              pathname === "/saved"
+                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            }`}
+          >
+            <Heart className="h-3.5 w-3.5" />
+            Saved
+          </Link>
+          <Link
+            href="/submit"
+            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+              pathname === "/submit"
+                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            }`}
+          >
+            Submit
+          </Link>
+        </nav>
+      </div>
+
       {open && (
         <>
           <div

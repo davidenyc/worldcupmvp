@@ -8,6 +8,7 @@ export type LegacyVenueIntentKey =
 
 export const DEFAULT_GAMES_FOCUSED_VENUE_INTENTS: VenueIntentKey[] = [
   "sports_bar",
+  "bar_with_tv",
   "cultural_bar",
   "fan_fest"
 ];
@@ -16,6 +17,8 @@ export function normalizeVenueIntent(value: string | null | undefined): VenueInt
   switch (value) {
     case "sports_bar":
       return "sports_bar";
+    case "bar_with_tv":
+      return "bar_with_tv";
     case "fan_fest":
     case "watch_party":
       return "fan_fest";
@@ -31,7 +34,7 @@ export function normalizeVenueIntent(value: string | null | undefined): VenueInt
 }
 
 export function isGamesFocusedVenueIntent(intent: VenueIntentKey) {
-  return intent === "sports_bar" || intent === "cultural_bar" || intent === "fan_fest";
+  return intent === "sports_bar" || intent === "bar_with_tv" || intent === "cultural_bar" || intent === "fan_fest";
 }
 
 export function getVenueIntentMeta(intent: VenueIntentKey, countryName?: string | null) {
@@ -41,6 +44,12 @@ export function getVenueIntentMeta(intent: VenueIntentKey, countryName?: string 
         label: "⚽ Sports Bar",
         className:
           "border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300"
+      };
+    case "bar_with_tv":
+      return {
+        label: "📺 Bar with TVs",
+        className:
+          "border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-500/20 dark:text-cyan-300"
       };
     case "cultural_restaurant":
       return {

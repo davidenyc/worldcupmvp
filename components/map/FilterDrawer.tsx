@@ -10,6 +10,7 @@ import { CountrySummary, VenueIntentKey } from "@/lib/types";
 
 const intentButtons: Array<{ key: VenueIntentKey; label: string }> = [
   { key: "sports_bar", label: "⚽ Sports bar" },
+  { key: "bar_with_tv", label: "📺 Bars with TVs" },
   { key: "cultural_restaurant", label: "🍽️ Cultural restaurants" },
   { key: "cultural_bar", label: "🍺 Cultural bars" },
   { key: "fan_fest", label: "🏆 Fan Fest" }
@@ -275,7 +276,7 @@ function DrawerBody({
       ) : null}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eef4ff] bg-white/95 px-4 py-4 backdrop-blur dark:border-white/8 dark:bg-[#161b22]/95">
         <div>
-          <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Filters</div>
+          <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white">Filters</div>
           <div className="text-sm font-semibold text-[#0a1628] dark:text-white">Adjust your search</div>
         </div>
         <button
@@ -290,7 +291,7 @@ function DrawerBody({
 
       <div className="space-y-5 p-4">
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">🏠 Venue type</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">🏠 Venue type</div>
           <button
             type="button"
             aria-pressed={soccerBarsMode}
@@ -306,7 +307,7 @@ function DrawerBody({
                 <div className={`text-sm font-semibold ${soccerBarsMode ? "text-[#a61d24] dark:text-[#ff9aa3]" : "text-[#0a1628] dark:text-white"}`}>
                   ⚽ Only sports bars
                 </div>
-                <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white/55">
+                <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
                   Dedicated soccer and sports bars only, without the dining-led spots.
                 </div>
               </div>
@@ -314,7 +315,7 @@ function DrawerBody({
                 className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-semibold ${
                   soccerBarsMode
                     ? "bg-[#e63946] text-white dark:bg-[#ff6b75] dark:text-[#161b22]"
-                    : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/65 dark:border-white/10 dark:bg-white/8 dark:text-white/65"
+                    : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/65 dark:border-white/10 dark:bg-white/8 dark:text-white"
                 }`}
               >
                 {soccerBarsMode ? "On" : "Off"}
@@ -342,9 +343,9 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">🌍 Countries</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">🌍 Countries</div>
           <div>
-            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">Popular countries</div>
+            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">Popular countries</div>
             <div className="flex flex-wrap gap-2">
               {topCountries.map((country) => {
                 const active = selectedCountrySlugs.includes(country.slug);
@@ -373,7 +374,7 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">📅 Match</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">📅 Match</div>
           <div className="grid gap-2">
             {cityMatches.length ? (
               cityMatches.map((match) => {
@@ -400,14 +401,14 @@ function DrawerBody({
                         {away?.name ?? match.awayCountry}
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white/55">
+                    <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
                       {new Date(match.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {match.stadiumName}
                     </div>
                   </button>
                 );
               })
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#d8e3f5] bg-white px-4 py-4 text-sm text-[#0a1628]/55 dark:border-white/10 dark:bg-white/5 dark:text-white/55">
+              <div className="rounded-2xl border border-dashed border-[#d8e3f5] bg-white px-4 py-4 text-sm text-[#0a1628]/55 dark:border-white/10 dark:bg-white/5 dark:text-white">
                 No matches loaded for this city yet.
               </div>
             )}
@@ -415,7 +416,7 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white/45">⚙️ More</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">⚙️ More</div>
           <div className="grid gap-3">
             <input
               value={query}

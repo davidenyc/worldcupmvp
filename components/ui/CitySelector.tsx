@@ -87,7 +87,7 @@ export function CitySelector({ selectedCity, onSelectCity }: CitySelectorProps) 
     <div className="w-full space-y-2 overflow-x-auto pb-1">
       {COUNTRY_GROUPS.map((group) => (
         <div key={group.key} className="mb-2 flex items-center gap-2">
-          <div className="mr-1 flex items-center gap-1.5 whitespace-nowrap text-lg font-semibold text-[#0a1628]/70 dark:text-white/70">
+          <div className="mr-1 flex items-center gap-1.5 whitespace-nowrap text-lg font-semibold text-[#0a1628]/70 dark:text-white">
             <span>{group.flag}</span>
             <span className="text-sm uppercase tracking-[0.24em]">{group.label}</span>
           </div>

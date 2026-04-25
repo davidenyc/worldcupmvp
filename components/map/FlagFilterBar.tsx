@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
@@ -17,6 +18,7 @@ export function FlagFilterBar({
   compact?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -29,11 +31,17 @@ export function FlagFilterBar({
     );
   }, [countries, query]);
 
+  const queryActive = query.trim().length > 0;
+  const showGrid = expanded || queryActive;
+  const summaryLabel = queryActive
+    ? `${visible.length} result${visible.length === 1 ? "" : "s"}`
+    : `${countries.length} countries`;
+
   return (
     <div className={`space-y-4 ${compact ? "" : "rounded-2xl border border-[#d8e3f5] bg-white/95 p-4 text-[#0a1628] backdrop-blur-md shadow-sm dark:border-white/10 dark:bg-[#161b22] dark:text-white"}`}>
       {selectedCountrySlugs.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#f4f8ff] p-2 dark:bg-white/8">
-          <span className="mr-1 text-xs font-semibold text-[#0a1628]/55 dark:text-white/55">Watching:</span>
+          <span className="mr-1 text-xs font-semibold text-[#0a1628]/55 dark:text-white">Watching:</span>
           {selectedCountrySlugs.map((slug) => {
             const country = countries.find((item) => item.slug === slug);
             if (!country) return null;
@@ -60,25 +68,47 @@ export function FlagFilterBar({
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-        {visible.map((country) => {
-          const active = selectedCountrySlugs.includes(country.slug);
-          return (
-            <button
-              key={country.slug}
-              type="button"
-              onClick={() => onToggleCountry(country.slug)}
-          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 text-center transition ${
-            active ? "border-[#f4b942] bg-[#fff8e7] shadow-md" : "border-[#e8eef8] bg-white hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
-          }`}
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className="flex w-full items-center justify-between rounded-2xl border border-[#d8e3f5] bg-[#f8fbff] px-4 py-3 text-left transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+          aria-expanded={showGrid}
         >
-          <div className="flex h-8 items-center justify-center leading-none">
-            <CountryFlag country={country} size="sm" />
+          <div>
+            <div className="text-sm font-semibold text-[#0a1628] dark:text-white">
+              {queryActive ? "Country search results" : "All countries"}
+            </div>
+            <div className="text-xs text-[#0a1628]/55 dark:text-white">{summaryLabel}</div>
           </div>
-          <div className="mt-1 w-full truncate text-[10px] font-semibold text-[#0a1628] dark:text-white">{country.name}</div>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#0a1628]/65 dark:text-white">
+            <span>{showGrid ? "Hide" : "Show"}</span>
+            {showGrid ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
         </button>
-      );
-        })}
+
+        {showGrid ? (
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+            {visible.map((country) => {
+              const active = selectedCountrySlugs.includes(country.slug);
+              return (
+                <button
+                  key={country.slug}
+                  type="button"
+                  onClick={() => onToggleCountry(country.slug)}
+                  className={`flex flex-col items-center rounded-xl border px-2 py-2.5 text-center transition ${
+                    active ? "border-[#f4b942] bg-[#fff8e7] shadow-md" : "border-[#e8eef8] bg-white hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                  }`}
+                >
+                  <div className="flex h-8 items-center justify-center leading-none">
+                    <CountryFlag country={country} size="sm" />
+                  </div>
+                  <div className="mt-1 w-full truncate text-[10px] font-semibold text-[#0a1628] dark:text-white">{country.name}</div>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );

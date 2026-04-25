@@ -36,6 +36,7 @@ function capacitySignal(venue: Venue) {
 function intentSignal(venue: Venue) {
   if (venue.venueIntent === "fan_fest") return 1.3;
   if (venue.venueIntent === "sports_bar") return 1.1;
+  if (venue.venueIntent === "bar_with_tv") return 0.8;
   if (venue.venueIntent === "cultural_bar") return 1.0;
   return 0.25;
 }
@@ -71,7 +72,11 @@ export function rankVenues(venues: Venue[], context: RankingContext): RankedVenu
       if (largeGroupStrength > 0.6) reasons.push("Good for large watch parties");
       if (venue.acceptsReservations) reasons.push("Takes reservations");
       if (venue.venueIntent === "cultural_restaurant") reasons.push("Authentic dining");
-      if (venue.venueIntent === "fan_fest" || venue.venueIntent === "sports_bar") {
+      if (
+        venue.venueIntent === "fan_fest" ||
+        venue.venueIntent === "sports_bar" ||
+        venue.venueIntent === "bar_with_tv"
+      ) {
         reasons.push("Showing games");
       }
       if (verificationSignal >= 1) reasons.push("Editor-verified soccer venue");

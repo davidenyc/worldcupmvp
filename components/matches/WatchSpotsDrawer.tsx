@@ -15,6 +15,9 @@ function intentLabel(venueIntent: Venue["venueIntent"]) {
   if (venueIntent === "cultural_restaurant") {
     return "🍽️ Cultural restaurant";
   }
+  if (venueIntent === "bar_with_tv") {
+    return "📺 Bar with TVs";
+  }
   if (venueIntent === "cultural_bar") {
     return "🍺 Cultural bar";
   }

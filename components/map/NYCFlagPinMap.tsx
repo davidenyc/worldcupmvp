@@ -241,7 +241,7 @@ export function NYCFlagPinMap({
         {venues.map((venue) => {
           const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) : null;
           const neutralSportsBar = isNeutralSportsBar(venue);
-          const flagEmoji = country?.flagEmoji ?? (neutralSportsBar ? "⚽" : "📍");
+          const flagEmoji = country?.flagEmoji ?? "📍";
           const accentColor = country?.primaryColors[0] ?? (neutralSportsBar ? "#f4b942" : "#16324f");
           const selected = selectedVenueId === venue.id || openVenueId === venue.id;
           const shouldAnimate = animatedVenueIds.includes(venue.id);

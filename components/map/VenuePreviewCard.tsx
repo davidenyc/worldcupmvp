@@ -22,7 +22,11 @@ const popupActionClass =
 
 function isNeutralSportsBar(venue: RankedVenue) {
   return (
-    (venue.venueIntent === "sports_bar" || (venue.venueTypes as string[]).includes("sports_bar")) &&
+    (
+      venue.venueIntent === "sports_bar" ||
+      venue.venueIntent === "bar_with_tv" ||
+      (venue.venueTypes as string[]).includes("sports_bar")
+    ) &&
     !venue.likelySupporterCountry
   );
 }
@@ -168,19 +172,19 @@ export function VenuePreviewCard({
             <div className="text-[0.88rem] font-semibold leading-tight text-[#0a1628] dark:text-white">
               {venue.name}
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-[#0a1628]/60 dark:text-white/60">
+            <div className="flex items-center gap-1 text-[11px] text-[#0a1628]/60 dark:text-white">
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">
                 {[venue.neighborhood, venue.borough].filter(Boolean).join(", ")}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] text-[#0a1628]/68 dark:text-white/68">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] text-[#0a1628]/68 dark:text-white">
               <span className="inline-flex items-center gap-1">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span>{Number(venue.rating ?? 0).toFixed(1)}</span>
               </span>
               {venue.reviewCount ? (
-                <span className="text-[10px] text-[#0a1628]/42 dark:text-white/42">
+                <span className="text-[10px] text-[#0a1628]/42 dark:text-white">
                   {venue.reviewCount.toLocaleString()} reviews
                 </span>
               ) : null}
@@ -262,7 +266,7 @@ export function VenuePreviewCard({
               Call
             </a>
           ) : (
-            <div className={`${popupActionClass} border border-[#d8e3f5] bg-white/70 text-[#0a1628]/45 dark:border-white/15 dark:bg-white/5 dark:text-white/40`}>
+            <div className={`${popupActionClass} border border-[#d8e3f5] bg-white/70 text-[#0a1628]/45 dark:border-white/15 dark:bg-white/5 dark:text-white`}>
               Venue info
             </div>
           )}
