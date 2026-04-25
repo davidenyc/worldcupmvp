@@ -277,13 +277,13 @@ export default async function VenuePage({
           {data.nearby.map((venue) => {
             const flagEmoji = countries.find((country) => country.slug === venue.likelySupporterCountry)?.flagEmoji ?? "📍";
             const intentLabel =
-              venue.venueIntent === "watch_party"
-                ? "📺 Watch party"
+              venue.venueIntent === "fan_fest"
+                ? "🏆 Fan Fest"
                 : venue.venueIntent === "sports_bar"
                   ? "⚽ Sports bar"
-                  : venue.venueIntent === "both"
-                    ? "🏆 Both"
-                    : "🍽️ Authentic dining";
+                  : venue.venueIntent === "cultural_bar"
+                    ? "🍺 Cultural bar"
+                    : "🍽️ Cultural restaurant";
             return (
               <Link
                 key={venue.id}
