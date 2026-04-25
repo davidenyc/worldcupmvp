@@ -1085,7 +1085,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                 <button
                   type="button"
                   onClick={handleToggleShowAllMapVenues}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                  className="hidden items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:inline-flex"
                 >
                   {showAllMapVenues ? "Show fewer" : shouldShowRegionalVenues ? "Show all regional" : "Show all"}
                 </button>
@@ -1174,7 +1174,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
             </div>
 
             {!hasActiveFilters && filteredVenues.length > 0 && !selectedVenue && !mobileGamesOpen ? (
-              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] left-1/2 z-30 -translate-x-1/2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:bottom-4">
+              <div className="absolute bottom-4 left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
                 {showAllMapVenues || !canToggleShowAllMapVenues
                   ? "All spots visible"
                   : `${mapVenues.length} spots shown`}
@@ -1183,6 +1183,20 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
           </div>
         }
       />
+
+      {canToggleShowAllMapVenues && !selectedVenue && !filterDrawerOpen && !mobileResultsOpen && !mobileGamesOpen ? (
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.4rem)] z-40 lg:hidden">
+          <div className="pointer-events-none flex items-end justify-end px-4">
+            <button
+              type="button"
+              onClick={handleToggleShowAllMapVenues}
+              className="pointer-events-auto rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white"
+            >
+              {showAllMapVenues ? "Show fewer" : shouldShowRegionalVenues ? "Show all regional" : "Show all"}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {activeQuickMatchOption && mobileGamesOpen ? (
         <div className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 lg:hidden">
