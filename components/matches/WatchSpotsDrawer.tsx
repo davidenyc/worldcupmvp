@@ -122,7 +122,7 @@ export function WatchSpotsDrawer({
                     </div>
                     <div className="mt-4">
                       <Link
-                        href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                        href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}&venue=${encodeURIComponent(venue.slug)}`}
                         className="inline-flex items-center rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#f0c86b]"
                       >
                         View on map →

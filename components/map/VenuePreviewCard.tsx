@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Clock3, ExternalLink, Heart, Instagram, MapPin, Phone, Star } from "lucide-react";
+import { Clock3, Heart, Instagram, MapPin, Phone, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,13 @@ import { getSoccerAtmosphereRating, toTitleCase } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
 
 const popupChipBaseClass =
-  "inline-flex h-7 items-center justify-center rounded-full px-2.5 text-[10px] font-semibold tracking-[0.08em]";
+  "inline-flex h-6.5 items-center justify-center rounded-full px-2 text-[9px] font-semibold tracking-[0.07em]";
 
 const popupSecondaryChipClass =
   `${popupChipBaseClass} w-full border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`;
 
 const popupActionClass =
-  "flex h-10 items-center justify-center rounded-full px-3 text-center text-[13px] font-semibold transition";
+  "flex h-8 items-center justify-center rounded-full px-2 text-center text-[11px] font-semibold transition";
 
 function isNeutralSportsBar(venue: RankedVenue) {
   return (
@@ -76,11 +76,18 @@ export function VenuePreviewCard({
   const countryChipSlug = neutralSportsBar ? null : venue.likelySupporterCountry ?? venue.associatedCountries[0] ?? null;
   const activeIntent = activeVenueIntent === venue.venueIntent;
   const utilityLinks = [
-    venue.website
+    venue.instagramUrl
       ? {
-          href: venue.website,
-          icon: <ExternalLink className="h-4 w-4" />,
-          label: "Website"
+          href: venue.instagramUrl,
+          icon: <Instagram className="h-3.5 w-3.5" />,
+          label: "Instagram"
+        }
+      : null,
+    venue.phone
+      ? {
+          href: `tel:${venue.phone}`,
+          icon: <Phone className="h-3.5 w-3.5" />,
+          label: "Call"
         }
       : null
   ].filter(Boolean) as Array<{ href: string; icon: ReactNode; label: string }>;
@@ -102,9 +109,9 @@ export function VenuePreviewCard({
   }
 
   return (
-    <div className="w-[min(228px,calc(100vw-64px))] max-w-[calc(100vw-64px)] px-3.5 py-3.5">
-      <div className="space-y-2.5">
-        <div className="grid grid-cols-2 gap-2">
+    <div className="w-[min(206px,calc(100vw-76px))] max-w-[calc(100vw-76px)] px-2.5 py-2.5">
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
             onClick={(event) => {
@@ -164,12 +171,12 @@ export function VenuePreviewCard({
           </button>
         </div>
 
-        <div className="grid grid-cols-[34px_minmax(0,1fr)] items-start gap-2.5">
-          <div className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)] dark:bg-white/10">
+        <div className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-1.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)] dark:bg-white/10">
             {neutralSportsBar ? <span className="text-base leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
           </div>
-          <div className="min-w-0 space-y-1">
-            <div className="text-[0.88rem] font-semibold leading-tight text-[#0a1628] dark:text-white">
+          <div className="min-w-0 space-y-0.5">
+            <div className="text-[0.82rem] font-semibold leading-tight text-[#0a1628] dark:text-white">
               {venue.name}
             </div>
             <div className="flex items-center gap-1 text-[11px] text-[#0a1628]/60 dark:text-white">
@@ -184,7 +191,7 @@ export function VenuePreviewCard({
                 <span>{Number(venue.rating ?? 0).toFixed(1)}</span>
               </span>
               {venue.reviewCount ? (
-                <span className="text-[10px] text-[#0a1628]/42 dark:text-white">
+                <span className="text-[9px] text-[#0a1628]/42 dark:text-white">
                   {venue.reviewCount.toLocaleString()} reviews
                 </span>
               ) : null}
@@ -192,7 +199,7 @@ export function VenuePreviewCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
             onClick={(event) => {
@@ -233,7 +240,7 @@ export function VenuePreviewCard({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <Link
             href={`/venue/${venue.slug}`}
             className={`${popupActionClass} bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]`}
@@ -272,7 +279,7 @@ export function VenuePreviewCard({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <a
             href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
             target="_blank"

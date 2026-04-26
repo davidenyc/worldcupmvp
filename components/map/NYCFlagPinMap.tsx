@@ -40,22 +40,29 @@ function createFlagPinIcon(
   selected: boolean,
   shouldAnimate: boolean,
   accentColor: string,
+  compact: boolean,
   slug?: string,
   fallbackCode?: string
 ) {
+  const iconWidth = compact ? 30 : 40;
+  const iconHeight = compact ? 36 : 48;
+  const iconAnchorX = compact ? 15 : 20;
+  const iconAnchorY = compact ? 33 : 44;
+  const popupAnchorY = compact ? -24 : -32;
+
   return L.divIcon({
     className: "",
     html: `
-        <div class="flag-pin ${selected ? "is-selected" : ""} ${shouldAnimate ? "animate-fade-in" : ""}" style="--flag-pin-accent: ${accentColor};">
+        <div class="flag-pin ${compact ? "is-compact" : ""} ${selected ? "is-selected" : ""} ${shouldAnimate ? "animate-fade-in" : ""}" style="--flag-pin-accent: ${accentColor};">
         <div class="flag-pin__flag-shell">
           ${renderFlagPinInner(flagEmoji, slug, fallbackCode)}
         </div>
         <span class="flag-pin__dot"></span>
       </div>
     `,
-    iconSize: [40, 48],
-    iconAnchor: [20, 44],
-    popupAnchor: [0, -32]
+    iconSize: [iconWidth, iconHeight],
+    iconAnchor: [iconAnchorX, iconAnchorY],
+    popupAnchor: [0, popupAnchorY]
   });
 }
 
@@ -153,7 +160,8 @@ export function NYCFlagPinMap({
   onToggleHighAtmosphere,
   onMapChanged,
   onMapReady,
-  heightClassName = "h-[520px]"
+  heightClassName = "h-[520px]",
+  compactMarkers = false
 }: {
   venues: RankedVenue[];
   countries: CountrySummary[];
@@ -177,8 +185,8 @@ export function NYCFlagPinMap({
   onMapChanged?: (center: [number, number], zoom: number) => void;
   onMapReady?: (map: L.Map) => void;
   heightClassName?: string;
+  compactMarkers?: boolean;
 }) {
-  const [openVenueId, setOpenVenueId] = useState<string | null>(selectedVenueId ?? null);
   const [animatedVenueIds, setAnimatedVenueIds] = useState<string[]>([]);
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
   const { isDark } = useTheme();
@@ -189,14 +197,31 @@ export function NYCFlagPinMap({
   const previousVenueIdsRef = useRef<string[]>(venues.map((venue) => venue.id));
 
   useEffect(() => {
-    setOpenVenueId(selectedVenueId ?? null);
-  }, [selectedVenueId]);
-
-  useEffect(() => {
     if (!selectedVenueId) return;
-    const marker = markerRefs.current[selectedVenueId];
-    marker?.openPopup();
-  }, [selectedVenueId]);
+    let frameId = 0;
+    let timeoutId = 0;
+
+    const tryOpenPopup = () => {
+      const marker = markerRefs.current[selectedVenueId];
+      if (!marker) return false;
+      marker.openPopup();
+      return true;
+    };
+
+    if (!tryOpenPopup()) {
+      frameId = window.requestAnimationFrame(() => {
+        if (tryOpenPopup()) return;
+        timeoutId = window.setTimeout(() => {
+          tryOpenPopup();
+        }, 120);
+      });
+    }
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [selectedVenueId, venues]);
 
   useEffect(() => {
     const previousIds = previousVenueIdsRef.current;
@@ -234,7 +259,6 @@ export function NYCFlagPinMap({
         <MapEvents
           onMove={onMapChanged}
           onBackgroundClick={() => {
-            setOpenVenueId(null);
             onClearSelection?.();
           }}
         />
@@ -243,14 +267,22 @@ export function NYCFlagPinMap({
           const neutralSportsBar = isNeutralSportsBar(venue);
           const flagEmoji = country?.flagEmoji ?? "📍";
           const accentColor = country?.primaryColors[0] ?? (neutralSportsBar ? "#f4b942" : "#16324f");
-          const selected = selectedVenueId === venue.id || openVenueId === venue.id;
+          const selected = selectedVenueId === venue.id;
           const shouldAnimate = animatedVenueIds.includes(venue.id);
 
           return (
             <Marker
               key={venue.id}
               position={[venue.lat, venue.lng]}
-              icon={createFlagPinIcon(flagEmoji, selected, shouldAnimate, accentColor, country?.slug, country?.fifaCode)}
+              icon={createFlagPinIcon(
+                flagEmoji,
+                selected,
+                shouldAnimate,
+                accentColor,
+                compactMarkers,
+                country?.slug,
+                country?.fifaCode
+              )}
               ref={(marker) => {
                 markerRefs.current[venue.id] = marker;
               }}
@@ -259,7 +291,6 @@ export function NYCFlagPinMap({
                   if ("originalEvent" in event && event.originalEvent) {
                     L.DomEvent.stopPropagation(event.originalEvent);
                   }
-                  setOpenVenueId(venue.id);
                   onSelectVenue?.(venue);
                 }
               }}
@@ -268,11 +299,6 @@ export function NYCFlagPinMap({
                 autoPan={false}
                 closeButton={false}
                 keepInView={false}
-                eventHandlers={{
-                  remove: () => {
-                    setOpenVenueId((current) => (current === venue.id ? null : current));
-                  }
-                }}
               >
                 <VenuePreviewCard
                   venue={venue}

@@ -107,7 +107,7 @@ function ThemeTileLayer({
     }).addTo(map);
 
     map.invalidateSize();
-  }, [map, provider.attribution, tileUrl]);
+  }, [isDark, map, provider.attribution, tileUrl]);
 
   useEffect(
     () => () => {

@@ -113,7 +113,11 @@ body {
 }
 
 .dark .leaflet-container {
-  background: #0f1724;
+  background: #223247;
+}
+
+.dark .leaflet-tile {
+  filter: brightness(1.48) contrast(1.18) saturate(1.12) hue-rotate(-4deg);
 }
 
 .leaflet-pane,
@@ -246,6 +250,30 @@ body {
 .flag-pin.is-selected {
   transform: translateY(-4px) scale(1.15);
   filter: drop-shadow(0 0 12px rgba(244, 185, 66, 0.45)) drop-shadow(0 6px 16px rgba(10, 22, 40, 0.14));
+}
+
+.flag-pin.is-compact {
+  width: 30px;
+  height: 36px;
+}
+
+.flag-pin.is-compact .flag-pin__flag-shell {
+  width: 22px;
+  height: 22px;
+}
+
+.flag-pin.is-compact .flag-pin__flag {
+  font-size: 15px;
+}
+
+.flag-pin.is-compact .flag-pin__code {
+  font-size: 7px;
+}
+
+.flag-pin.is-compact .flag-pin__dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 1px;
 }
 
 .flag-pin__flag-shell {
