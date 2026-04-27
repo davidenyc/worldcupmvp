@@ -14,7 +14,7 @@ export function HomeHeroActions() {
     <div className="flex flex-col gap-3">
       <Link
         href={`/${activeCity?.key ?? "nyc"}/map`}
-        className="inline-flex w-full items-center justify-center rounded-full bg-[#f4b942] px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-card transition hover:bg-[#f0c86b] lg:w-auto lg:justify-start lg:py-2.5"
+        className="inline-flex w-full items-center justify-center rounded-full bg-[#f4b942] px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-card transition hover:bg-[#f0c86b] dark:text-[#0a1628] lg:w-auto lg:justify-start lg:py-2.5"
       >
         Find a watch spot →
       </Link>

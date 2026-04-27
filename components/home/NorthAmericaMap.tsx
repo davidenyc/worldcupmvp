@@ -30,31 +30,31 @@ export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
   const activeCityKey = userCity ?? suggestedCity ?? null;
 
   return (
-    <div className="overflow-hidden border-y border-[#cfe0ff] bg-[#eef4ff] shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none sm:rounded-[2rem] sm:border sm:p-4">
-      <div className="bg-white dark:bg-[#1c2330] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:p-4 sm:dark:border-white/10">
+    <div className="min-w-0 overflow-hidden border-y border-[#cfe0ff] bg-[#eef4ff] shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none sm:rounded-[2rem] sm:border sm:p-4">
+      <div className="min-w-0 bg-white dark:bg-[#1c2330] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:p-4 sm:dark:border-white/10">
         <div className="mb-4 flex flex-col items-start gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:pt-0">
-          <div>
+          <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">North America host map</div>
             <div className="mt-1 text-xl font-semibold text-[#0a1628] dark:text-white sm:text-base">Tap a city to jump straight to its watch spots</div>
           </div>
-          <div className="rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628]/75 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/75">
+          <div className="shrink-0 rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628]/75 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/75">
             17 host cities
           </div>
         </div>
 
-        <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 px-4 pt-2">
+        <div className="sm:hidden flex min-w-0 gap-2 overflow-x-auto pb-2 px-4 pt-2">
           {cityCards.map((card) => (
             <Link
               key={card.key}
               href={`/${card.key}/map`}
-              className="shrink-0 whitespace-nowrap rounded-full border border-[#d8e3f5] bg-white px-3 py-2 text-xs font-semibold text-[#0a1628]"
+              className="shrink-0 whitespace-nowrap rounded-full border border-[#d8e3f5] bg-white px-3 py-2 text-xs font-semibold text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
             >
               {card.label}
             </Link>
           ))}
         </div>
 
-        <div className="hidden sm:block overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:bg-[#111827] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
+        <div className="hidden min-w-0 sm:block overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:bg-[#111827] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
           <div style={{ overflow: "hidden", width: "100%", maxWidth: "100%" }}>
             <ComposableMap
               projection="geoMercator"
