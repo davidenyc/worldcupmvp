@@ -34,6 +34,14 @@ function HeartIcon() {
   );
 }
 
+function StarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2.8l2.76 5.59 6.17.9-4.46 4.35 1.05 6.15L12 16.9l-5.52 2.89 1.05-6.15L3.07 9.29l6.17-.9L12 2.8z" />
+    </svg>
+  );
+}
+
 function getMatchCountForCity(cityKey: string) {
   return worldCup2026Matches.filter((match) => getMatchHostCityKey(match) === cityKey).length;
 }
@@ -111,7 +119,7 @@ export function SiteHeader() {
       className="sticky top-0 z-40 border-b border-[#d8e3f5] bg-white/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#0d1117]/92"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-      <div className="container-shell flex min-h-[56px] items-center justify-between gap-2 overflow-hidden py-0 lg:h-auto lg:gap-3 lg:py-4">
+      <div className="container-shell flex min-h-[56px] items-center justify-between gap-2 py-0 lg:h-auto lg:gap-3 lg:py-4">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2.5 lg:flex-1 lg:gap-3">
           <div
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-sm font-black shadow-sm lg:h-12 lg:w-12 lg:rounded-[1.2rem] lg:text-lg"
@@ -129,16 +137,16 @@ export function SiteHeader() {
           <Link href={tonightHref} className={`${navClass(currentPath === "/tonight")} whitespace-nowrap`}>Tonight</Link>
           <Link href={mapHref} className={`${navClass(currentPath.includes("/map"))} whitespace-nowrap`}>Map</Link>
           <Link href={matchesHref} className={`${navClass(currentPath.includes("/matches"))} whitespace-nowrap`}>Matches</Link>
-          <Link href="/membership" className={`${navClass(currentPath.startsWith("/membership"))} whitespace-nowrap`}>Membership</Link>
-          <Link href="/account" className={`${navClass(currentPath.startsWith("/account"))} whitespace-nowrap`}>Account</Link>
+          <Link href="/membership" className={`${navClass(currentPath.startsWith("/membership"))} hidden whitespace-nowrap xl:inline-flex`}>Membership</Link>
+          <Link href="/account" className={`${navClass(currentPath.startsWith("/account"))} hidden whitespace-nowrap xl:inline-flex`}>Account</Link>
         </nav>
-        <div className="flex min-w-0 items-center gap-1.5 lg:gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap lg:gap-2">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-9 max-w-[100px] items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-2.5 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:max-w-none lg:gap-2 lg:px-3"
+            className="inline-flex h-9 max-w-[140px] min-w-0 items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-2.5 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:max-w-none lg:gap-2 lg:px-3"
           >
-            <span className="hidden h-7 w-7 items-center justify-center rounded-full bg-white/80 text-[11px] font-bold text-[#0a1628] dark:bg-white/12 dark:text-white lg:inline-flex">
+            <span className="hidden h-7 w-7 items-center justify-center rounded-full bg-white/80 text-[11px] font-bold text-[#0a1628] dark:bg-white/12 dark:text-white xl:inline-flex">
               {activeCityData.shortLabel}
             </span>
             <span className="truncate whitespace-nowrap text-sm">{activeCityData.label}</span>
@@ -146,14 +154,14 @@ export function SiteHeader() {
           </button>
           <Link
             href="/saved"
-            className="hidden h-12 items-center gap-2 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:inline-flex"
+            className="hidden h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 xl:inline-flex"
           >
             <HeartIcon />
             Saved
           </Link>
           <Link
             href={tier === "free" ? `/membership?return=${encodeURIComponent(currentPath)}` : "/account"}
-            className={`hidden sm:inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold transition ${
+            className={`hidden h-12 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition xl:inline-flex ${
               tier === "free"
                 ? "border border-[#f4b942] text-[#c98a00] hover:bg-[#fff8e7]"
                 : tier === "fan"
@@ -162,6 +170,19 @@ export function SiteHeader() {
             }`}
           >
             {tier === "free" ? "⭐ Go Pro" : tier === "fan" ? "⭐ Fan Pass" : "👑 Elite"}
+          </Link>
+          <Link
+            href={tier === "free" ? `/membership?return=${encodeURIComponent(currentPath)}` : "/account"}
+            aria-label={tier === "free" ? "Go Pro" : tier === "fan" ? "Fan Pass" : "Elite"}
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition sm:hidden ${
+              tier === "free"
+                ? "border-[#f4b942] bg-[#fff8e7] text-[#c98a00]"
+                : tier === "fan"
+                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                  : "border-[#f4b942] bg-[#0a1628] text-[#f4b942]"
+            }`}
+          >
+            <StarIcon />
           </Link>
           <Link
             href={searchHref}
@@ -173,18 +194,18 @@ export function SiteHeader() {
           <Link
             href="/account"
             aria-label="Open account"
-            className="hidden h-10 w-10 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-sm font-bold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:inline-flex lg:h-12 lg:w-12"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-sm font-bold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 xl:inline-flex xl:h-12 xl:w-12"
           >
             👤
           </Link>
-          <Link href="/submit" className="hidden lg:block">
+          <Link href="/submit" className="hidden xl:block">
             <Button className="h-12 px-5">Submit a venue</Button>
           </Link>
           <button
             type="button"
             onClick={toggle}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10 sm:inline-flex lg:h-12 lg:w-12"
+            className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10 xl:inline-flex"
           >
             {isDark ? "☀️" : "🌙"}
           </button>
@@ -192,10 +213,10 @@ export function SiteHeader() {
       </div>
 
       <div className="container-shell mt-0 border-t border-[#d8e3f5]/50 pb-3 dark:border-white/8 lg:hidden">
-        <nav className="grid grid-cols-5 gap-2 pt-3">
+        <nav className="grid grid-cols-4 gap-2 pt-3">
           <Link
             href="/"
-            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-2 text-sm font-semibold transition ${
               pathname === "/"
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -205,7 +226,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href={mapHref}
-            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-2 text-sm font-semibold transition ${
               pathname?.includes("/map")
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -215,7 +236,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href={matchesHref}
-            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-2 text-sm font-semibold transition ${
               pathname?.includes("/matches")
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -225,23 +246,15 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/saved"
-            className={`inline-flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-sm font-semibold transition ${
               pathname === "/saved"
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
             }`}
           >
             <HeartIcon />
-            Saved
+            <span className="max-[360px]:hidden">Saved</span>
           </Link>
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white"
-          >
-            {isDark ? "☀️" : "🌙"}
-          </button>
         </nav>
       </div>
 

@@ -64,11 +64,11 @@ export async function USAHomepage() {
     <main className="bg-bg text-deep">
       <section className="bg-bg lg:min-h-[calc(100vh-88px)]">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-4 px-4 py-8 sm:px-6 lg:min-h-[calc(100vh-88px)] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 lg:px-8">
-          <div className="order-1 flex flex-col justify-center gap-4 lg:pr-4 lg:gap-6">
+          <div className="order-1 flex min-w-0 flex-col justify-center gap-4 lg:pr-4 lg:gap-6">
             <div className="text-xs font-semibold uppercase tracking-[0.35em] text-mist">
               GAMEDAY MAP
             </div>
-            <div className="max-w-2xl">
+            <div className="min-w-0 max-w-2xl">
               <h1 className="text-4xl font-semibold tracking-tight text-deep sm:text-5xl lg:text-6xl">
                 Find your World Cup watch party
               </h1>
@@ -81,7 +81,7 @@ export async function USAHomepage() {
             <HomeHeroActions />
           </div>
 
-          <div className="order-2 -mx-4 w-auto self-center sm:mx-0 sm:w-full">
+          <div className="order-2 min-w-0 self-center">
             <NorthAmericaMap cityCards={cityCards} />
           </div>
         </div>
