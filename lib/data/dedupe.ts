@@ -12,6 +12,14 @@ function geoDistanceMeters(a: Venue, b: Venue) {
   return Math.sqrt(lat * lat + lng * lng);
 }
 
+function buildIdentitySuffix(venue: Venue) {
+  const raw =
+    venue.sourceExternalId ??
+    `${venue.address}-${venue.lat.toFixed(4)}-${venue.lng.toFixed(4)}`;
+  const compact = normalized(raw);
+  return compact.slice(-10) || "alt";
+}
+
 export function dedupeVenues(venues: Venue[], radiusMeters = 120): Venue[] {
   const accepted: Venue[] = [];
 
@@ -29,4 +37,52 @@ export function dedupeVenues(venues: Venue[], radiusMeters = 120): Venue[] {
   }
 
   return accepted;
+}
+
+export function ensureUniqueVenueIdentity<T extends Venue>(venues: T[]): T[] {
+  const seenIds = new Set<string>();
+  const seenSlugs = new Set<string>();
+
+  return venues.map((venue) => {
+    if (!seenIds.has(venue.id) && !seenSlugs.has(venue.slug)) {
+      seenIds.add(venue.id);
+      seenSlugs.add(venue.slug);
+      return venue;
+    }
+
+    const suffix = buildIdentitySuffix(venue);
+    let attempt = 0;
+    let nextId = `${venue.id}-${suffix}`;
+    let nextSlug = `${venue.slug}-${suffix}`;
+
+    while (seenIds.has(nextId) || seenSlugs.has(nextSlug)) {
+      attempt += 1;
+      nextId = `${venue.id}-${suffix}-${attempt}`;
+      nextSlug = `${venue.slug}-${suffix}-${attempt}`;
+    }
+
+    seenIds.add(nextId);
+    seenSlugs.add(nextSlug);
+
+    return {
+      ...venue,
+      id: nextId,
+      slug: nextSlug
+    };
+  });
+}
+
+export function dedupeVenueIdentities<T extends Venue>(venues: T[]): T[] {
+  const seenIds = new Set<string>();
+  const seenSlugs = new Set<string>();
+
+  return venues.filter((venue) => {
+    if (seenIds.has(venue.id) || seenSlugs.has(venue.slug)) {
+      return false;
+    }
+
+    seenIds.add(venue.id);
+    seenSlugs.add(venue.slug);
+    return true;
+  });
 }

@@ -1,7 +1,7 @@
 import { demoCountries, demoImportJobs, demoSubmissions, demoVenues } from "@/lib/data/demo";
 import { CsvVenueProvider } from "@/lib/providers/csv";
-import { dedupeVenues } from "@/lib/data/dedupe";
-import { findPlacesVenueBySlug, readPlacesCache, readPlacesCacheForCity } from "@/lib/cache/places";
+import { dedupeVenues, ensureUniqueVenueIdentity } from "@/lib/data/dedupe";
+import { readAllPlacesCache, readPlacesCache, readPlacesCacheForCity } from "@/lib/cache/places";
 import { VenueProvider, VenueSearchParams } from "@/lib/providers/types";
 import { CountrySummary, ImportJobRecord, SubmissionRecord, Venue } from "@/lib/types";
 
@@ -12,6 +12,10 @@ function withRealVenueFlag(venues: Venue[], isRealVenue: boolean) {
     ...venue,
     isRealVenue
   }));
+}
+
+function normalizeVenueResults(venues: Venue[]) {
+  return ensureUniqueVenueIdentity(dedupeVenues(venues));
 }
 
 function applySearchFilters(venues: Venue[], params?: VenueSearchParams) {
@@ -98,7 +102,7 @@ export class MockVenueProvider implements VenueProvider {
         ? (await readPlacesCache(params.city, params.countrySlug)) ?? []
         : await readPlacesCacheForCity(params.city);
       const curatedVenues = await csvProvider.listVenues(params);
-      const merged = dedupeVenues([
+      const merged = normalizeVenueResults([
         ...withRealVenueFlag(curatedVenues, true),
         ...withRealVenueFlag(cachedVenues, true)
       ]);
@@ -121,13 +125,15 @@ export class MockVenueProvider implements VenueProvider {
     const realVenues = withRealVenueFlag(await csvProvider.listVenues(params), true);
     const demoGeneratedVenues = withRealVenueFlag(demoVenues, false);
 
-    return applySearchFilters([...realVenues, ...demoGeneratedVenues], params);
+    return applySearchFilters(normalizeVenueResults([...realVenues, ...demoGeneratedVenues]), params);
   }
 
   async getVenueBySlug(slug: string): Promise<Venue | null> {
-    const cachedVenue = await findPlacesVenueBySlug(slug);
-    if (cachedVenue) return cachedVenue;
-    return csvProvider.getVenueBySlug(slug);
+    const cachedVenues = withRealVenueFlag(await readAllPlacesCache(), true);
+    const curatedVenues = withRealVenueFlag(await csvProvider.listVenues(), true);
+    const allVenues = normalizeVenueResults([...curatedVenues, ...cachedVenues, ...withRealVenueFlag(demoVenues, false)]);
+
+    return allVenues.find((venue) => venue.slug === slug) ?? null;
   }
 
   async listSubmissions(): Promise<SubmissionRecord[]> {

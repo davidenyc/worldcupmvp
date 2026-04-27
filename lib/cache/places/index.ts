@@ -31,10 +31,17 @@ export async function readPlacesCache(city: string, countrySlug: string): Promis
 }
 
 export async function readPlacesCacheForCity(city: string): Promise<Venue[]> {
+  return readPlacesCacheByPrefix(`${slugify(city)}-`);
+}
+
+export async function readAllPlacesCache(): Promise<Venue[]> {
+  return readPlacesCacheByPrefix("");
+}
+
+async function readPlacesCacheByPrefix(prefix: string): Promise<Venue[]> {
   try {
     await mkdir(placesCacheDir, { recursive: true });
     const entries = await readdir(placesCacheDir);
-    const prefix = `${slugify(city)}-`;
     const venueGroups = await Promise.all(
       entries
         .filter((entry) => entry.startsWith(prefix) && entry.endsWith(".json"))
