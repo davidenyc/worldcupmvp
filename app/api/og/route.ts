@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       React.createElement(
         "div",
         { style: { fontSize: "22px", color: "rgba(255,255,255,0.75)" } },
-        "GameDay Map · World Cup 2026 fan experience"
+        "GameDay Map · World Cup 2026 fan venue finder"
       )
     ),
     {

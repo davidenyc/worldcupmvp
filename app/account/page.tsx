@@ -1,0 +1,536 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import { TierBadge } from "@/components/membership/TierBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { HOST_CITIES } from "@/lib/data/hostCities";
+import { demoCountries } from "@/lib/data/demo";
+import { useUserCity } from "@/lib/hooks/useUserCity";
+import { useFavoritesStore } from "@/lib/store/favorites";
+import { useGroups } from "@/lib/store/groups";
+import { TIER_META, useMembership } from "@/lib/store/membership";
+import { useReviews } from "@/lib/store/reviews";
+import { useTheme } from "@/lib/store/theme";
+import { useResetUser, useUpdateUser, useUser } from "@/lib/store/user";
+import { toast } from "@/lib/toast";
+
+const AVATAR_EMOJIS = ["⚽", "🏆", "🥇", "🎯", "🍺", "🎉", "🔥", "❤️", "🦁", "🦅", "🌟", "👑", "🎪", "🏟️", "🌍", "🌎", "🌏", "🎸", "🥁", "🎺"] as const;
+const LANGUAGES = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "es", label: "Español", flag: "🇲🇽" },
+  { code: "pt", label: "Português", flag: "🇧🇷" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "ar", label: "العربية", flag: "🇲🇦" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "ja", label: "日本語", flag: "🇯🇵" },
+  { code: "ko", label: "한국어", flag: "🇰🇷" },
+  { code: "zh-CN", label: "中文", flag: "🇨🇳" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" }
+] as const;
+
+function SectionCard({
+  title,
+  children,
+  dark = false
+}: {
+  title: string;
+  children: React.ReactNode;
+  dark?: boolean;
+}) {
+  return (
+    <section
+      className={`rounded-[1.75rem] p-5 shadow-sm ring-1 ${
+        dark ? "bg-[#0a1628] text-white ring-white/10" : "bg-white text-[#0a1628] ring-[#d8e3f5]"
+      }`}
+    >
+      <h2 className={`text-xl font-semibold ${dark ? "text-white" : "text-[#0a1628]"}`}>{title}</h2>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+function Toggle({
+  checked,
+  onClick,
+  disabled = false
+}: {
+  checked: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
+        disabled ? "cursor-not-allowed bg-gray-200" : checked ? "bg-[#f4b942]" : "bg-[#d8e3f5]"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+export default function AccountPage() {
+  const router = useRouter();
+  const user = useUser();
+  const updateUser = useUpdateUser();
+  const resetUser = useResetUser();
+  const { setUserCity } = useUserCity();
+  const { theme, setTheme, isDark } = useTheme();
+  const { tier, reset: resetMembership } = useMembership();
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const resetFavorites = useFavoritesStore((state) => state.resetFavorites);
+  const groups = useGroups((state) => state.groups);
+  const resetGroups = useGroups((state) => state.reset);
+  const reviewCount = useReviews((state) => state.reviews.filter((review) => review.userId === user.id).length);
+  const resetReviews = useReviews((state) => state.reset);
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(user.displayName);
+  const [emailDraft, setEmailDraft] = useState(user.email);
+  const [showSavedFlash, setShowSavedFlash] = useState(false);
+  const [confirmClearSaved, setConfirmClearSaved] = useState(false);
+  const [confirmResetAll, setConfirmResetAll] = useState(false);
+  const [showInstallRow, setShowInstallRow] = useState(false);
+
+  useEffect(() => {
+    setNameDraft(user.displayName);
+    setEmailDraft(user.email);
+  }, [user.displayName, user.email]);
+
+  useEffect(() => {
+    const standalone = window.matchMedia("(display-mode: standalone)").matches;
+    const appleStandalone = "standalone" in window.navigator && window.navigator.standalone === true;
+    const isMobile = window.innerWidth < 1024;
+    setShowInstallRow(isMobile && !standalone && !appleStandalone);
+  }, []);
+
+  useEffect(() => {
+    if (!showSavedFlash) return;
+    const timeout = window.setTimeout(() => setShowSavedFlash(false), 1200);
+    return () => window.clearTimeout(timeout);
+  }, [showSavedFlash]);
+
+  const joinedLabel = useMemo(() => {
+    if (!user.joinedAt) return "April 2026";
+    const date = new Date(user.joinedAt);
+    if (Number.isNaN(date.getTime())) return "April 2026";
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  }, [user.joinedAt]);
+
+  const myGroupsCount = groups.filter((group) => group.creatorId === user.id).length;
+  const currentTierFeatures = TIER_META[tier].features;
+  const lockedFeatures =
+    tier === "free"
+      ? [...TIER_META.fan.features.slice(1, 5), ...TIER_META.elite.features.slice(1, 4)]
+      : tier === "fan"
+        ? TIER_META.elite.features.slice(1, 6)
+        : [];
+
+  function saveDisplayName() {
+    updateUser({ displayName: nameDraft.trim() || "Fan" });
+    setEditingName(false);
+    setShowSavedFlash(true);
+  }
+
+  function toggleFavoriteCountry(slug: string) {
+    const exists = user.favoriteCountries.includes(slug);
+    const nextCountries = exists
+      ? user.favoriteCountries.filter((item) => item !== slug)
+      : user.favoriteCountries.length >= 5
+        ? user.favoriteCountries
+        : [...user.favoriteCountries, slug];
+
+    if (!exists && user.favoriteCountries.length >= 5) {
+      toast.error("You can select up to 5 countries.");
+      return;
+    }
+
+    updateUser({ favoriteCountries: nextCountries });
+  }
+
+  function applyLanguage(code: string) {
+    if (code === "en") {
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    } else {
+      document.cookie = `googtrans=/en/${code}; path=/`;
+    }
+    updateUser({ language: code });
+    window.location.reload();
+  }
+
+  function saveEmail() {
+    updateUser({ email: emailDraft.trim() });
+    toast.success("✓ Saved");
+  }
+
+  function handleResetAll() {
+    resetFavorites();
+    resetGroups();
+    resetReviews();
+    resetMembership();
+    resetUser();
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.localStorage.clear();
+    toast("All data cleared");
+    router.push("/");
+  }
+
+  return (
+    <main className="min-h-[100dvh] bg-[#f7fafc] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="container-shell space-y-6">
+        <SectionCard title="Profile Header" dark>
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-5">
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker((current) => !current)}
+                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#f4b942] bg-white/10 text-[40px]"
+                >
+                  {user.avatarEmoji}
+                </button>
+                {showEmojiPicker ? (
+                  <div className="grid grid-cols-5 gap-2 rounded-2xl bg-white/10 p-3">
+                    {AVATAR_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          updateUser({ avatarEmoji: emoji });
+                          setShowEmojiPicker(false);
+                        }}
+                        className="rounded-xl bg-white/10 py-2 text-2xl"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="space-y-3">
+                {editingName ? (
+                  <input
+                    value={nameDraft}
+                    onChange={(event) => setNameDraft(event.target.value)}
+                    onBlur={saveDisplayName}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") saveDisplayName();
+                    }}
+                    autoFocus
+                    className="rounded-full border border-[#f4b942] bg-white px-4 py-2 text-xl font-semibold text-[#0a1628] outline-none"
+                  />
+                ) : (
+                  <button type="button" onClick={() => setEditingName(true)} className="text-left text-3xl font-bold">
+                    {user.displayName}
+                  </button>
+                )}
+                {showSavedFlash ? <div className="text-xs font-semibold text-[#f4b942]">✓ Saved</div> : null}
+                <TierBadge tier={tier} size="md" />
+                <div className="text-sm text-white/65">Member since {joinedLabel}</div>
+              </div>
+            </div>
+
+            {tier === "free" ? (
+              <Link href="/membership?return=%2Faccount" className="inline-flex rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]">
+                ⭐ Upgrade to Fan Pass →
+              </Link>
+            ) : null}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="My Membership">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+            <div className="space-y-3">
+              {currentTierFeatures.map((feature) => (
+                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/82">
+                  <span className="mt-0.5 text-emerald-600">✓</span>
+                  <span>{feature}</span>
+                </div>
+              ))}
+              {lockedFeatures.map((feature) => (
+                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/45">
+                  <span className="mt-0.5">🔒</span>
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-[1.5rem] bg-[#f8fbff] p-4">
+              <div className="grid gap-3 text-sm text-[#0a1628]/72">
+                <div>🏟 {favorites.length} venues saved</div>
+                <div>🌍 {user.favoriteCountries.length} countries filtered</div>
+                <div>📅 Member since {joinedLabel}</div>
+              </div>
+              <div className="mt-5">
+                {tier === "free" ? (
+                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]">
+                    Upgrade to Fan Pass — $4.99/mo
+                  </Link>
+                ) : tier === "fan" ? (
+                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-[#0a1628] px-5 py-3 text-sm font-bold text-white">
+                    Upgrade to Elite — $12.99/mo
+                  </Link>
+                ) : (
+                  <button type="button" disabled className="inline-flex w-full justify-center rounded-full bg-gray-100 px-5 py-3 text-sm font-bold text-gray-500">
+                    👑 Maximum access — you&apos;re all set
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="My Preferences">
+          <div className="space-y-6">
+            <div>
+              <div className="text-sm font-semibold text-[#0a1628]">Favorite City</div>
+              <select
+                value={user.favoriteCity}
+                onChange={(event) => {
+                  updateUser({ favoriteCity: event.target.value });
+                  setUserCity(event.target.value);
+                  toast.success("✓ Saved");
+                }}
+                className="mt-3 h-12 w-full rounded-2xl border border-[#d8e3f5] bg-white px-4 text-sm text-[#0a1628]"
+              >
+                {HOST_CITIES.map((city) => (
+                  <option key={city.key} value={city.key}>
+                    {city.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-[#0a1628]">Favorite Countries</div>
+                <div className="text-xs font-semibold text-[#0a1628]/55">{user.favoriteCountries.length}/5 selected</div>
+              </div>
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                {demoCountries.map((country) => {
+                  const active = user.favoriteCountries.includes(country.slug);
+                  return (
+                    <button
+                      key={country.slug}
+                      type="button"
+                      onClick={() => toggleFavoriteCountry(country.slug)}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                        active ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                      }`}
+                    >
+                      <span>{country.flagEmoji}</span>
+                      <span>{country.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-semibold text-[#0a1628]">Avatar Emoji</div>
+              <div className="mt-3 grid grid-cols-5 gap-3 sm:grid-cols-10">
+                {AVATAR_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => updateUser({ avatarEmoji: emoji })}
+                    className={`flex h-12 items-center justify-center rounded-2xl border text-2xl transition ${
+                      user.avatarEmoji === emoji ? "border-[#f4b942] bg-[#fff8e7]" : "border-[#d8e3f5] bg-white"
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Notifications">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4">
+              <div>
+                <div className="font-semibold text-[#0a1628]">🔔 New venue alerts</div>
+                <div className="mt-1 text-sm text-[#0a1628]/60">Know when new bars are added to your city.</div>
+              </div>
+              <Toggle checked={user.notifyNewVenues} onClick={() => updateUser({ notifyNewVenues: !user.notifyNewVenues })} />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (tier !== "elite") {
+                  router.push("/membership?feature=match_alerts&return=%2Faccount");
+                  return;
+                }
+                updateUser({ notifyMatchAlerts: !user.notifyMatchAlerts });
+              }}
+              className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4 text-left"
+            >
+              <div>
+                <div className="font-semibold text-[#0a1628]">⚡ Match day alerts</div>
+                <div className="mt-1 text-sm text-[#0a1628]/60">Get a reminder before your team kicks off.</div>
+              </div>
+              <div className="flex items-center gap-3">
+                {tier !== "elite" ? (
+                  <span className="rounded-full border border-[#f4b942] px-3 py-1 text-xs font-bold text-[#c98a00]">
+                    Elite feature
+                  </span>
+                ) : null}
+                <Toggle checked={user.notifyMatchAlerts} disabled={tier !== "elite"} onClick={() => undefined} />
+              </div>
+            </button>
+
+            {(user.notifyNewVenues || user.notifyMatchAlerts || tier === "elite") ? (
+              <div>
+                <div className="text-sm font-semibold text-[#0a1628]">Alert email</div>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    type="email"
+                    value={emailDraft}
+                    onChange={(event) => setEmailDraft(event.target.value)}
+                    onBlur={saveEmail}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") saveEmail();
+                    }}
+                    className="h-12 flex-1 rounded-2xl border border-[#d8e3f5] px-4 text-sm text-[#0a1628]"
+                    placeholder="your@email.com"
+                  />
+                  <button type="button" onClick={saveEmail} className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#f4b942] px-5 text-sm font-bold text-[#0a1628]">
+                    Save
+                  </button>
+                </div>
+                <div className="mt-2 text-xs text-[#0a1628]/45">Stored locally on this device · Never shared</div>
+              </div>
+            ) : null}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Language">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {LANGUAGES.map((language) => {
+              const active = user.language === language.code;
+              return (
+                <button
+                  key={language.code}
+                  type="button"
+                  onClick={() => applyLanguage(language.code)}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                    active ? "border-[#f4b942] bg-[#fff8e7] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                  }`}
+                >
+                  <span className="text-xl">{language.flag}</span>
+                  <span className="font-semibold">{language.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 text-xs text-[#0a1628]/45">Powered by Google Translate · Some UI may stay in English</div>
+        </SectionCard>
+
+        <SectionCard title="App Settings">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4">
+              <div>
+                <div className="font-semibold text-[#0a1628]">Dark mode</div>
+                <div className="mt-1 text-sm text-[#0a1628]/60">Current theme: {theme}</div>
+              </div>
+              <Toggle
+                checked={isDark}
+                onClick={() => {
+                  const nextTheme = isDark ? "light" : "dark";
+                  setTheme(nextTheme);
+                  updateUser({ prefersDarkMode: nextTheme === "dark" });
+                }}
+              />
+            </div>
+
+            {showInstallRow ? (
+              <div className="rounded-2xl border border-[#d8e3f5] px-4 py-4 text-sm text-[#0a1628]">
+                📲 Tap Share → Add to Home Screen to install GameDay Map
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border border-[#d8e3f5] px-4 py-4">
+              {!confirmClearSaved ? (
+                <button type="button" onClick={() => setConfirmClearSaved(true)} className="text-sm font-semibold text-[#0a1628]">
+                  Clear saved venues
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-sm text-[#0a1628]/70">Are you sure? This removes all {favorites.length} saved venues.</div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setConfirmClearSaved(false)} className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]">
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetFavorites();
+                        setConfirmClearSaved(false);
+                        toast.success("Saved venues cleared");
+                      }}
+                      className="rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+                    >
+                      Yes, clear
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="About">
+          <div className="space-y-4 text-sm">
+            <div className="text-[#0a1628]/60">GameDay Map · v1.0.0 · World Cup 2026</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[#0a1628]">
+              <Link href="/privacy" className="underline">Privacy Policy</Link>
+              <Link href="/terms" className="underline">Terms</Link>
+              <Link href="/submit" className="underline">Submit a Venue</Link>
+              <Link href="mailto:hello@gamedaymap.com" className="underline">Contact</Link>
+              {myGroupsCount > 0 ? <Link href="/groups" className="underline">Groups ({myGroupsCount})</Link> : null}
+              {reviewCount > 0 ? <span className="text-[#0a1628]/60">Reviews written: {reviewCount}</span> : null}
+            </div>
+
+            {!confirmResetAll ? (
+              <button type="button" onClick={() => setConfirmResetAll(true)} className="text-sm font-semibold text-red-600">
+                Reset All Data
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
+                <div className="text-sm text-red-700">
+                  This deletes all your preferences, saves, and membership. Continue?
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => setConfirmResetAll(false)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-700">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleResetAll} className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white">
+                    Reset Everything
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SectionCard>
+      </div>
+    </main>
+  );
+}

@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { ExternalLink, Heart, Instagram, MapPin, Phone, Star } from "lucide-react";
+import { useState } from "react";
 
+import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import { Badge } from "@/components/ui/badge";
+import { VenueShareButton } from "@/components/venue/VenueShareButton";
 import { useFavoritesStore } from "@/lib/store/favorites";
+import { useMembership } from "@/lib/store/membership";
+import { toast } from "@/lib/toast";
 import { formatCapacityBucket, formatPriceLevel, formatScore, toTitleCase } from "@/lib/utils";
 import { RankedVenue } from "@/lib/types";
 
@@ -16,7 +21,29 @@ function capacityLabel(venue: RankedVenue) {
 export function VenueCard({ venue }: { venue: RankedVenue }) {
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { hasFeature, canSaveVenue } = useMembership();
   const favorite = favorites.includes(venue.slug);
+  const isAtLimit = !favorite && !canSaveVenue(favorites.length);
+  const canSeeBadges = hasFeature("premium_venue_badges");
+  const isHotSpot = Boolean(venue.isRealVenue && (venue.rating ?? 0) >= 4.4);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+
+  function handleSave() {
+    if (isAtLimit) {
+      setShowSaveModal(true);
+      return;
+    }
+
+    const wasFavorite = favorites.includes(venue.slug);
+    toggleFavorite(venue.slug);
+    if (wasFavorite) {
+      toast("Removed from saved");
+      return;
+    }
+
+    toast.success("Saved!");
+  }
 
   return (
     <div className="surface relative p-5 transition hover:-translate-y-0.5 hover:border-accent/40">
@@ -26,7 +53,7 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
         aria-label={favorite ? "Remove from favorites" : "Save to favorites"}
         onClick={(event) => {
           event.stopPropagation();
-          toggleFavorite(venue.slug);
+          handleSave();
         }}
         className={`absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
           favorite
@@ -36,10 +63,38 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
       >
         <Heart className={`h-3.5 w-3.5 ${favorite ? "fill-current" : ""}`} />
         {favorite ? "Saved" : "Save"}
+        {isAtLimit ? <span className="ml-1 text-[10px]">🔒</span> : null}
       </button>
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
+            {venue.isRealVenue ? (
+              <span className="inline-flex items-center gap-0.5 rounded-full border border-[#c8d6f8] bg-[#eef4ff] px-2 py-0.5 text-[10px] font-semibold text-[#0a1628]">
+                ✓ Curated
+              </span>
+            ) : null}
+            {isHotSpot && canSeeBadges ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#e63946] px-2 py-0.5 text-[10px] font-bold text-white">
+                🔥 Hot Spot
+              </span>
+            ) : null}
+            {isHotSpot && !canSeeBadges ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgeModal(true)}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#f4b942]/50 bg-[#fff8e7] px-2 py-0.5 text-[10px] font-bold text-[#0a1628]/50 blur-[0.5px] select-none"
+                >
+                  🔥 Hot Spot
+                </button>
+                <span
+                  title="Fan feature"
+                  className="inline-flex items-center rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-2 py-0.5 text-[10px] font-bold text-[#c98a00]"
+                >
+                  ⭐
+                </span>
+              </>
+            ) : null}
             {venue.isOfficialFanHub && <Badge className="bg-accent text-white">Official fan hub</Badge>}
             {venue.acceptsReservations && <Badge>Reservations available</Badge>}
             {venue.goodForGroups && <Badge>Good for big groups</Badge>}
@@ -63,9 +118,9 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
           <Badge key={type}>{toTitleCase(type.replace(/_/g, " "))}</Badge>
         ))}
         {venue.associatedCountries.map((country) => (
-          <Badge key={country} className="bg-white">
-            {toTitleCase(country.replace(/-/g, " "))}
-          </Badge>
+          <Link key={country} href={`/country/${country}`}>
+            <Badge className="bg-white">{toTitleCase(country.replace(/-/g, " "))}</Badge>
+          </Link>
         ))}
         {venue.cuisineTags.slice(0, 3).map((tag) => (
           <Badge key={tag} className="bg-white">
@@ -161,7 +216,29 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
             IG
           </a>
         )}
+        <VenueShareButton
+          venueName={venue.name}
+          countryName={venue.associatedCountries[0] ? toTitleCase(venue.associatedCountries[0].replace(/-/g, " ")) : "your team"}
+          url={`https://gamedaymap.com/venue/${venue.slug}`}
+        />
+        <Link href={`/venue/${venue.slug}`} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-2 text-navy dark:border-white/10 dark:bg-white/5 dark:text-white">
+          View details →
+        </Link>
       </div>
+      {showSaveModal ? (
+        <UpgradeModal
+          feature="unlimited_saves"
+          requiredTier="fan"
+          onClose={() => setShowSaveModal(false)}
+        />
+      ) : null}
+      {showBadgeModal ? (
+        <UpgradeModal
+          feature="premium_venue_badges"
+          requiredTier="fan"
+          onClose={() => setShowBadgeModal(false)}
+        />
+      ) : null}
     </div>
   );
 }

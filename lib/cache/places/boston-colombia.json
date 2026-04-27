@@ -500,7 +500,7 @@
     "capacityConfidence": "estimated",
     "sourceType": "official_api",
     "sourceName": "Google Places",
-    "sourceExternalId": "ChIJVZpbfbB544kRDiaDnJWPAxY",
+    "sourceExternalId": "ChIJVZpbfbB544kRDiaDnJGMAxY",
     "sourceConfidence": 0.92,
     "verificationStatus": "imported",
     "isRealVenue": true,

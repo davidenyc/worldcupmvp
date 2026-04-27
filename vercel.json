@@ -1,10 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "env": {
-    "DATA_PROVIDER": "mock",
-    "NEXT_PUBLIC_APP_URL": "https://your-app.vercel.app"
-  }
+  "outputDirectory": ".next"
 }

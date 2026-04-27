@@ -18,7 +18,7 @@ function getDateKey(value: string) {
 }
 
 function openCitySwitcher() {
-  window.dispatchEvent(new Event("watchparty:open-city-switcher"));
+  window.dispatchEvent(new Event("gameday:open-city-switcher"));
 }
 
 export function MatchesPageClient({

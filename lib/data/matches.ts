@@ -23,7 +23,9 @@ export interface WorldCupMatch {
   };
 }
 
-type MatchSeed = Omit<WorldCupMatch, "competition" | "note" | "stageLabel" | "venue" | "isCanada" | "isMexico">;
+type MatchSeed = Omit<WorldCupMatch, "competition" | "note" | "stageLabel" | "venue" | "isCanada" | "isMexico"> & {
+  note?: string;
+};
 
 function isCanadaStadium(stadiumName: string) {
   return stadiumName === "BMO Field" || stadiumName === "BC Place";
@@ -39,9 +41,11 @@ function makeMatch(seed: MatchSeed): WorldCupMatch {
     isCanada: isCanadaStadium(seed.stadiumName),
     isMexico: isMexicoStadium(seed.stadiumName),
     competition: "FIFA World Cup 2026",
-    note: seed.isNYNJ
-      ? "MetLife Stadium fixture with major NYC fan interest."
-      : "Official group-stage fixture from the FIFA schedule.",
+    note:
+      seed.note ??
+      (seed.isNYNJ
+        ? "MetLife Stadium fixture with major NYC fan interest."
+        : "Official group-stage fixture from the FIFA schedule."),
     stageLabel: formatMatchStage(seed.stage),
     venue: {
       city: seed.city,
@@ -407,7 +411,7 @@ export const worldCup2026Matches: WorldCupMatch[] = [
     group: "E",
     stadiumName: "MetLife Stadium",
     city: "East Rutherford",
-    isNYNJ: true
+    isNYNJ: false
   }),
 
   // Group F
@@ -884,6 +888,388 @@ export const worldCup2026Matches: WorldCupMatch[] = [
     stadiumName: "Lincoln Financial Field",
     city: "Philadelphia",
     isNYNJ: false
+  }),
+
+  // Round of 32
+  makeMatch({
+    id: "r32-1",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-01T15:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "MetLife Stadium",
+    city: "East Rutherford",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-2",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-01T19:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "AT&T Stadium",
+    city: "Arlington",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-3",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-01T22:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "SoFi Stadium",
+    city: "Inglewood",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-4",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-02T13:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "NRG Stadium",
+    city: "Houston",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-5",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-02T16:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Hard Rock Stadium",
+    city: "Miami Gardens",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-6",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-02T19:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Lumen Field",
+    city: "Seattle",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-7",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-02T22:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Mercedes-Benz Stadium",
+    city: "Atlanta",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-8",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-03T13:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Gillette Stadium",
+    city: "Foxborough",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-9",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-03T16:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "BC Place",
+    city: "Vancouver",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-10",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-03T19:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "BMO Field",
+    city: "Toronto",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-11",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-03T22:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Arrowhead Stadium",
+    city: "Kansas City",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-12",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-04T13:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Lincoln Financial Field",
+    city: "Philadelphia",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-13",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-04T16:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Estadio Azteca",
+    city: "Mexico City",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-14",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-04T19:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Estadio Akron",
+    city: "Zapopan",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-15",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-04T22:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Levi's Stadium",
+    city: "Santa Clara",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r32-16",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-05T16:00:00-04:00",
+    stage: "round_of_32",
+    group: null,
+    stadiumName: "Estadio BBVA",
+    city: "Guadalupe",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+
+  // Round of 16
+  makeMatch({
+    id: "r16-1",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-07T15:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "MetLife Stadium",
+    city: "East Rutherford",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-2",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-07T21:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "AT&T Stadium",
+    city: "Arlington",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-3",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-08T16:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "SoFi Stadium",
+    city: "Inglewood",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-4",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-08T21:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "Hard Rock Stadium",
+    city: "Miami Gardens",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-5",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-09T16:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "NRG Stadium",
+    city: "Houston",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-6",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-09T21:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "Mercedes-Benz Stadium",
+    city: "Atlanta",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-7",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-11T15:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "Gillette Stadium",
+    city: "Foxborough",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "r16-8",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-11T21:00:00-04:00",
+    stage: "round_of_16",
+    group: null,
+    stadiumName: "Lumen Field",
+    city: "Seattle",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+
+  // Quarterfinals
+  makeMatch({
+    id: "qf-1",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-14T16:00:00-04:00",
+    stage: "quarter",
+    group: null,
+    stadiumName: "MetLife Stadium",
+    city: "East Rutherford",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "qf-2",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-14T21:00:00-04:00",
+    stage: "quarter",
+    group: null,
+    stadiumName: "AT&T Stadium",
+    city: "Arlington",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "qf-3",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-15T16:00:00-04:00",
+    stage: "quarter",
+    group: null,
+    stadiumName: "SoFi Stadium",
+    city: "Inglewood",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "qf-4",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-16T21:00:00-04:00",
+    stage: "quarter",
+    group: null,
+    stadiumName: "Hard Rock Stadium",
+    city: "Miami Gardens",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+
+  // Semifinals
+  makeMatch({
+    id: "sf-1",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-18T19:00:00-04:00",
+    stage: "semi",
+    group: null,
+    stadiumName: "AT&T Stadium",
+    city: "Arlington",
+    isNYNJ: false,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+  makeMatch({
+    id: "sf-2",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-19T16:00:00-04:00",
+    stage: "semi",
+    group: null,
+    stadiumName: "MetLife Stadium",
+    city: "East Rutherford",
+    isNYNJ: true,
+    note: "Knockout stage fixture — matchup TBD based on group results."
+  }),
+
+  // Final
+  makeMatch({
+    id: "final-1",
+    homeCountry: "tbd",
+    awayCountry: "tbd",
+    startsAt: "2026-07-23T19:00:00-04:00",
+    stage: "final",
+    group: null,
+    stadiumName: "MetLife Stadium",
+    city: "East Rutherford",
+    isNYNJ: true,
+    note: "Knockout stage fixture — matchup TBD based on group results."
   })
 ];
 

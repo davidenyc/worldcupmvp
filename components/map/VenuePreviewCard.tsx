@@ -6,7 +6,10 @@ import { Clock3, Heart, Instagram, MapPin, Phone, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { Badge } from "@/components/ui/badge";
+import { UpgradeModal } from "@/components/membership/UpgradeModal";
+import { usePremiumGate } from "@/lib/hooks/usePremiumGate";
 import { useFavoritesStore } from "@/lib/store/favorites";
+import { useMembership } from "@/lib/store/membership";
 import { CountrySummary, RankedVenue } from "@/lib/types";
 import { getSoccerAtmosphereRating, toTitleCase } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
@@ -72,7 +75,10 @@ export function VenuePreviewCard({
   const soccerAtmosphere = getSoccerAtmosphereRating(venue);
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { canSaveVenue } = useMembership();
+  const { showModal, setShowModal, requiredTier } = usePremiumGate("unlimited_saves");
   const favorite = favorites.includes(venue.slug);
+  const isAtLimit = !favorite && !canSaveVenue(favorites.length);
   const countryChipSlug = neutralSportsBar ? null : venue.likelySupporterCountry ?? venue.associatedCountries[0] ?? null;
   const activeIntent = activeVenueIntent === venue.venueIntent;
   const utilityLinks = [
@@ -91,6 +97,16 @@ export function VenuePreviewCard({
         }
       : null
   ].filter(Boolean) as Array<{ href: string; icon: ReactNode; label: string }>;
+
+  function handleSave(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isAtLimit) {
+      setShowModal(true);
+      return;
+    }
+    toggleFavorite(venue.slug);
+  }
 
   function chipButtonClass(active: boolean, emphasis: "default" | "success" = "default") {
     if (emphasis === "success") {
@@ -136,42 +152,11 @@ export function VenuePreviewCard({
               {toTitleCase(primaryVenueType.replace(/_/g, " "))}
             </button>
           ) : (
-            <div />
+            <Badge className={popupSecondaryChipClass}>Watch spot</Badge>
           )}
-          {venue.acceptsReservations ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onToggleReservations?.();
-              }}
-              className={chipButtonClass(reservationsOnly)}
-            >
-              Reservations
-            </button>
-          ) : (
-            <div />
-          )}
-          <button
-            type="button"
-            aria-label={favorite ? "Remove from saved venues" : "Save venue"}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              toggleFavorite(venue.slug);
-            }}
-            className={`inline-flex h-7 w-full items-center justify-center rounded-full border transition ${
-              favorite
-                ? "border-[#f4b942] bg-[#fff4d6] text-[#c98a00] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
-                : "border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f8fbff] dark:border-white/15 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
-            }`}
-          >
-            <Heart className={`h-3 w-3 ${favorite ? "fill-current" : ""}`} />
-          </button>
         </div>
 
-        <div className="grid grid-cols-[28px_minmax(0,1fr)] items-start gap-1.5">
+        <div className="grid grid-cols-[28px_minmax(0,1fr)_28px] items-start gap-1.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)] dark:bg-white/10">
             {neutralSportsBar ? <span className="text-base leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
           </div>
@@ -197,6 +182,19 @@ export function VenuePreviewCard({
               ) : null}
             </div>
           </div>
+          <button
+            type="button"
+            aria-label={favorite ? "Remove from saved venues" : "Save venue"}
+            onClick={handleSave}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
+              favorite
+                ? "border-[#f4b942] bg-[#fff4d6] text-[#c98a00] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
+                : "border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f8fbff] dark:border-white/15 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
+            }`}
+          >
+            <Heart className={`h-3 w-3 ${favorite ? "fill-current" : ""}`} />
+            {isAtLimit ? <span className="absolute -right-1 -top-1 text-[9px]">🔒</span> : null}
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-1.5">
@@ -214,7 +212,21 @@ export function VenuePreviewCard({
               ? "Mixed crowd"
               : toTitleCase((venue.likelySupporterCountry ?? venue.associatedCountries[0] ?? "watch spot").replace(/-/g, " "))}
           </button>
-          <Badge className={popupSecondaryChipClass}>~{venue.approximateCapacity ?? "?"} cap</Badge>
+          {venue.acceptsReservations ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onToggleReservations?.();
+              }}
+              className={chipButtonClass(reservationsOnly)}
+            >
+              Reservations
+            </button>
+          ) : (
+            <Badge className={popupSecondaryChipClass}>~{venue.approximateCapacity ?? "?"} cap</Badge>
+          )}
           <button
             type="button"
             onClick={(event) => {
@@ -238,6 +250,7 @@ export function VenuePreviewCard({
           >
             {soccerAtmosphere} atmosphere
           </button>
+          {venue.acceptsReservations ? <Badge className={popupSecondaryChipClass}>~{venue.approximateCapacity ?? "?"} cap</Badge> : <div />}
         </div>
 
         <div className="grid grid-cols-2 gap-1.5">
@@ -279,7 +292,7 @@ export function VenuePreviewCard({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-1 gap-1.5">
           <a
             href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
             target="_blank"
@@ -288,26 +301,29 @@ export function VenuePreviewCard({
           >
             Directions
           </a>
-          {utilityLinks.length ? (
-            utilityLinks[0] ? (
-              <a
-                href={utilityLinks[0].href}
-                target={utilityLinks[0].href.startsWith("tel:") ? undefined : "_blank"}
-                rel={utilityLinks[0].href.startsWith("tel:") ? undefined : "noreferrer"}
-                className={`${popupActionClass} border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
-                aria-label={utilityLinks[0].label}
-              >
-                {utilityLinks[0].icon}
-              </a>
-            ) : (
-              <div />
-            )
-          ) : (
-            <div />
-          )}
-
         </div>
+        {utilityLinks.length ? (
+          <div className="grid grid-cols-1 gap-1.5">
+            <a
+              href={utilityLinks[0].href}
+              target={utilityLinks[0].href.startsWith("tel:") ? undefined : "_blank"}
+              rel={utilityLinks[0].href.startsWith("tel:") ? undefined : "noreferrer"}
+              className={`${popupActionClass} gap-1.5 border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
+              aria-label={utilityLinks[0].label}
+            >
+              {utilityLinks[0].icon}
+              {utilityLinks[0].label}
+            </a>
+          </div>
+        ) : null}
       </div>
+      {showModal ? (
+        <UpgradeModal
+          feature="unlimited_saves"
+          requiredTier={requiredTier}
+          onClose={() => setShowModal(false)}
+        />
+      ) : null}
     </div>
   );
 }

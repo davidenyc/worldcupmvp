@@ -16,6 +16,12 @@ function withRealVenueFlag(venues: Venue[], isRealVenue: boolean) {
 
 function applySearchFilters(venues: Venue[], params?: VenueSearchParams) {
   let results = [...venues];
+  const normalizeCity = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
+
+  if (params?.city) {
+    const cityKey = normalizeCity(params.city);
+    results = results.filter((venue) => normalizeCity(venue.city) === cityKey);
+  }
 
   if (params?.countrySlug) {
     results = results.filter((venue) => venue.associatedCountries.includes(params.countrySlug!));

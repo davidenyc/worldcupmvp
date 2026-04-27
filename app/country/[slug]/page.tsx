@@ -1,181 +1,158 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CountryBrowser } from "@/components/country/country-browser";
-import { CountryFlag } from "@/components/ui/CountryFlag";
-import { RankedVenueList } from "@/components/venue/ranked-venue-list";
-import { VenueCard } from "@/components/venue/venue-card";
-import { Badge } from "@/components/ui/badge";
-import { formatMatchStage } from "@/lib/data/matches";
-import { getAllCountries, getCountryPageData } from "@/lib/data/repository";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { demoCountries } from "@/lib/data/demo";
+import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
+import { worldCup2026Matches } from "@/lib/data/matches";
+import { getAllCountries, getMapPageData } from "@/lib/data/repository";
 
-export async function generateMetadata({
-  params
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+async function getCountryVenueBuckets() {
+  const cityResults = await Promise.all(
+    HOST_CITIES.map(async (city) => ({ city, data: await getMapPageData(city.key) }))
+  );
+
+  return cityResults.map(({ city, data }) => ({
+    city,
+    venues: data.venues.filter((venue) => venue.likelySupporterCountry)
+  }));
+}
+
+export async function generateStaticParams() {
+  return demoCountries.map((country) => ({ slug: country.slug }));
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const countries = await getAllCountries();
   const country = countries.find((item) => item.slug === params.slug);
 
   if (!country) {
     return {
       title: "GameDay Map",
-      description: "World Cup 2026 watch spots."
+      description: "World Cup 2026 fan venue finder."
     };
   }
 
   return {
-    title: `${country.name} fans · World Cup 2026 watch spots`,
-    description: `World Cup 2026 venue discovery for ${country.supportersLabel}, with reservations, supporter hubs, and match-day spots across the host cities.`,
-    openGraph: {
-      images: [`/api/og?country=${country.slug}`]
-    }
+    title: `Best ${country.name} Watch Party Bars in the US | GameDay Map`,
+    description: `Find every ${country.name} bar and restaurant across all 17 World Cup 2026 host cities. Find your fellow supporters and watch the games together.`
   };
 }
 
-export default async function CountryPage({
-  params
-}: {
-  params: { slug: string };
-}) {
-  const { slug } = params;
-  const [data, countries] = await Promise.all([getCountryPageData(slug), getAllCountries()]);
+export default async function CountryPage({ params }: { params: { slug: string } }) {
+  try {
+    const [countries, buckets] = await Promise.all([getAllCountries(), getCountryVenueBuckets()]);
+    const country = countries.find((item) => item.slug === params.slug);
 
-  if (!data) {
-    notFound();
-  }
+    if (!country) notFound();
 
-  const neighborhoodOptions = Array.from(new Set(data.venues.map((venue) => venue.neighborhood))).sort();
+    const citySections = buckets
+      .map((bucket) => ({
+        city: bucket.city,
+        venues: bucket.venues.filter((venue) => venue.likelySupporterCountry === params.slug)
+      }))
+      .filter((section) => section.venues.length > 0);
 
-  return (
-    <div className="container-shell py-10">
-      <section className="surface-strong p-6">
-        <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
-          <div>
-            <CountryFlag country={data.country} size="lg" />
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <h1 className="text-4xl font-semibold tracking-tight text-deep">{data.country.name}</h1>
-              <Badge>{data.country.fifaCode}</Badge>
-              <Badge>{data.country.confederation}</Badge>
+    const venueCount = citySections.reduce((sum, section) => sum + section.venues.length, 0);
+    const matches = worldCup2026Matches
+      .filter(
+        (match) =>
+          match.homeCountry === params.slug ||
+          match.awayCountry === params.slug ||
+          match.homeCountry === "tbd"
+      )
+      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+
+    return (
+      <main className="bg-[#f7fafc] pb-12">
+        <section className="bg-[#0a1628] px-4 py-14 text-white sm:px-6 lg:px-8">
+          <div className="container-shell">
+            <div className="text-[80px] leading-none">{country.flagEmoji || "🏳"}</div>
+            <h1 className="mt-4 text-4xl font-bold tracking-tight">{country.name}</h1>
+            <div className="mt-3 text-lg text-white/70">
+              {venueCount} venues · {citySections.length} cities
             </div>
-            <p className="mt-4 max-w-2xl text-navy/72">
-              World Cup 2026 venue discovery for {data.country.name} supporters, with reservation support, capacity signals, and curated match-day atmosphere notes.
-            </p>
+            <div className="mt-2 text-sm uppercase tracking-[0.24em] text-[#f4b942]">Find your supporters</div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl bg-sky/55 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-navy/55">Venue count</div>
-              <div className="mt-2 text-3xl font-semibold text-deep">{data.venues.length}</div>
-            </div>
-            <div className="rounded-2xl bg-sky/55 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-navy/55">Best matchday spots</div>
-              <div className="mt-2 text-3xl font-semibold text-deep">{data.featuredVenues.length}</div>
-            </div>
-            <div className="rounded-2xl bg-sky/55 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-navy/55">Best for groups</div>
-              <div className="mt-2 text-3xl font-semibold text-deep">{data.largeGroupVenues.length}</div>
-            </div>
-            <div className="rounded-2xl bg-sky/55 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-navy/55">Reservable</div>
-              <div className="mt-2 text-3xl font-semibold text-deep">{data.reservableVenues.length}</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="grid gap-6 py-8 xl:grid-cols-[1fr,0.75fr]">
-        <RankedVenueList
-          venues={data.featuredVenues.slice(0, 6)}
-          title="Most trending places"
-          subtitle="Top-ranked USA spots for this country, sorted by rank score and boosted by your saved favorites."
-        />
-        <div className="surface p-6">
-          <div className="text-sm uppercase tracking-[0.2em] text-mist">Upcoming games</div>
-          <h2 className="mt-2 text-2xl font-semibold text-deep">Schedule first, venues second</h2>
-          <p className="mt-3 text-sm leading-6 text-navy/72">
-            Tap into the next fixtures for {data.country.name}, then jump back to the best places to watch them.
-          </p>
-          <div className="mt-5 grid gap-3">
-            {data.matches.length ? (
-              data.matches.map((match) => (
-              <div key={match.id} className="rounded-2xl border border-line bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="font-semibold text-deep">
-                      <span className="mr-1">{countries.find((country) => country.slug === match.homeCountry)?.flagEmoji ?? "🏁"}</span>
-                      {countries.find((country) => country.slug === match.homeCountry)?.name ?? match.homeCountry}
-                      <span className="mx-2 text-navy/40">vs</span>
-                      <span className="mr-1">{countries.find((country) => country.slug === match.awayCountry)?.flagEmoji ?? "🏁"}</span>
-                      {countries.find((country) => country.slug === match.awayCountry)?.name ?? match.awayCountry}
-                    </div>
-                    <Badge>{match.stageLabel ?? formatMatchStage(match.stage)}</Badge>
+        <div className="container-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+          {citySections.length ? (
+            citySections.map((section) => (
+              <section key={section.city.key} className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#0a1628]">{section.city.label}</h2>
+                    <div className="text-sm text-[#0a1628]/60">{section.venues.length} venues for {country.name} fans</div>
                   </div>
-                  <div className="mt-2 text-sm text-navy/65">
-                    {new Date(match.startsAt).toLocaleString("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short"
-                    })}
-                  </div>
-                  <div className="mt-2 text-sm text-navy/65">
-                    {match.stadiumName}, {match.city}
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-navy/72">{match.note}</p>
+                  <Link href={`/${section.city.key}/map?countries=${params.slug}`} className="text-sm font-semibold text-[#0a1628] underline">
+                    View all in {section.city.label} →
+                  </Link>
                 </div>
-              ))
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {section.venues.slice(0, 4).map((venue) => (
+                    <Link key={venue.id} href={`/venue/${venue.slug}`} className="min-w-[260px] rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4 shadow-sm">
+                      <div className="text-lg font-semibold text-[#0a1628]">{venue.name}</div>
+                      <div className="mt-1 text-sm text-[#0a1628]/60">{venue.neighborhood}</div>
+                      <div className="mt-2 text-xs text-[#0a1628]/55">
+                        {(venue.rating ?? 0).toFixed(1)} · {venue.venueIntent.replace(/_/g, " ")}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <EmptyState
+              emoji="🏳"
+              title={`No venues found for ${country.name} yet`}
+              action={
+                <Link href="/submit" className="inline-flex rounded-full bg-[#f4b942] px-5 py-2.5 text-sm font-bold text-[#0a1628]">
+                  Submit a venue →
+                </Link>
+              }
+            />
+          )}
+
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-[#0a1628]">Upcoming Matches</h2>
+            </div>
+            {matches.length ? (
+              <div className="grid gap-4">
+                {matches.map((match) => {
+                  const isTbd = match.homeCountry === "tbd";
+                  const opponent = match.homeCountry === params.slug ? match.awayCountry : match.homeCountry;
+                  const hostCityKey = getHostCity(match.city)?.key ?? "nyc";
+                  return (
+                    <div key={match.id} className="rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4">
+                      <div className="font-semibold text-[#0a1628]">
+                        {new Date(match.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                      </div>
+                      <div className="mt-1 text-sm text-[#0a1628]/60">
+                        {isTbd ? "Potential knockout match" : `vs ${opponent}`} · {match.stadiumName}, {match.city}
+                      </div>
+                      <Link
+                        href={isTbd ? "/nyc/matches" : `/${hostCityKey}/map?countries=${params.slug}`}
+                        className="mt-3 inline-flex text-sm font-semibold text-[#0a1628] underline"
+                      >
+                        {isTbd ? "View full schedule →" : "Find bars →"}
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-line bg-sky/30 p-4 text-sm text-navy/65">
-                Match schedule details for this country are still filling in.
+              <div className="rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4 text-sm text-[#0a1628]/60">
+                No matches found — explore the full schedule. <Link href="/nyc/matches" className="font-semibold underline">Go to matches</Link>
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </section>
-
-      <section className="grid gap-6 py-8 xl:grid-cols-4">
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm uppercase tracking-[0.2em] text-mist">Best matchday spots</div>
-            <div className="mt-2 grid gap-4">
-              {data.featuredVenues.slice(0, 2).map((venue) => (
-                <VenueCard key={venue.id} venue={venue} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm uppercase tracking-[0.2em] text-mist">Best for large groups</div>
-            <div className="mt-2 grid gap-4">
-              {data.largeGroupVenues.slice(0, 2).map((venue) => (
-                <VenueCard key={venue.id} venue={venue} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm uppercase tracking-[0.2em] text-mist">Best for reservations</div>
-            <div className="mt-2 grid gap-4">
-              {data.reservableVenues.slice(0, 2).map((venue) => (
-                <VenueCard key={venue.id} venue={venue} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm uppercase tracking-[0.2em] text-mist">Authentic food + football vibe</div>
-            <div className="mt-2 grid gap-4">
-              {data.authenticVibeVenues.slice(0, 2).map((venue) => (
-                <VenueCard key={venue.id} venue={venue} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="pb-8">
-        <CountryBrowser venues={data.venues} neighborhoods={neighborhoodOptions} />
-      </section>
-    </div>
-  );
+      </main>
+    );
+  } catch {
+    notFound();
+  }
 }

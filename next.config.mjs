@@ -10,17 +10,25 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "images.ctfassets.net"
+      },
+      {
+        protocol: "https",
+        hostname: "maps.googleapis.com"
+      },
+      {
+        protocol: "https",
+        hostname: "cartocdn.com"
       }
     ]
   },
   async headers() {
     return [
       {
-        source: '/(.*)',
-        headers: [{ key: 'X-Frame-Options', value: 'ALLOWALL' }],
-      },
+        source: "/(.*)",
+        headers: [{ key: "X-Frame-Options", value: "ALLOWALL" }]
+      }
     ];
-  },
+  }
 };
 
 export default nextConfig;

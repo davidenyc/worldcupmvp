@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
+import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import { FilterDrawer } from "@/components/map/FilterDrawer";
 import { MatchdayBanner } from "@/components/map/MatchdayBanner";
 import { MapResultsPanel } from "@/components/map/MapResultsPanel";
@@ -13,6 +14,7 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { WorldCupMatch, getMatchDateKey, worldCup2026Matches } from "@/lib/data/matches";
 import { MapPageData, MapSortKey } from "@/lib/maps/types";
+import { useMembership } from "@/lib/store/membership";
 import { RankedVenue, VenueIntentKey } from "@/lib/types";
 import { getSoccerAtmosphereRating } from "@/lib/utils";
 import { DEFAULT_GAMES_FOCUSED_VENUE_INTENTS } from "@/lib/venueIntents";
@@ -374,6 +376,7 @@ const NYCFlagPinMap = dynamic(
 export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?: string }) {
   const initialCityConfig = getHostCity(city) ?? HOST_CITIES[0];
   const router = useRouter();
+  const { canAddCountryFilter, tier } = useMembership();
   const pathname = usePathname() ?? "/map";
   const searchParams = useSearchParams();
   const params = searchParams ?? emptySearchParams;
@@ -410,9 +413,9 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const [desktopResultsExpanded, setDesktopResultsExpanded] = useState(false);
   const [showAllMapVenues, setShowAllMapVenues] = useState(false);
   const [showAllLockedVenues, setShowAllLockedVenues] = useState<RankedVenue[] | null>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [quickMatchBucket, setQuickMatchBucket] = useState<QuickMatchBucket>("local");
   const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
-  const [mobileGamesPage, setMobileGamesPage] = useState(0);
   const countryLookup = useMemo(
     () => new Map(data.countries.map((country) => [country.slug, country] as const)),
     [data.countries]
@@ -787,10 +790,6 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     }
   }, [activeQuickMatchOption, quickMatchBucket]);
 
-  useEffect(() => {
-    setMobileGamesPage(0);
-  }, [quickMatchBucket, mobileGamesOpen]);
-
   const topCountries = useMemo(() => {
     const counts = new Map<string, number>();
     data.venues.forEach((venue) => {
@@ -936,7 +935,16 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
 
   const handleToggleCountry = (slug: string) => {
     setSoccerBarsMode(false);
-    setSelectedCountrySlugs((current) => (current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]));
+    setSelectedCountrySlugs((current) => {
+      if (current.includes(slug)) {
+        return current.filter((item) => item !== slug);
+      }
+      if (!canAddCountryFilter(current.length)) {
+        setShowFilterModal(true);
+        return current;
+      }
+      return [...current, slug];
+    });
   };
 
   const handleToggleVenueIntent = (intent: VenueIntentKey) => {
@@ -1020,7 +1028,51 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
             <span>{comparisonBannerCountries[1]?.name}</span>
           </div>
           <div className="mt-1 text-xs font-normal text-[#0a1628]/60 dark:text-white/60">Watching spots for both sets of fans</div>
+          {tier === "free" ? (
+            <button
+              type="button"
+              onClick={() => setShowFilterModal(true)}
+              className="mt-3 inline-flex rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-[11px] font-bold text-[#c98a00]"
+            >
+              + Upgrade to compare more
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {tier === "free" && selectedCountrySlugs.length >= 1 ? (
+        <div className="flex items-center gap-2 rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-xs font-semibold text-[#0a1628]">
+          <span>{selectedCountrySlugs.length}/2 countries</span>
+          {selectedCountrySlugs.length >= 2 ? (
+            <button
+              type="button"
+              onClick={() => setShowFilterModal(true)}
+              className="ml-1 font-bold text-[#c98a00] underline"
+            >
+              Upgrade for all 48
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {tier === "free" ? (
+        <div className="mt-1 text-xs text-[#0a1628]/50 dark:text-white/50">
+          <button
+            type="button"
+            onClick={() => setShowFilterModal(true)}
+            className="font-semibold text-[#c98a00] hover:underline"
+          >
+            ⭐ Fan Pass
+          </button>{" "}
+          unlocks all 48 country filters
+        </div>
+      ) : null}
+      {tier === "free" && filteredVenues.length > 20 ? (
+        <button
+          type="button"
+          onClick={() => setShowFilterModal(true)}
+          className="inline-flex rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-xs font-semibold text-[#0a1628]"
+        >
+          ⭐ Fan Pass members see all {filteredVenues.length} venues ranked by quality
+        </button>
       ) : null}
       <MapResultsPanel
         venues={displayedVenues}
@@ -1046,7 +1098,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   };
 
   return (
-    <div className="relative">
+    <div className="map-page relative">
       <MapShell
         banner={
           <MatchdayBanner
@@ -1057,14 +1109,20 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
           />
         }
         results={resultsPanel}
-        resultsCountLabel={`${filteredVenues.length} spots`}
-        filterDrawerOpen={filterDrawerOpen}
+        resultsCountLabel={`${filteredVenues.length} venues`}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearAllFilters}
         onOpenFilters={() => setFilterDrawerOpen(true)}
         onOpenResults={() => setMobileResultsOpen(true)}
+        onOpenGames={() => {
+          setFilterDrawerOpen(false);
+          setMobileResultsOpen(false);
+          setMobileGamesOpen((current) => !current);
+        }}
         mobileResultsOpen={mobileResultsOpen}
+        mobileGamesOpen={mobileGamesOpen}
         onCloseResults={() => setMobileResultsOpen(false)}
+        mobileFilterOpen={filterDrawerOpen}
         hideMobileResultsButton={Boolean(selectedVenue) || filterDrawerOpen || mobileResultsOpen || mobileGamesOpen}
         desktopResultsExpanded={desktopResultsExpanded}
         onDesktopResultsExpandedChange={setDesktopResultsExpanded}
@@ -1114,7 +1172,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
             />
 
             <div
-              className={`absolute left-3 top-5 z-30 flex max-w-[min(92vw,22rem)] flex-col items-start gap-2.5 transition-all duration-200 lg:top-3 ${
+              className={`absolute left-3 top-5 z-30 hidden max-w-[min(92vw,22rem)] flex-col items-start gap-2.5 transition-all duration-200 lg:top-3 lg:flex ${
                 selectedVenue
                   ? "pointer-events-none translate-y-2 opacity-0 lg:pointer-events-auto lg:translate-y-0 lg:opacity-100"
                   : "pointer-events-auto translate-y-0 opacity-100"
@@ -1123,20 +1181,16 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setCitySelectorOpen((current) => {
-                      const next = !current;
-                      if (next) {
-                        setFilterDrawerOpen(false);
-                        setMobileResultsOpen(false);
-                        setMobileGamesOpen(false);
-                      }
-                      return next;
-                    })
-                  }
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-white/95 px-3.5 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                  onClick={() => {
+                    setCitySelectorOpen(false);
+                    setFilterDrawerOpen(false);
+                    setMobileResultsOpen(false);
+                    setMobileGamesOpen((current) => !current);
+                  }}
+                  className="inline-flex h-12 min-w-[11rem] items-center justify-between gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
                 >
-                  📍 {selectedCityConfig.label} ▾
+                  <span>🏟 Games</span>
+                  <span className="text-xs opacity-65">▾</span>
                 </button>
                 {hasActiveFilters ? (
                   <button
@@ -1148,7 +1202,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                         clearAllFilters();
                       }
                     }}
-                    className="inline-flex items-center rounded-full bg-[#f4b942] px-3 py-2 text-xs font-bold text-[#0a1628] shadow-lg"
+                    className="inline-flex h-12 items-center rounded-full bg-[#f4b942] px-3.5 text-xs font-bold text-[#0a1628] shadow-lg"
                   >
                     {selectedCountrySlugs.length > 0
                       ? selectedCountrySlugs.map((slug) => countryLookup.get(slug)?.flagEmoji ?? slug).join(" ")
@@ -1178,111 +1232,94 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                   setMobileGamesOpen(false);
                   setFilterDrawerOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-white/95 px-3.5 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                className="inline-flex h-12 min-w-[11rem] items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
               >
                 ⚙ Filters{hasActiveFilters ? ` · ${activeFilterCount}` : ""}
               </button>
 
-              {activeQuickMatchOption ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCitySelectorOpen(false);
-                      setFilterDrawerOpen(false);
-                      setMobileResultsOpen(false);
-                      setMobileGamesOpen((current) => !current);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-white/95 px-3.5 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
-                  >
-                    🏟 Games
-                  </button>
-
-                  {mobileGamesOpen ? (
-                    <div className="hidden w-[min(92vw,22rem)] rounded-2xl border border-[#d8e3f5] bg-white/95 p-3 text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/55 dark:text-white">
-                          Games
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setMobileGamesOpen(false)}
-                          className="rounded-full border border-[#d8e3f5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                        >
-                          Close
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {quickMatchOptions.map((option) => (
-                          <button
-                            key={option.key}
-                            type="button"
-                            onClick={() => setQuickMatchBucket(option.key)}
-                            disabled={!option.matches.length}
-                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
-                              option.key === activeQuickMatchOption.key
-                                ? "bg-[#f4b942] text-[#0a1628]"
-                                : option.matches.length
-                                  ? "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                                  : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35 dark:border-white/10 dark:bg-white/5 dark:text-white/35"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 space-y-2">
-                        {activeQuickMatchOption.matches.slice(0, 4).map((match) => {
-                          const home = countryLookup.get(match.homeCountry);
-                          const away = countryLookup.get(match.awayCountry);
-                          const stats = getMatchVenueStats(match);
-
-                          return (
-                            <button
-                              key={match.id}
-                              type="button"
-                              onClick={() => handleApplyMatch(match)}
-                              className="w-full rounded-2xl border border-[#d8e3f5] bg-white px-3 py-3 text-left transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
-                            >
-                              <div className="text-sm font-semibold text-[#0a1628] dark:text-white">
-                                <span className="inline-flex items-center gap-1">
-                                  <span>{home?.flagEmoji ?? "🏁"}</span>
-                                  <span>{home?.name ?? match.homeCountry}</span>
-                                </span>
-                                <span className="mx-2 text-[#0a1628]/40 dark:text-white">vs</span>
-                                <span className="inline-flex items-center gap-1">
-                                  <span>{away?.flagEmoji ?? "🏁"}</span>
-                                  <span>{away?.name ?? match.awayCountry}</span>
-                                </span>
-                              </div>
-                              <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
-                                {new Date(match.startsAt).toLocaleString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  timeZone: "America/New_York"
-                                })}{" "}
-                                ET
-                              </div>
-                              <div className="mt-1 text-[11px] text-[#0a1628]/58 dark:text-white/68">
-                                {stats.spots} spots · {stats.sportsBars} sports bars
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+              {activeQuickMatchOption && mobileGamesOpen ? (
+                <div className="hidden w-[min(92vw,22rem)] rounded-2xl border border-[#d8e3f5] bg-white/95 p-3 text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/55 dark:text-white">
+                      Games
                     </div>
-                  ) : null}
-                </>
+                    <button
+                      type="button"
+                      onClick={() => setMobileGamesOpen(false)}
+                      className="rounded-full border border-[#d8e3f5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {quickMatchOptions.map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => setQuickMatchBucket(option.key)}
+                        disabled={!option.matches.length}
+                        className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                          option.key === activeQuickMatchOption.key
+                            ? "bg-[#f4b942] text-[#0a1628]"
+                            : option.matches.length
+                              ? "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                              : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35 dark:border-white/10 dark:bg-white/5 dark:text-white/35"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {activeQuickMatchOption.matches.slice(0, 4).map((match) => {
+                      const home = countryLookup.get(match.homeCountry);
+                      const away = countryLookup.get(match.awayCountry);
+                      const stats = getMatchVenueStats(match);
+
+                      return (
+                        <button
+                          key={match.id}
+                          type="button"
+                          onClick={() => handleApplyMatch(match)}
+                          className="w-full rounded-2xl border border-[#d8e3f5] bg-white px-3 py-3 text-left transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                        >
+                          <div className="text-sm font-semibold text-[#0a1628] dark:text-white">
+                            <span className="inline-flex items-center gap-1">
+                              <span>{home?.flagEmoji ?? "🏁"}</span>
+                              <span>{home?.name ?? match.homeCountry}</span>
+                            </span>
+                            <span className="mx-2 text-[#0a1628]/40 dark:text-white">vs</span>
+                            <span className="inline-flex items-center gap-1">
+                              <span>{away?.flagEmoji ?? "🏁"}</span>
+                              <span>{away?.name ?? match.awayCountry}</span>
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
+                            {new Date(match.startsAt).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York"
+                            })}{" "}
+                            ET
+                          </div>
+                          <div className="mt-1 text-[11px] text-[#0a1628]/58 dark:text-white/68">
+                            {stats.spots} spots · {stats.sportsBars} sports bars
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : null}
 
               {canToggleShowAllMapVenues ? (
                 <button
                   type="button"
                   onClick={handleToggleShowAllMapVenues}
-                  className="hidden items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:inline-flex"
+                  className="hidden h-12 min-w-[11rem] items-center justify-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:inline-flex"
                 >
                   {showAllMapVenues ? "Show fewer" : "Show all"}
                 </button>
@@ -1301,7 +1338,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
       />
 
       {canToggleShowAllMapVenues && !selectedVenue && !filterDrawerOpen && !mobileResultsOpen && !mobileGamesOpen ? (
-        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.4rem)] z-40 lg:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+10.5rem)] z-40 lg:hidden">
           <div className="pointer-events-none flex items-end justify-end px-4">
             <button
               type="button"
@@ -1317,9 +1354,9 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
       {activeQuickMatchOption && mobileGamesOpen ? (
         <div className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 lg:hidden">
           <div className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#161b22]/96 text-white shadow-2xl backdrop-blur-md">
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="min-w-0 flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex min-w-max gap-1.5 pr-1">
+            <div className="overflow-x-auto px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-w-max items-stretch gap-2 pr-1">
+                <div className="flex items-stretch gap-1.5">
                   {quickMatchOptions.map((option) => (
                     <button
                       key={option.key}
@@ -1338,21 +1375,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMobileGamesPage((current) => Math.max(0, current - 1))}
-                disabled={mobileGamesPage === 0}
-                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white disabled:opacity-35"
-              >
-                ←
-              </button>
-
-              <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
-                {activeQuickMatchOption.matches
-                  .slice(mobileGamesPage * 2, mobileGamesPage * 2 + 2)
-                  .map((match) => {
+                {activeQuickMatchOption.matches.slice(0, 8).map((match) => {
                     const home = countryLookup.get(match.homeCountry);
                     const away = countryLookup.get(match.awayCountry);
                     const stats = getMatchVenueStats(match);
@@ -1362,7 +1385,7 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                         key={match.id}
                         type="button"
                         onClick={() => handleApplyMatch(match)}
-                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-2.5 py-2 text-left transition hover:bg-white/10"
+                        className="w-[12.25rem] shrink-0 rounded-2xl border border-white/10 bg-white/5 px-2.5 py-2 text-left transition hover:bg-white/10"
                       >
                         <div className="text-[11px] font-semibold leading-tight text-white">
                           <span>{home?.flagEmoji ?? "🏁"}</span>
@@ -1388,24 +1411,38 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
                     );
                   })}
               </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileGamesPage((current) => {
-                    const maxPage = Math.max(0, Math.ceil(activeQuickMatchOption.matches.length / 2) - 1);
-                    return Math.min(maxPage, current + 1);
-                  })
-                }
-                disabled={mobileGamesPage >= Math.max(0, Math.ceil(activeQuickMatchOption.matches.length / 2) - 1)}
-                className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white disabled:opacity-35"
-              >
-                →
-              </button>
-
             </div>
           </div>
         </div>
+      ) : null}
+
+      {citySelectorOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close city selector"
+            onClick={() => setCitySelectorOpen(false)}
+            className="fixed inset-0 z-40 bg-[#0a1628]/18 lg:hidden"
+          />
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 lg:hidden">
+            <div className="flex justify-center pt-4">
+              <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
+            </div>
+            <div className="border-b border-[#d8e3f5] px-4 py-3 dark:border-white/10">
+              <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Switch city</div>
+              <div className="mt-1 text-sm font-semibold text-[#0a1628] dark:text-white">Choose your host city</div>
+            </div>
+            <div className="max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <CitySelector
+                selectedCity={city}
+                onSelectCity={(nextCity) => {
+                  setCitySelectorOpen(false);
+                  handleSelectCity(nextCity);
+                }}
+              />
+            </div>
+          </div>
+        </>
       ) : null}
 
       <FilterDrawer
@@ -1446,6 +1483,13 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
         showAllMapVenues={showAllMapVenues}
         totalVenueCount={filteredVenues.length}
       />
+      {showFilterModal ? (
+        <UpgradeModal
+          feature="unlimited_country_filters"
+          requiredTier="fan"
+          onClose={() => setShowFilterModal(false)}
+        />
+      ) : null}
     </div>
   );
 }

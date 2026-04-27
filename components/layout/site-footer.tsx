@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-[#d8e3f5] bg-white py-10 dark:border-white/8 dark:bg-[#0d1117]">
+    <footer className="pb-safe mt-auto border-t border-[#d8e3f5] bg-white py-10 dark:border-white/8 dark:bg-[#0d1117]">
       <div className="container-shell">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
@@ -13,21 +13,30 @@ export function SiteFooter() {
               <span className="font-semibold text-[#0a1628] dark:text-white">GameDay Map</span>
             </div>
             <p className="mt-3 text-sm text-[#0a1628]/60 dark:text-white/55">
-              World Cup 2026 fan experience across 17 host cities. Find bars, restaurants, and supporter hubs for all 48 nations.
+              GameDay Map · World Cup 2026 · Built for fans, by fans
             </p>
           </div>
 
           <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#0a1628]/70 dark:text-white/60">
             <Link href="/" className="hover:text-[#0a1628] dark:hover:text-white">Home</Link>
-            <Link href="/map" className="hover:text-[#0a1628] dark:hover:text-white">Explore map</Link>
-            <Link href="/matches" className="hover:text-[#0a1628] dark:hover:text-white">Matches</Link>
+            <Link href="/tonight" className="hover:text-[#0a1628] dark:hover:text-white">Tonight</Link>
+            <Link href="/search" className="hover:text-[#0a1628] dark:hover:text-white">Search</Link>
+            <Link href="/nyc/map" className="hover:text-[#0a1628] dark:hover:text-white">Map</Link>
+            <Link href="/nyc/matches" className="hover:text-[#0a1628] dark:hover:text-white">Matches</Link>
+            <Link href="/country/brazil" className="hover:text-[#0a1628] dark:hover:text-white">Country Guides</Link>
+            <Link href="/membership" className="hover:text-[#0a1628] dark:hover:text-white">Membership</Link>
+            <Link href="/account" className="hover:text-[#0a1628] dark:hover:text-white">Account</Link>
+            <Link href="/groups" className="hover:text-[#0a1628] dark:hover:text-white">Groups</Link>
+            <Link href="/privacy" className="hover:text-[#0a1628] dark:hover:text-white">Privacy</Link>
+            <Link href="/terms" className="hover:text-[#0a1628] dark:hover:text-white">Terms</Link>
+            <Link href="/about" className="hover:text-[#0a1628] dark:hover:text-white">About</Link>
             <Link href="/submit" className="hover:text-[#0a1628] dark:hover:text-white">Submit a venue</Link>
           </nav>
         </div>
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef4ff] pt-6 text-xs text-[#0a1628]/40 dark:border-white/6 dark:text-white/30">
-          <span>© 2026 GameDay Map. Built for discovery, not scraping.</span>
-          <span>Curated supporter spots across World Cup 2026 host cities.</span>
+          <span>© 2026 GameDay Map</span>
+          <span>GameDay Map · World Cup 2026 · Built for fans, by fans</span>
         </div>
       </div>
     </footer>

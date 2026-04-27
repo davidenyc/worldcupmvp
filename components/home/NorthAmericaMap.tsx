@@ -32,10 +32,10 @@ export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
   return (
     <div className="overflow-hidden border-y border-[#cfe0ff] bg-[#eef4ff] shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none sm:rounded-[2rem] sm:border sm:p-4">
       <div className="bg-white dark:bg-[#1c2330] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:p-4 sm:dark:border-white/10">
-        <div className="mb-4 flex items-center justify-between gap-4 px-4 pt-4 sm:px-2 sm:pt-0">
+        <div className="mb-4 flex flex-col items-start gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:pt-0">
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">North America host map</div>
-            <div className="mt-1 text-sm font-semibold text-[#0a1628] dark:text-white">Tap a city to jump straight to its watch spots</div>
+            <div className="mt-1 text-xl font-semibold text-[#0a1628] dark:text-white sm:text-sm">Tap a city to jump straight to its watch spots</div>
           </div>
           <div className="rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628]/75 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/75">
             17 host cities

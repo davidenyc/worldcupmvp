@@ -1,7 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 
 import { createClusterIcon } from "@/lib/maps/markerFactory";
@@ -10,6 +11,16 @@ import { CountrySummary, RankedVenue } from "@/lib/types";
 import { VenuePreviewCard } from "@/components/map/VenuePreviewCard";
 import { FlagMarker } from "@/components/map/FlagMarker";
 import { useTheme } from "@/lib/store/theme";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((module) => module.MapContainer), {
+  ssr: false
+});
+const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
+  ssr: false
+});
+const Popup = dynamic(() => import("react-leaflet").then((module) => module.Popup), {
+  ssr: false
+});
 
 function clusterVenues(venues: RankedVenue[], zoom: number): MapCluster[] {
   const threshold = zoom <= 10 ? 0.03 : zoom <= 12 ? 0.015 : 0.008;

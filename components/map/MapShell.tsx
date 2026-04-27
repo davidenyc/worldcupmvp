@@ -1,41 +1,63 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, TouchEvent, useEffect, useRef, useState } from "react";
+
+function useSwipeDown(onSwipeDown?: () => void) {
+  const startYRef = useRef<number | null>(null);
+
+  return {
+    onTouchStart(event: TouchEvent<HTMLDivElement>) {
+      startYRef.current = event.touches[0]?.clientY ?? null;
+    },
+    onTouchEnd(event: TouchEvent<HTMLDivElement>) {
+      const endY = event.changedTouches[0]?.clientY ?? null;
+      if (startYRef.current !== null && endY !== null && endY - startYRef.current > 70) {
+        onSwipeDown?.();
+      }
+      startYRef.current = null;
+    }
+  };
+}
 
 export function MapShell({
   banner,
   map,
   results,
   resultsCountLabel,
-  filterDrawerOpen = false,
   hideMobileResultsButton = false,
   hasActiveFilters = false,
   onClearFilters,
   onOpenFilters,
   onOpenResults,
+  onOpenGames,
   mobileResultsOpen = false,
+  mobileGamesOpen = false,
   onCloseResults,
   desktopResultsExpanded = false,
   onDesktopResultsExpandedChange,
-  hideDesktopResults = false
+  hideDesktopResults = false,
+  mobileFilterOpen = false
 }: {
   banner?: ReactNode;
   map: ReactNode;
   results: ReactNode;
   resultsCountLabel?: string;
-  filterDrawerOpen?: boolean;
   hideMobileResultsButton?: boolean;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
   onOpenFilters?: () => void;
   onOpenResults?: () => void;
+  onOpenGames?: () => void;
   mobileResultsOpen?: boolean;
+  mobileGamesOpen?: boolean;
   onCloseResults?: () => void;
   desktopResultsExpanded?: boolean;
   onDesktopResultsExpandedChange?: (expanded: boolean) => void;
   hideDesktopResults?: boolean;
+  mobileFilterOpen?: boolean;
 }) {
   const [desktopResultsCollapsed, setDesktopResultsCollapsed] = useState(false);
+  const resultsSwipe = useSwipeDown(onCloseResults);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -69,20 +91,20 @@ export function MapShell({
                   <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Results</div>
                   <div className="text-sm font-semibold text-[#0a1628] dark:text-white">{resultsCountLabel ?? "Venues in view"}</div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className={`grid gap-2 ${hasActiveFilters && onClearFilters ? "grid-cols-2" : "grid-cols-2"}`}>
                   {hasActiveFilters && onClearFilters ? (
                     <button
                       type="button"
                       onClick={onClearFilters}
-                      className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                      className="inline-flex h-12 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                     >
-                      Clear all
+                      Clear
                     </button>
                   ) : null}
                   <button
                     type="button"
                     onClick={() => onDesktopResultsExpandedChange?.(!desktopResultsExpanded)}
-                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    className="inline-flex h-12 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                   >
                     {desktopResultsExpanded ? "Compact" : "Expand"}
                   </button>
@@ -92,7 +114,9 @@ export function MapShell({
                       setDesktopResultsCollapsed(true);
                       onDesktopResultsExpandedChange?.(false);
                     }}
-                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    className={`inline-flex h-12 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 ${
+                      hasActiveFilters && onClearFilters ? "col-span-2" : ""
+                    }`}
                   >
                     Hide
                   </button>
@@ -117,14 +141,42 @@ export function MapShell({
 
       {!hideMobileResultsButton ? (
         <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-          <div className="pointer-events-none flex items-end justify-end px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <button
-              type="button"
-              onClick={onOpenResults}
-              className="pointer-events-auto rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white"
-            >
-              ▸ {resultsCountLabel ?? "Results"}
-            </button>
+          <div className="pb-safe border-t border-[#d8e3f5] bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96">
+            <div className="grid min-h-[64px] grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={onOpenGames}
+                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
+                  mobileGamesOpen
+                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                }`}
+              >
+                🏟 Games
+              </button>
+              <button
+                type="button"
+                onClick={onOpenFilters}
+                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
+                  mobileFilterOpen
+                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                }`}
+              >
+                ⚙ Filters
+              </button>
+              <button
+                type="button"
+                onClick={onOpenResults}
+                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
+                  mobileResultsOpen
+                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                }`}
+              >
+                📍 {resultsCountLabel ?? "Venues"}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
@@ -137,14 +189,15 @@ export function MapShell({
       />
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[94vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white lg:hidden ${
           mobileResultsOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
+        {...resultsSwipe}
       >
-        <div className="flex justify-center pt-3">
+        <div className="flex justify-center pt-4">
           <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
         </div>
-        <div className="flex items-center justify-between border-b border-[#d8e3f5] px-4 py-3 dark:border-white/10">
+        <div className="flex items-center justify-between border-b border-[#d8e3f5] px-4 py-3.5 dark:border-white/10">
           <div>
             <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Results</div>
             <div className="text-sm font-semibold text-[#0a1628] dark:text-white">{resultsCountLabel ?? "Venues in view"}</div>
@@ -152,12 +205,12 @@ export function MapShell({
           <button
             type="button"
             onClick={onCloseResults}
-            className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className="h-10 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-xs font-semibold text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
           >
             Close
           </button>
         </div>
-        <div className="max-h-[calc(94vh-3.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{results}</div>
+        <div className="pb-safe max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{results}</div>
       </div>
     </div>
   );

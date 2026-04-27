@@ -1,49 +1,135 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, Phone } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { LockedFeature } from "@/components/membership/LockedFeature";
+import { FanGroupCreateForm } from "@/components/venue/FanGroupCreateForm";
 import { ReportUpdateForm } from "@/components/venue/report-update-form";
 import { ReservationRequestForm } from "@/components/venue/reservation-request-form";
+import { ReviewSection } from "@/components/venue/ReviewSection";
+import { VenueActionBar } from "@/components/venue/VenueActionBar";
 import { SingleVenueLeafletMap } from "@/components/venue/SingleVenueLeafletMap";
+import { VenueShareButton } from "@/components/venue/VenueShareButton";
 import { VenueHero } from "@/components/venue/venue-hero";
 import { VenueCard } from "@/components/venue/venue-card";
 import { Badge } from "@/components/ui/badge";
-import { formatMatchStage } from "@/lib/data/matches";
-import { getAllCountries, getVenueDetails } from "@/lib/data/repository";
+import { demoVenues } from "@/lib/data/demo";
+import { formatMatchStage, worldCup2026Matches } from "@/lib/data/matches";
+import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
 import { toTitleCase } from "@/lib/utils";
+
+function formatStarRating(rating: number | undefined | null) {
+  if (!rating) return "★★★★☆";
+  const rounded = Math.round(rating * 2) / 2;
+  const full = Math.floor(rounded);
+  const half = rounded % 1 !== 0;
+  return `${"★".repeat(full)}${half ? "½" : ""}${"☆".repeat(Math.max(0, 5 - Math.ceil(rounded)))}`;
+}
+
+export async function generateMetadata({
+  params
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const data = await getVenueDetails(params.slug);
+
+  if (!data) {
+    return {
+      title: "Venue not found | GameDay Map"
+    };
+  }
+
+  const venue = data.venue;
+  const title = `${venue.name} — Watch World Cup 2026 | GameDay Map`;
+  const description = `Watch World Cup 2026 at ${venue.name} in ${venue.neighborhood}, ${venue.city}. ${formatStarRating(venue.rating)} rated. ${toTitleCase(venue.venueIntent.replace(/_/g, " "))}. Directions, reservation requests, and more.`;
+  const countryEmoji = data.country?.flagEmoji ?? "⚽";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/venue/${venue.slug}`
+    },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      siteName: "GameDay Map",
+      url: `/venue/${venue.slug}`,
+      images: [
+        {
+          url: `/og?title=${encodeURIComponent(venue.name)}&subtitle=${encodeURIComponent(`${venue.neighborhood || venue.borough} · ${data.country?.name ?? "Sports Bar"}`)}&emoji=${encodeURIComponent(countryEmoji)}`,
+          width: 1200,
+          height: 630
+        }
+      ]
+    }
+  };
+}
+
+export async function generateStaticParams() {
+  return demoVenues.map((venue) => ({ slug: venue.slug }));
+}
 
 export default async function VenuePage({
   params
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
-  const [data, countries] = await Promise.all([getVenueDetails(slug), getAllCountries()]);
+  try {
+    const { slug } = params;
+    const [data, countries] = await Promise.all([getVenueDetails(slug), getAllCountries()]);
 
-  if (!data) {
-    notFound();
-  }
+    if (!data) {
+      notFound();
+    }
 
-  const rankedVenue = {
-    ...data.venue,
-    rankScore: data.venue.gameDayScore,
-    rankingReasons: [
-      `Strong ${data.country?.name ?? "country"} match`,
-      data.venue.acceptsReservations ? "Takes reservations" : "Walk-in friendly",
-      data.venue.goodForGroups ? "Good for large watch parties" : "Neighborhood-scale vibe"
-    ]
-  };
-  const venueCityKey = data.venue.city ?? "nyc";
+    const rankedVenue = {
+      ...data.venue,
+      rankScore: data.venue.gameDayScore,
+      rankingReasons: [
+        `Strong ${data.country?.name ?? "country"} match`,
+        data.venue.acceptsReservations ? "Takes reservations" : "Walk-in friendly",
+        data.venue.goodForGroups ? "Good for large watch parties" : "Neighborhood-scale vibe"
+      ]
+    };
+    const venueCityKey = data.venue.city ?? "nyc";
+    const venueMatches = data.matches.length
+      ? data.matches
+      : worldCup2026Matches
+          .filter((match) => Date.parse(match.startsAt) >= Date.now())
+          .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+          .slice(0, 4);
 
-  return (
-    <div>
-      <VenueHero venue={rankedVenue} />
+    return (
+      <div>
+        <VenueHero venue={rankedVenue} />
+      <section className="container-shell py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <VenueActionBar
+            venueSlug={data.venue.slug}
+            venueName={data.venue.name}
+            venueAddress={data.venue.address}
+          />
+          {data.venue.website ? (
+            <a
+              href={data.venue.website}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex rounded-full bg-[#0a1628] px-4 py-2 text-sm font-semibold text-white"
+            >
+              Visit Website →
+            </a>
+          ) : null}
+        </div>
+      </section>
       <section className="container-shell -mt-2 py-4">
         <div className="surface p-6">
           <div className="text-sm uppercase tracking-[0.2em] text-mist">Upcoming matches to watch here</div>
           <h2 className="mt-2 text-2xl font-semibold text-deep">Matches that fit this crowd</h2>
           <div className="mt-4 grid gap-4">
-            {data.matches.map((match) => {
+            {venueMatches.map((match) => {
               const home = countries.find((country) => country.slug === match.homeCountry);
               const away = countries.find((country) => country.slug === match.awayCountry);
               return (
@@ -159,7 +245,7 @@ export default async function VenuePage({
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Best matches to watch here</div>
             <h2 className="mt-2 text-2xl font-semibold text-deep">Upcoming games tied to this venue</h2>
             <div className="mt-4 grid gap-4">
-              {data.matches.map((match) => {
+              {venueMatches.map((match) => {
                 const home = countries.find((country) => country.slug === match.homeCountry);
                 const away = countries.find((country) => country.slug === match.awayCountry);
                 return (
@@ -185,8 +271,25 @@ export default async function VenuePage({
             </div>
           </section>
 
+          <section id="reservation-section" className="surface p-6">
+            <ReservationRequestForm venueName={data.venue.name} venueSlug={data.venue.slug} />
+          </section>
+
+          <div id="review-section">
+            <ReviewSection venueId={data.venue.id} />
+          </div>
+
           <section className="surface p-6">
-            <ReservationRequestForm venueName={data.venue.name} />
+            <div className="text-sm uppercase tracking-[0.2em] text-mist">⚽ Start a GameDay Crew</div>
+            <h2 className="mt-2 text-2xl font-semibold text-deep">Create a crew for this venue</h2>
+            <div className="mt-4">
+              <FanGroupCreateForm
+                cityKey={venueCityKey}
+                venueId={data.venue.slug}
+                venueName={data.venue.name}
+                matches={data.matches}
+              />
+            </div>
           </section>
 
           <section className="surface p-6">
@@ -246,6 +349,11 @@ export default async function VenuePage({
                   Directions
                 </a>
               )}
+              <VenueShareButton
+                venueName={data.venue.name}
+                countryName={data.country?.name ?? "your team"}
+                url={`https://gamedaymap.com/venue/${data.venue.slug}`}
+              />
               {(data.venue.reservationPhone || data.venue.phone) && (
                 <a
                   href={`tel:${data.venue.reservationPhone ?? data.venue.phone ?? ""}`}
@@ -254,16 +362,22 @@ export default async function VenuePage({
                   Call
                 </a>
               )}
-              {data.venue.acceptsReservations && data.venue.reservationUrl && (
-                <a
-                  href={data.venue.reservationUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white"
-                >
-                  Reserve
-                </a>
-              )}
+              <LockedFeature feature="reservation_request" lockStyle="replace">
+                {data.venue.acceptsReservations && data.venue.reservationUrl ? (
+                  <a
+                    href={data.venue.reservationUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white"
+                  >
+                    Reserve
+                  </a>
+                ) : (
+                  <div className="rounded-2xl bg-white px-4 py-3 text-navy dark:bg-white/5 dark:text-white">
+                    Reserve
+                  </div>
+                )}
+              </LockedFeature>
             </div>
           </div>
         </aside>
@@ -305,6 +419,9 @@ export default async function VenuePage({
           })}
         </div>
       </section>
-    </div>
-  );
+      </div>
+    );
+  } catch {
+    notFound();
+  }
 }

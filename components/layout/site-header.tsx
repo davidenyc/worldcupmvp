@@ -3,16 +3,36 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { worldCup2026Matches } from "@/lib/data/matches";
+import { useMembership } from "@/lib/store/membership";
 import { useTheme } from "@/lib/store/theme";
 
 const CITY_LOOKUP = new Map(HOST_CITIES.map((city) => [city.key, city]));
+const _lucideIcons = { Heart, Search };
+void _lucideIcons;
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
 
 function getMatchCountForCity(cityKey: string) {
   return worldCup2026Matches.filter((match) => getMatchHostCityKey(match) === cityKey).length;
@@ -29,6 +49,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { userCity, suggestedCity, hasChosenCity, setUserCity } = useUserCity();
   const { toggle, isDark } = useTheme();
+  const tier = useMembership((state) => state.tier);
   const [open, setOpen] = useState(false);
 
   const activeCity = useMemo(() => {
@@ -41,14 +62,25 @@ export function SiteHeader() {
   const nearestCity = suggestedCity ?? null;
   const mapHref = `/${activeCity}/map`;
   const matchesHref = `/${activeCity}/matches`;
+  const tonightHref = "/tonight";
+  const searchHref = `/search?city=${activeCity}`;
+  const currentPath = pathname ?? "/";
+
+  function navClass(active: boolean) {
+    return `inline-flex h-12 items-center rounded-full border px-5 font-semibold transition ${
+      active
+        ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+        : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+    }`;
+  }
 
   useEffect(() => {
     function handleOpenCitySwitcher() {
       setOpen(true);
     }
 
-    window.addEventListener("watchparty:open-city-switcher", handleOpenCitySwitcher);
-    return () => window.removeEventListener("watchparty:open-city-switcher", handleOpenCitySwitcher);
+    window.addEventListener("gameday:open-city-switcher", handleOpenCitySwitcher);
+    return () => window.removeEventListener("gameday:open-city-switcher", handleOpenCitySwitcher);
   }, []);
 
   function navigateToCity(nextCity: string) {
@@ -75,64 +107,92 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#d8e3f5] bg-white/90 backdrop-blur-xl dark:border-white/8 dark:bg-[#0d1117]/90">
-      <div className="container-shell flex h-18 items-center justify-between gap-4 py-4">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-lg font-black text-deep shadow-card">
+    <header
+      className="sticky top-0 z-40 border-b border-[#d8e3f5] bg-white/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#0d1117]/92"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      <div className="container-shell flex h-14 items-center justify-between gap-2 py-0 lg:h-auto lg:gap-3 lg:py-4">
+        <Link href="/" className="flex min-w-0 items-center gap-2.5 lg:flex-1 lg:gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-accent text-sm font-black text-deep shadow-card lg:h-12 lg:w-12 lg:rounded-[1.2rem] lg:text-lg">
             GM
           </div>
-          <div>
-            <div className="text-lg font-semibold tracking-tight text-[#0a1628] dark:text-white">GameDay Map</div>
-            <div className="text-xs text-[#0a1628]/55 dark:text-white/55">World Cup 2026 fan experience</div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold tracking-tight text-[#0a1628] dark:text-white sm:text-base lg:text-xl">GameDay Map</div>
+            <div className="hidden truncate text-xs text-[#0a1628]/55 dark:text-white/55 lg:block">World Cup 2026 fan experience</div>
           </div>
         </Link>
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link href="/" className="text-sm text-[#0a1628]/70 transition hover:text-[#0a1628] dark:text-white/60 dark:hover:text-white">
-            Home
-          </Link>
-          <Link href={mapHref} className="text-sm text-[#0a1628]/70 transition hover:text-[#0a1628] dark:text-white/60 dark:hover:text-white">
-            Map
-          </Link>
-          <Link href={matchesHref} className="text-sm text-[#0a1628]/70 transition hover:text-[#0a1628] dark:text-white/60 dark:hover:text-white">
-            Matches
-          </Link>
+        <nav className="hidden items-center gap-2 lg:flex">
+          <Link href="/" className={`${navClass(currentPath === "/")} whitespace-nowrap`}>Home</Link>
+          <Link href={tonightHref} className={`${navClass(currentPath === "/tonight")} whitespace-nowrap`}>Tonight</Link>
+          <Link href={mapHref} className={`${navClass(currentPath.includes("/map"))} whitespace-nowrap`}>Map</Link>
+          <Link href={matchesHref} className={`${navClass(currentPath.includes("/matches"))} whitespace-nowrap`}>Matches</Link>
+          <Link href="/membership" className={`${navClass(currentPath.startsWith("/membership"))} whitespace-nowrap`}>Membership</Link>
+          <Link href="/account" className={`${navClass(currentPath.startsWith("/account"))} whitespace-nowrap`}>Account</Link>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10"
+            className="inline-flex h-9 max-w-[130px] items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-2.5 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:max-w-none lg:gap-2 lg:px-3"
           >
-            <span className="text-base">📍</span>
-            <span>{activeCityData.label}</span>
-            <span className="text-xs text-[#0a1628]/55 dark:text-white/55">▾</span>
+            <span className="hidden h-7 w-7 items-center justify-center rounded-full bg-white/80 text-[11px] font-bold text-[#0a1628] dark:bg-white/12 dark:text-white lg:inline-flex">
+              {activeCityData.shortLabel}
+            </span>
+            <span className="truncate whitespace-nowrap text-sm">{activeCityData.label}</span>
+            <span className="shrink-0 text-xs text-[#0a1628]/55 dark:text-white/55">▾</span>
           </button>
           <Link
             href="/saved"
-            className="hidden sm:inline-flex items-center gap-2 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+            className="hidden h-12 items-center gap-2 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:inline-flex"
           >
-            <Heart className="h-4 w-4" />
+            <HeartIcon />
             Saved
           </Link>
-          <Link href="/submit" className="hidden sm:block">
-            <Button>Submit a venue</Button>
+          <Link
+            href={tier === "free" ? `/membership?return=${encodeURIComponent(currentPath)}` : "/account"}
+            className={`hidden sm:inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold transition ${
+              tier === "free"
+                ? "border border-[#f4b942] text-[#c98a00] hover:bg-[#fff8e7]"
+                : tier === "fan"
+                  ? "bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]"
+                  : "border border-[#f4b942] bg-[#0a1628] text-[#f4b942] hover:bg-[#13203a]"
+            }`}
+          >
+            {tier === "free" ? "⭐ Go Pro" : tier === "fan" ? "⭐ Fan Pass" : "👑 Elite"}
+          </Link>
+          <Link
+            href={searchHref}
+            aria-label="Search venues"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:w-12"
+          >
+            <SearchIcon />
+          </Link>
+          <Link
+            href="/account"
+            aria-label="Open account"
+            className="hidden h-10 w-10 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-sm font-bold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:inline-flex lg:h-12 lg:w-12"
+          >
+            👤
+          </Link>
+          <Link href="/submit" className="hidden lg:block">
+            <Button className="h-12 px-5">Submit a venue</Button>
           </Link>
           <button
             type="button"
             onClick={toggle}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10 lg:h-12 lg:w-12"
           >
             {isDark ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
 
-      <div className="container-shell pb-3 md:hidden">
-        <nav className="flex items-center gap-2 overflow-x-auto">
+      <div className="container-shell pb-3 lg:hidden">
+        <nav className="grid grid-cols-4 gap-2">
           <Link
             href="/"
-            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
               pathname === "/"
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -142,7 +202,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href={mapHref}
-            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
               pathname?.includes("/map")
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -152,7 +212,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href={matchesHref}
-            className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
               pathname?.includes("/matches")
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -162,13 +222,13 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/saved"
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition ${
+            className={`inline-flex h-12 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
               pathname === "/saved"
                 ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
                 : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
             }`}
           >
-            <Heart className="h-3.5 w-3.5" />
+            <HeartIcon />
             Saved
           </Link>
         </nav>
@@ -180,7 +240,7 @@ export function SiteHeader() {
             className="fixed inset-0 z-40 bg-white/60 md:hidden"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-4 top-[4.75rem] z-50 w-[min(92vw,24rem)] overflow-hidden rounded-[1.5rem] border border-[#d8e3f5] bg-white shadow-2xl dark:border-white/10 dark:bg-[#161b22] md:right-6 md:w-[26rem]">
+          <div className="absolute right-4 top-[calc(env(safe-area-inset-top,0px)+4rem)] z-50 w-[min(92vw,24rem)] overflow-hidden rounded-[1.5rem] border border-[#d8e3f5] bg-white shadow-2xl dark:border-white/10 dark:bg-[#161b22] md:right-6 md:w-[26rem]">
             <div className="border-b border-[#eef4ff] px-4 py-3 dark:border-white/8">
               <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">Switch city</div>
               <div className="mt-1 text-sm text-[#0a1628]/60 dark:text-white/60">Choose where you want to watch the matches.</div>

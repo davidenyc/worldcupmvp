@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="108" fill="#f4b942"/>
+  <!-- GD — white fill, navy outline via paint-order stroke-then-fill -->
+  <text
+    x="256" y="230"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'DejaVu Sans', Arial, Helvetica, sans-serif"
+    font-weight="700"
+    font-size="196"
+    fill="white"
+    stroke="#0a1628"
+    stroke-width="18"
+    paint-order="stroke fill"
+  >GD</text>
+  <!-- MAP — smaller label below -->
+  <text
+    x="256" y="390"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'DejaVu Sans', Arial, Helvetica, sans-serif"
+    font-weight="700"
+    font-size="65"
+    fill="white"
+    stroke="#0a1628"
+    stroke-width="8"
+    paint-order="stroke fill"
+    letter-spacing="6"
+  >MAP</text>
+</svg>

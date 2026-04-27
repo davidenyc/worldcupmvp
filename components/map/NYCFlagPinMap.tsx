@@ -1,14 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { useMap, useMapEvents } from "react-leaflet";
 
 import { VenuePreviewCard } from "@/components/map/VenuePreviewCard";
 import { leafletMapProvider } from "@/lib/maps/providers/leaflet";
 import { useTheme } from "@/lib/store/theme";
 import { CountrySummary, RankedVenue } from "@/lib/types";
 import { getFlagImageUrl } from "@/lib/utils/flagImage";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((module) => module.MapContainer), {
+  ssr: false
+});
+const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
+  ssr: false
+});
+const Popup = dynamic(() => import("react-leaflet").then((module) => module.Popup), {
+  ssr: false
+});
+const ZoomControl = dynamic(() => import("react-leaflet").then((module) => module.ZoomControl), {
+  ssr: false
+});
 
 const NYC_CENTER: [number, number] = [40.742, -73.968];
 const NYC_ZOOM = 11;

@@ -4,8 +4,11 @@ import Image from "next/image";
 import { useState } from "react";
 import { Heart, MapPin, Share2, Star } from "lucide-react";
 
+import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import { Badge } from "@/components/ui/badge";
+import { usePremiumGate } from "@/lib/hooks/usePremiumGate";
 import { useFavoritesStore } from "@/lib/store/favorites";
+import { useMembership } from "@/lib/store/membership";
 import { RankedVenue } from "@/lib/types";
 import { formatPriceLevel, getSoccerAtmosphereRating } from "@/lib/utils";
 import { getVenueImageSet } from "@/lib/utils/venueImages";
@@ -49,9 +52,12 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
   const [toastVisible, setToastVisible] = useState(false);
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { canSaveVenue } = useMembership();
+  const { showModal, setShowModal, requiredTier } = usePremiumGate("unlimited_saves");
   const banner = intentBanner(venue.venueIntent);
   const galleryImages = getVenueImageSet(venue);
   const favorite = favorites.includes(venue.slug);
+  const isAtLimit = !favorite && !canSaveVenue(favorites.length);
   const soccerAtmosphere = getSoccerAtmosphereRating(venue);
 
   async function copyShareLink() {
@@ -59,6 +65,14 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
     await navigator.clipboard.writeText(url);
     setToastVisible(true);
     window.setTimeout(() => setToastVisible(false), 1500);
+  }
+
+  function handleSave() {
+    if (isAtLimit) {
+      setShowModal(true);
+      return;
+    }
+    toggleFavorite(venue.slug);
   }
 
   return (
@@ -80,7 +94,7 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => toggleFavorite(venue.slug)}
+                onClick={handleSave}
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                   favorite
                     ? "border-rose-200 bg-rose-50 text-rose-700"
@@ -89,6 +103,7 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
               >
                 <Heart className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />
                 {favorite ? "Saved" : "Save"}
+                {isAtLimit ? <span className="text-[10px]">🔒</span> : null}
               </button>
               <button
                 type="button"
@@ -171,6 +186,13 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
           </div>
         </div>
       </div>
+      {showModal ? (
+        <UpgradeModal
+          feature="unlimited_saves"
+          requiredTier={requiredTier}
+          onClose={() => setShowModal(false)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { TouchEvent, useRef } from "react";
 import { X } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
@@ -91,6 +92,20 @@ export function FilterDrawer({
   showAllMapVenues: boolean;
   totalVenueCount: number;
 }) {
+  const startYRef = useRef<number | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    startYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const endY = event.changedTouches[0]?.clientY ?? null;
+    if (startYRef.current !== null && endY !== null && endY - startYRef.current > 70) {
+      onClose();
+    }
+    startYRef.current = null;
+  };
+
   return (
     <>
       <div
@@ -145,9 +160,11 @@ export function FilterDrawer({
       </div>
 
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:hidden ${
           open ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <DrawerBody
           countries={countries}
@@ -268,7 +285,7 @@ function DrawerBody({
   mobile?: boolean;
 }) {
   return (
-    <div className={`h-full ${mobile ? "max-h-[92vh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]" : ""}`}>
+    <div className={`h-full ${mobile ? "max-h-[80vh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]" : ""}`}>
       {mobile ? (
         <div className="flex justify-center pt-3">
           <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />

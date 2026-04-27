@@ -1,9 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-
-import { NYCFlagPinMap } from "@/components/map/NYCFlagPinMap";
 import { CountrySummary, RankedVenue } from "@/lib/types";
+
+const NYCFlagPinMap = dynamic(
+  () => import("@/components/map/NYCFlagPinMap").then((module) => module.NYCFlagPinMap),
+  {
+    ssr: false
+  }
+);
 
 export function SingleVenueLeafletMap({
   venue,

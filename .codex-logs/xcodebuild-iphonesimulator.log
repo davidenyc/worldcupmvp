@@ -1,0 +1,19 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.2
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  CapApp-SPM: /Users/davideclarkson/Documents/world cup mvp/ios/App/CapApp-SPM @ local
+  CapacitorStatusBar: /Users/davideclarkson/Documents/world cup mvp/node_modules/@capacitor/status-bar @ local
+  CapacitorSplashScreen: /Users/davideclarkson/Documents/world cup mvp/node_modules/@capacitor/splash-screen @ local
+  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.3.1
+  CapacitorPushNotifications: /Users/davideclarkson/Documents/world cup mvp/node_modules/@capacitor/push-notifications @ local
+
+2026-04-26 22:48:03.139 xcodebuild[49824:6119326] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+2026-04-26 22:48:03.148 xcodebuild[49824:6119326] Writing error result bundle to /var/folders/2f/n0lpsg9j1dl5c_wycrh5xqvc0000gn/T/ResultBundle_2026-26-04_22-48-0003.xcresult
+xcodebuild: error: Found no destinations for the scheme 'App' and action build.

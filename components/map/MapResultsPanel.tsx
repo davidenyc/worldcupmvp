@@ -157,11 +157,11 @@ export function MapResultsPanel({
                     {soccerAtmosphere} atmosphere
                   </span>
                 </div>
-                <div className={`mt-3 grid gap-2 ${secondaryAction ? "grid-cols-3" : "grid-cols-2"}`}>
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <Link
                     href={`/venue/${venue.slug}`}
                     onClick={(event) => event.stopPropagation()}
-                    className="inline-flex items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
+                    className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
                   >
                     Details
                   </Link>
@@ -171,7 +171,7 @@ export function MapResultsPanel({
                       target={secondaryAction.external ? "_blank" : undefined}
                       rel={secondaryAction.external ? "noreferrer" : undefined}
                       onClick={(event) => event.stopPropagation()}
-                      className={`inline-flex items-center justify-center rounded-full px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
+                      className={`inline-flex h-11 items-center justify-center rounded-full px-3 text-[11px] font-semibold transition sm:text-xs ${
                         secondaryAction.highlight
                           ? "bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]"
                           : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
@@ -179,14 +179,18 @@ export function MapResultsPanel({
                     >
                       {secondaryAction.label}
                     </a>
-                  ) : null}
+                  ) : (
+                    <div className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628]/40 dark:border-white/10 dark:bg-white/5 dark:text-white/40 sm:text-xs">
+                      Venue info
+                    </div>
+                  )}
                   {venue.address ? (
                     <a
                       href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
+                      className="col-span-2 inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
                     >
                       Directions
                     </a>

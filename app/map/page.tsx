@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "GameDay Map · World Cup 2026 Fan Experience",
+  title: "GameDay Map — World Cup 2026 Fan Venue Finder",
   description:
-    "Explore World Cup 2026 supporter spots across the host cities — find bars, restaurants, and supporter clubs for all 48 nations."
+    "Find the best bars and restaurants to watch World Cup 2026 with fans from your country. 17 US host cities, 48 nations, every watch party."
 };
 
 export default function LegacyMapPage({

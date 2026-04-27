@@ -29,7 +29,14 @@ export default async function CityMatchesPage({
 
   const countries = await getAllCountries();
   const venueCacheEntries = await Promise.all(
-    HOST_CITIES.map(async (item) => [item.key, await readPlacesCacheForCity(item.key)] as const)
+    HOST_CITIES.map(async (item) => {
+      try {
+        const venues = await readPlacesCacheForCity(item.key);
+        return [item.key, venues ?? []] as const;
+      } catch {
+        return [item.key, []] as const;
+      }
+    })
   );
 
   return (
