@@ -111,9 +111,12 @@ export function SiteHeader() {
       className="sticky top-0 z-40 border-b border-[#d8e3f5] bg-white/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#0d1117]/92"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-      <div className="container-shell flex h-14 items-center justify-between gap-2 py-0 lg:h-auto lg:gap-3 lg:py-4">
-        <Link href="/" className="flex min-w-0 items-center gap-2.5 lg:flex-1 lg:gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-accent text-sm font-black text-deep shadow-card lg:h-12 lg:w-12 lg:rounded-[1.2rem] lg:text-lg">
+      <div className="container-shell flex min-h-[56px] items-center justify-between gap-2 overflow-hidden py-0 lg:h-auto lg:gap-3 lg:py-4">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2.5 lg:flex-1 lg:gap-3">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-sm font-black shadow-sm lg:h-12 lg:w-12 lg:rounded-[1.2rem] lg:text-lg"
+            style={{ backgroundColor: "#f4b942", color: "#0a1628" }}
+          >
             GM
           </div>
           <div className="min-w-0">
@@ -129,11 +132,11 @@ export function SiteHeader() {
           <Link href="/membership" className={`${navClass(currentPath.startsWith("/membership"))} whitespace-nowrap`}>Membership</Link>
           <Link href="/account" className={`${navClass(currentPath.startsWith("/account"))} whitespace-nowrap`}>Account</Link>
         </nav>
-        <div className="flex min-w-0 shrink-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 lg:gap-2">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-9 max-w-[130px] items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-2.5 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:max-w-none lg:gap-2 lg:px-3"
+            className="inline-flex h-9 max-w-[100px] items-center gap-1.5 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-2.5 text-sm font-semibold text-[#0a1628] shadow-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/8 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:max-w-none lg:gap-2 lg:px-3"
           >
             <span className="hidden h-7 w-7 items-center justify-center rounded-full bg-white/80 text-[11px] font-bold text-[#0a1628] dark:bg-white/12 dark:text-white lg:inline-flex">
               {activeCityData.shortLabel}
@@ -163,7 +166,7 @@ export function SiteHeader() {
           <Link
             href={searchHref}
             aria-label="Search venues"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:w-12"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 lg:h-12 lg:w-12"
           >
             <SearchIcon />
           </Link>
@@ -181,15 +184,15 @@ export function SiteHeader() {
             type="button"
             onClick={toggle}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10 lg:h-12 lg:w-12"
+            className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10 sm:inline-flex lg:h-12 lg:w-12"
           >
             {isDark ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
 
-      <div className="container-shell pb-3 lg:hidden">
-        <nav className="grid grid-cols-4 gap-2">
+      <div className="container-shell mt-0 border-t border-[#d8e3f5]/50 pb-3 dark:border-white/8 lg:hidden">
+        <nav className="grid grid-cols-5 gap-2 pt-3">
           <Link
             href="/"
             className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold transition ${
@@ -231,6 +234,14 @@ export function SiteHeader() {
             <HeartIcon />
             Saved
           </Link>
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white"
+          >
+            {isDark ? "☀️" : "🌙"}
+          </button>
         </nav>
       </div>
 

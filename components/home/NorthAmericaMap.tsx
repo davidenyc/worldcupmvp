@@ -35,80 +35,91 @@ export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
         <div className="mb-4 flex flex-col items-start gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:pt-0">
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">North America host map</div>
-            <div className="mt-1 text-xl font-semibold text-[#0a1628] dark:text-white sm:text-sm">Tap a city to jump straight to its watch spots</div>
+            <div className="mt-1 text-xl font-semibold text-[#0a1628] dark:text-white sm:text-base">Tap a city to jump straight to its watch spots</div>
           </div>
           <div className="rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628]/75 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/75">
             17 host cities
           </div>
         </div>
 
-        <div className="overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:bg-[#111827] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
-          <ComposableMap
-            projection="geoMercator"
-            projectionConfig={{ scale: 640, center: [-98, 38] }}
-            style={{ width: "100%", height: "100%" }}
-            className="h-[100svh] w-full sm:h-[720px] md:h-[760px]"
-          >
-            <Geographies geography={geoUrl}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const id = String((geo as { id?: string | number }).id ?? "");
-                  const fill =
-                    id === "840"
-                      ? "#d8e6ff"
-                      : id === "124"
-                        ? "#ffd7df"
-                        : id === "484"
-                          ? "#d7f3df"
-                          : "transparent";
-                  const stroke = id === "840" || id === "124" || id === "484" ? "#0a162820" : "none";
+        <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 px-4 pt-2">
+          {cityCards.map((card) => (
+            <Link
+              key={card.key}
+              href={`/${card.key}/map`}
+              className="shrink-0 whitespace-nowrap rounded-full border border-[#d8e3f5] bg-white px-3 py-2 text-xs font-semibold text-[#0a1628]"
+            >
+              {card.label}
+            </Link>
+          ))}
+        </div>
 
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      style={{
-                        default: { fill, stroke, strokeWidth: 0.7, outline: "none" },
-                        hover: { fill, stroke, strokeWidth: 0.7, outline: "none" },
-                        pressed: { fill, stroke, strokeWidth: 0.7, outline: "none" }
-                      }}
-                    />
-                  );
-                })
-              }
-            </Geographies>
+        <div className="hidden sm:block overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)] dark:bg-[#111827] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
+          <div style={{ overflow: "hidden", width: "100%", maxWidth: "100%" }}>
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{ scale: 640, center: [-98, 38] }}
+              style={{ width: "100%", height: "100%" }}
+              className="h-[420px] w-full sm:h-[540px] md:h-[720px]"
+            >
+              <Geographies geography={geoUrl}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const id = String((geo as { id?: string | number }).id ?? "");
+                    const fill =
+                      id === "840"
+                        ? "#d8e6ff"
+                        : id === "124"
+                          ? "#ffd7df"
+                          : id === "484"
+                            ? "#d7f3df"
+                            : "transparent";
+                    const stroke = id === "840" || id === "124" || id === "484" ? "#0a162820" : "none";
 
-            {cityCards.map((city) => {
-              const accent = COUNTRY_COLORS[city.country];
-              const shouldAnimate = activeCityKey === city.key;
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        style={{
+                          default: { fill, stroke, strokeWidth: 0.7, outline: "none" },
+                          hover: { fill, stroke, strokeWidth: 0.7, outline: "none" },
+                          pressed: { fill, stroke, strokeWidth: 0.7, outline: "none" }
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
 
-              return (
-                <Marker key={city.key} coordinates={[city.lng, city.lat]}>
+              {cityCards.map((card) => (
+                <Marker key={card.key} coordinates={[card.lng, card.lat]}>
                   <Link
-                    href={`/${city.key}/map`}
-                    className="group cursor-pointer outline-none"
-                    aria-label={`${city.label} · ${city.stadiumName} · ${city.matchCount} matches`}
-                    title={`${city.label} · ${city.stadiumName} · ${city.matchCount} matches`}
+                    href={`/${card.key}/map`}
+                    aria-label={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
+                    title={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
                   >
-                    {shouldAnimate && <circle cx={0} cy={0} r={16} fill={accent} opacity={0.22} className="animate-ping" />}
-                    <circle cx={0} cy={0} r={10} fill={accent} stroke="#ffffff" strokeWidth={3} />
+                    <circle
+                      r={activeCityKey === card.key ? 10 : 7}
+                      fill={COUNTRY_COLORS[card.country]}
+                      stroke="white"
+                      strokeWidth={2}
+                      style={{ cursor: "pointer" }}
+                    />
                     <text
-                      x={0}
-                      y={34}
                       textAnchor="middle"
+                      y={20}
+                      fontSize={9}
                       fill="#0a1628"
-                      fontSize={11}
-                      fontWeight={700}
-                      letterSpacing="0.08em"
-                      className="transition group-hover:fill-[#0f1f3d]"
+                      fontWeight="600"
+                      style={{ pointerEvents: "none" }}
                     >
-                      {city.shortLabel}
+                      {card.shortLabel}
                     </text>
                   </Link>
                 </Marker>
-              );
-            })}
-          </ComposableMap>
+              ))}
+            </ComposableMap>
+          </div>
         </div>
       </div>
     </div>

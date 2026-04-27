@@ -13,6 +13,9 @@ function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
   const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
   if (stored === "dark" || stored === "light") return stored;
+  const hour = new Date().getHours();
+  const isNight = hour >= 18 || hour < 6;
+  if (isNight) return "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 

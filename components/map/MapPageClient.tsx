@@ -1101,12 +1101,14 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     <div className="map-page relative">
       <MapShell
         banner={
-          <MatchdayBanner
-            countries={data.countries}
-            match={matchdayDismissed ? null : matchdayAlertMatch}
-            onApplyMatch={handleApplyMatch}
-            onDismiss={() => setMatchdayDismissed(true)}
-          />
+          <div className="hidden lg:block">
+            <MatchdayBanner
+              countries={data.countries}
+              match={matchdayDismissed ? null : matchdayAlertMatch}
+              onApplyMatch={handleApplyMatch}
+              onDismiss={() => setMatchdayDismissed(true)}
+            />
+          </div>
         }
         results={resultsPanel}
         resultsCountLabel={`${filteredVenues.length} venues`}
