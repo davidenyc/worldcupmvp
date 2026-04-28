@@ -26,18 +26,19 @@ export function MyHeroIdentity({
 }) {
   const monogram = (user.firstName ?? user.displayName).trim().slice(0, 1).toUpperCase() || "F";
   const firstName = user.firstName?.trim() || (user.displayName?.trim() ? user.displayName.trim().split(/\s+/)[0] : "Fan");
-  const cityLabel = user.homeCity ? user.homeCity.replace(/\b\w/g, (char) => char.toUpperCase()) : user.favoriteCity === "nyc" ? "New York" : user.favoriteCity;
+  const cityKey = user.homeCity ?? user.favoriteCity;
+  const cityLabel = cityKey === "nyc" ? "New York" : cityKey.replace(/\b\w/g, (char) => char.toUpperCase());
 
   return (
     <section className="overflow-hidden rounded-[2rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.18),transparent_38%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-6 sm:p-7">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-gold/40 bg-[#12233f] text-3xl font-black text-gold">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-gold/40 bg-[var(--bg-avatar-deep)] text-3xl font-black text-gold">
             {monogram}
           </div>
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup</div>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-deep">
+            <h1 className="mt-1 break-words text-3xl font-semibold tracking-tight text-deep">
               Welcome back, {firstName}.
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -53,9 +54,13 @@ export function MyHeroIdentity({
                   {TIER_LABELS[tier]}
                 </span>
               )}
-              <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event("gameday:open-city-switcher"))}
+                className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist transition hover:bg-surface-2 hover:text-deep"
+              >
                 Watching from {cityLabel} · change
-              </span>
+              </button>
             </div>
             <p className="mt-3 text-sm text-mist">
               Your saved spots, watchlist, and promos all stay together here.
