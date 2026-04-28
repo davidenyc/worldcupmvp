@@ -8,7 +8,8 @@ import { demoCountries } from "@/lib/data/demo";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useOnboardingActions, useUser } from "@/lib/store/user";
-import { useMembership } from "@/lib/store/membership";
+import { TIER_META, useMembership } from "@/lib/store/membership";
+import { toast } from "@/lib/toast";
 
 const STEPS = [
   {
@@ -47,7 +48,7 @@ export function WelcomeFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useUser();
-  const { tier } = useMembership();
+  const { tier, setTier } = useMembership();
   const { setFirstName, setHomeCity, setFavoriteCountry, setFollowing, setDefaultFilters, markWelcomeSeen } = useOnboardingActions();
   const { suggestedCity, setUserCity } = useUserCity();
   const [stepIndex, setStepIndex] = useState(0);
@@ -134,6 +135,9 @@ export function WelcomeFlow() {
     }
     if (stepIndex === 3) {
       setDefaultFilters(defaultFiltersDraft);
+    }
+    if (stepIndex === 4 && tier !== "free") {
+      toast.success("Payment coming soon — your perks are unlocked for the demo.");
     }
     if (isLast) {
       markWelcomeSeen();
@@ -294,6 +298,39 @@ export function WelcomeFlow() {
                   >
                     <span>{label}</span>
                     <span className="text-xs text-mist">{defaultFiltersDraft[typedKey] ? "On" : "Off"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : stepIndex === 4 ? (
+            <div className="grid gap-3">
+              {(["free", "fan", "elite"] as const).map((plan) => {
+                const active = tier === plan;
+                return (
+                  <button
+                    key={plan}
+                    type="button"
+                    onClick={() => setTier(plan)}
+                    className={`rounded-[1.5rem] border p-5 text-left transition ${
+                      active ? "border-gold bg-gold/10 ring-2 ring-gold/20" : "border-line bg-surface"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-lg font-semibold text-deep">{TIER_META[plan].label}</div>
+                        <div className="mt-1 text-sm text-mist">
+                          {plan === "free" ? "Continue free" : `${TIER_META[plan].price}/mo · demo unlock`}
+                        </div>
+                      </div>
+                      <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface-2 px-4 text-sm font-semibold text-deep">
+                        {active ? "Selected" : plan === "free" ? "Continue free" : plan === "fan" ? "Start Fan Pass" : "Go Elite"}
+                      </span>
+                    </div>
+                    <ul className="mt-4 space-y-2 text-sm text-mist">
+                      {TIER_META[plan].features.slice(0, 4).map((feature) => (
+                        <li key={feature}>{feature}</li>
+                      ))}
+                    </ul>
                   </button>
                 );
               })}
