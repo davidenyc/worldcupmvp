@@ -10,6 +10,7 @@ import { NYCFlagPinMap } from "@/components/map/NYCFlagPinMap";
 import { MapResultsPanel } from "@/components/map/MapResultsPanel";
 import { MapShell } from "@/components/map/MapShell";
 import { CitySelector } from "@/components/ui/CitySelector";
+import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
@@ -38,6 +39,7 @@ const LATE_MAP_REVEAL_ZOOM = 13;
 const FULL_MAP_REVEAL_ZOOM = 14;
 const REGIONAL_REVEAL_ZOOM = 10.6;
 const QUICK_MATCH_LIMIT = 4;
+const RESULTS_PAGE_SIZE = 12;
 
 type QuickMatchBucket = "local" | "today" | "tomorrow" | "upcoming";
 
@@ -436,6 +438,8 @@ export function MapPageClient({
   const [mobileBrowseExpanded, setMobileBrowseExpanded] = useState(true);
   const [mobileDealsExpanded, setMobileDealsExpanded] = useState(true);
   const [mobileCityExpanded, setMobileCityExpanded] = useState(false);
+  const [resultsVisibleCount, setResultsVisibleCount] = useState(RESULTS_PAGE_SIZE);
+  const [resultsReady, setResultsReady] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const countryLookup = useMemo(
     () => new Map(data.countries.map((country) => [country.slug, country] as const)),
@@ -446,6 +450,10 @@ export function MapPageClient({
   const usingDefaultGamesFocusedIntents =
     selectedVenueIntents.length === defaultVenueIntents.length &&
     defaultVenueIntents.every((intent) => selectedVenueIntents.includes(intent));
+
+  useEffect(() => {
+    setResultsReady(true);
+  }, []);
 
   useEffect(() => {
     const nextIntents = parseIntentParam(params.get("intents"));
@@ -687,6 +695,7 @@ export function MapPageClient({
   useEffect(() => {
     setShowAllMapVenues(false);
     setShowAllLockedVenues(null);
+    setResultsVisibleCount(RESULTS_PAGE_SIZE);
   }, [
     acceptsReservations,
     borough,
@@ -756,6 +765,11 @@ export function MapPageClient({
 
   const mapVenues = useMemo(() => prioritizedMapVenues, [prioritizedMapVenues]);
   const displayedVenues = filteredVenues;
+  const resultsVenues = useMemo(
+    () => displayedVenues.slice(0, resultsVisibleCount),
+    [displayedVenues, resultsVisibleCount]
+  );
+  const canShowMoreResults = displayedVenues.length > resultsVisibleCount;
   const allSelectableVenues = useMemo(
     () => [...filteredVenues, ...regionalFilteredVenues],
     [filteredVenues, regionalFilteredVenues]
@@ -1049,17 +1063,24 @@ export function MapPageClient({
 
   const resultsPanel = (
     <div className="space-y-3">
-      {cityGuideIntro ? (
+      {!resultsReady ? (
+        <div className="space-y-3">
+          <SkeletonCard className="border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)]" lines={2} />
+          <SkeletonCard className="border border-[color:var(--border-subtle)] bg-[var(--bg-surface)]" lines={4} />
+          <SkeletonCard className="border border-[color:var(--border-subtle)] bg-[var(--bg-surface)]" lines={4} />
+        </div>
+      ) : null}
+      {resultsReady && cityGuideIntro ? (
         <section className="rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-4 py-3 text-sm text-[color:var(--fg-secondary)] shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">City guide</div>
           <p className="mt-2 leading-6">{cityGuideIntro}</p>
         </section>
       ) : null}
-      {tier === "free" && !upsellDismissed ? (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--accent-soft-bg)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
+      {resultsReady && tier === "free" && !upsellDismissed ? (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e6c879] bg-[var(--accent-soft-bg)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
           <button type="button" onClick={() => setShowFilterModal(true)} className="min-w-0 text-left">
-            <span className="font-semibold">Unlock ranked results, watch-party priority booking, and city alerts.</span>
-            <span className="mt-1 block text-xs text-[color:var(--accent-soft-fg)]">Fan Pass $4.99/mo</span>
+            <span className="font-semibold text-[color:var(--fg-primary)]">Unlock ranked results, watch-party priority booking, and city alerts.</span>
+            <span className="mt-1 block text-xs font-bold text-[#9b6b04]">Fan Pass $4.99/mo</span>
           </button>
           <button
             type="button"
@@ -1070,15 +1091,28 @@ export function MapPageClient({
           </button>
         </div>
       ) : null}
-      <MapResultsPanel
-        venues={displayedVenues}
-        countries={data.countries}
-        selectedVenueId={selectedVenue?.id}
-        selectedCountrySlugs={selectedCountrySlugs}
-        columns={desktopResultsExpanded ? 2 : 1}
-        onSelect={handleSelectVenue}
-        onClearAll={clearAllFilters}
-      />
+      {resultsReady ? (
+        <MapResultsPanel
+          venues={resultsVenues}
+          countries={data.countries}
+          selectedVenueId={selectedVenue?.id}
+          selectedCountrySlugs={selectedCountrySlugs}
+          columns={desktopResultsExpanded ? 2 : 1}
+          onSelect={handleSelectVenue}
+          onClearAll={clearAllFilters}
+        />
+      ) : null}
+      {resultsReady && canShowMoreResults ? (
+        <div className="flex justify-center pt-1">
+          <button
+            type="button"
+            onClick={() => setResultsVisibleCount((current) => current + RESULTS_PAGE_SIZE)}
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-5 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+          >
+            Show 12 more
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 

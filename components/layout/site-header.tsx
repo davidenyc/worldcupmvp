@@ -120,10 +120,7 @@ export function SiteHeader() {
                 GM
               </div>
               <div className="min-w-0">
-                <div
-                  className="truncate text-sm font-semibold tracking-tight text-[color:var(--fg-primary)] sm:text-base"
-                  style={{ textShadow: "0 0 14px rgba(255, 255, 255, 0.75), 0 0 24px rgba(255, 255, 255, 0.45)" }}
-                >
+                <div className="truncate text-sm font-semibold tracking-tight text-[color:var(--fg-primary)] sm:text-base">
                   GameDay Map
                 </div>
                 <div className="hidden text-small text-[color:var(--fg-muted)] lg:block">

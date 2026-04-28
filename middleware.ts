@@ -34,6 +34,7 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "offline",
   "og",
   "privacy",
+  "promos",
   "saved",
   "search",
   "submit",

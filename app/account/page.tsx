@@ -269,21 +269,21 @@ export default function AccountPage() {
           <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
             <div className="space-y-3">
               {currentTierFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/82">
+                <div key={feature} className="flex items-start gap-2 text-sm text-[color:var(--fg-primary)]">
                   <span className="mt-0.5 text-emerald-600">✓</span>
                   <span>{feature}</span>
                 </div>
               ))}
               {lockedFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/45">
+                <div key={feature} className="flex items-start gap-2 text-sm text-[color:var(--fg-muted)]">
                   <span className="mt-0.5">🔒</span>
                   <span>{feature}</span>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-[1.5rem] bg-[#f8fbff] p-4">
-              <div className="grid gap-3 text-sm text-[#0a1628]/72">
+            <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+              <div className="grid gap-3 text-sm text-[color:var(--fg-secondary)]">
                 <div>🏟 {favorites.length} venues saved</div>
                 <div>🌍 {user.favoriteCountries.length} countries filtered</div>
                 <div>📅 Member since {joinedLabel}</div>
