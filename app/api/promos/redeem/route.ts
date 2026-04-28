@@ -97,5 +97,5 @@ export async function POST(request: Request) {
 
   await appendFile(redemptionLogPath, `${JSON.stringify(record)}\n`, "utf8");
 
-  return Response.json({ savedPromo });
+  return Response.json({ savedPromo, redemptionCode: savedPromo.code });
 }
