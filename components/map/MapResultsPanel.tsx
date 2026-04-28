@@ -96,7 +96,9 @@ export function MapResultsPanel({
                   <CountryFlag country={country} size="sm" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-base font-semibold text-deep">{venue.name}</h3>
+                  <h3 className="text-base font-semibold leading-5 text-deep [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
+                    {venue.name}
+                  </h3>
                   <p className="mt-0.5 truncate text-sm text-mist">
                     {venue.neighborhood ?? venue.borough}
                     {supporterLabel ? ` · ${supporterLabel}` : ""}
