@@ -54,7 +54,7 @@ export function CollapsibleGrid({
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="inline-flex h-10 items-center justify-center rounded-full border border-line bg-surface px-5 text-sm font-semibold text-deep transition hover:bg-surface-2"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-5 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
           >
             {expanded ? collapseLabel : expandLabel}
           </button>
