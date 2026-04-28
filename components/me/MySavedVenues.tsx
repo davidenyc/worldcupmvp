@@ -10,9 +10,11 @@ import { useMembership } from "@/lib/store/membership";
 import type { RankedVenue } from "@/lib/types";
 
 export function MySavedVenues({
-  venues
+  venues,
+  cityKey
 }: {
   venues: RankedVenue[];
+  cityKey: string;
 }) {
   const { tier, getLimit } = useMembership();
   const saveLimit = getLimit("maxSaves");
@@ -23,8 +25,8 @@ export function MySavedVenues({
     <section className="surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-mist">Saved venues</div>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Saved</h2>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Saved venues</div>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Your shortlist</h2>
           <p className="mt-2 text-sm text-mist">
             {tier === "free"
               ? `Saved · ${venues.length} of ${Number.isFinite(saveLimit) ? saveLimit : "∞"} (Free)`
@@ -60,7 +62,7 @@ export function MySavedVenues({
             title="Nothing saved yet"
             subtitle="Browse the map and tap the heart on any venue to build your short list."
             action={
-              <Link href="/nyc/map" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              <Link href={`/${cityKey || "nyc"}/map`} className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                 Browse the map →
               </Link>
             }

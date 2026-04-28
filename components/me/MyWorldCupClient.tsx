@@ -47,7 +47,7 @@ export function MyWorldCupClient({
         followedCountries={user.followedCountries}
         favoriteCity={user.favoriteCity}
       />
-      <MySavedVenues venues={savedVenueList} />
+      <MySavedVenues venues={savedVenueList} cityKey={user.favoriteCity} />
       <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
       <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
       <MyActivity tier={tier} />
