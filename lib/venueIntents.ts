@@ -61,7 +61,7 @@ export function getVenueIntentMeta(intent: VenueIntentKey, countryName?: string 
       return {
         label: `🍺 ${countryName ? `${countryName} Bar` : "Cultural Bar"}`,
         className:
-          "border border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/20 dark:text-purple-300"
+          "border border-[color:var(--accent)]/35 bg-[color:var(--accent-soft-bg)] text-[color:var(--accent-soft-fg)] dark:border-[color:var(--accent)]/40 dark:bg-[color:var(--accent-soft-bg)] dark:text-[color:var(--accent-soft-fg)]"
       };
     case "fan_fest":
       return {

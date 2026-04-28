@@ -1,0 +1,39 @@
+<!-- Email: Post-match recap
+     Trigger: 90 min after final whistle of any match a user attended/saved
+     Goal: warm follow-up that drives next-match save
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>How was the room?</title></head>
+<body style="margin:0;padding:0;background:#0b1020;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#e9ecf3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1020;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#11172a;border:1px solid #1f2a44;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:28px 28px 0 28px;">
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#f5b942;font-weight:800;">{{home_country}} {{score}} {{away_country}}</div>
+          <h1 style="margin:6px 0 0 0;font-size:24px;line-height:1.2;color:#fff;">How was the room at {{venue_name}}?</h1>
+        </td></tr>
+        <tr><td style="padding:14px 28px 0 28px;color:#b8c1d6;font-size:15px;line-height:1.55;">
+          Drop us one tap — it helps the next fan find the right spot.
+        </td></tr>
+        <tr><td style="padding:18px 28px 0 28px;">
+          <a href="{{rate_url}}?score=5" style="display:inline-block;padding:10px 14px;background:#1a2138;border:1px solid #2a3658;border-radius:999px;color:#fff;text-decoration:none;font-size:14px;margin-right:6px;">Loud + packed</a>
+          <a href="{{rate_url}}?score=4" style="display:inline-block;padding:10px 14px;background:#1a2138;border:1px solid #2a3658;border-radius:999px;color:#fff;text-decoration:none;font-size:14px;margin-right:6px;">Solid</a>
+          <a href="{{rate_url}}?score=2" style="display:inline-block;padding:10px 14px;background:#1a2138;border:1px solid #2a3658;border-radius:999px;color:#fff;text-decoration:none;font-size:14px;">Quiet</a>
+        </td></tr>
+        <tr><td style="padding:24px 28px 0 28px;border-top:1px solid #1f2a44;margin-top:14px;">
+          <div style="color:#fff;font-size:15px;font-weight:700;">Your next match</div>
+          <a href="{{next_match_url}}" style="display:block;margin-top:8px;background:#1a2138;border:1px solid #2a3658;border-radius:14px;padding:14px;text-decoration:none;">
+            <div style="color:#7f89a6;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">{{next_kickoff_local}} · {{next_stadium}}</div>
+            <div style="margin-top:4px;color:#fff;font-size:17px;font-weight:700;">{{next_home_flag}} {{next_home_country}} vs {{next_away_country}} {{next_away_flag}}</div>
+            <div style="margin-top:8px;color:#f5b942;font-size:14px;font-weight:600;">Find spots in {{city_name}} →</div>
+          </a>
+        </td></tr>
+        <tr><td style="padding:24px 28px 28px 28px;color:#7f89a6;font-size:12px;line-height:1.6;">
+          Got a venue suggestion? <a href="{{submit_url}}" style="color:#7f89a6;">Submit it</a>. <a href="{{unsubscribe_url}}" style="color:#7f89a6;">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

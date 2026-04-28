@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CountrySummary } from "@/lib/types";
 import { WorldCupMatch } from "@/lib/data/matches";
 
@@ -45,13 +46,13 @@ export function MatchdayBanner({
         </span>
         <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2 text-sm font-semibold">
           <span className="flex items-center gap-2">
-            <span className="text-xl">{home?.flagEmoji ?? "🏁"}</span>
+            <CountryFlag country={home} size="sm" />
             <span>{home?.name ?? match.homeCountry}</span>
           </span>
           <span className="text-white/80">vs</span>
           <span className="flex items-center gap-2">
             <span>{away?.name ?? match.awayCountry}</span>
-            <span className="text-xl">{away?.flagEmoji ?? "🏁"}</span>
+            <CountryFlag country={away} size="sm" />
           </span>
           <span className="hidden md:inline text-white/80">·</span>
           <span className="text-white/90">Kick off {kickOff} ET</span>
@@ -84,11 +85,11 @@ export function MatchdayBanner({
             </span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold">
-                <span className="mr-1">{home?.flagEmoji ?? "🏁"}</span>
+                <span className="mr-1 inline-flex align-middle"><CountryFlag country={home} size="sm" /></span>
                 {home?.name ?? match.homeCountry}
                 <span className="mx-1.5 text-white/75">vs</span>
                 {away?.name ?? match.awayCountry}
-                <span className="ml-1">{away?.flagEmoji ?? "🏁"}</span>
+                <span className="ml-1 inline-flex align-middle"><CountryFlag country={away} size="sm" /></span>
               </div>
               <div className="truncate text-[11px] text-white/80">
                 {kickOff} ET

@@ -1,0 +1,39 @@
+<!-- Email: Abandoned Checkout
+     Trigger: 1 hour after a Stripe Checkout session is started but not completed
+     Goal: recover the upgrade
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Want a hand finishing that?</title></head>
+<body style="margin:0;padding:0;background:#0b1020;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#e9ecf3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1020;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#11172a;border:1px solid #1f2a44;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:28px 28px 0 28px;">
+          <h1 style="margin:0;font-size:24px;line-height:1.2;color:#fff;">Almost there. Want a hand finishing that?</h1>
+        </td></tr>
+        <tr><td style="padding:14px 28px 0 28px;color:#b8c1d6;font-size:15px;line-height:1.55;">
+          You started checkout for {{tier_name}}. The page closed before it went through — your spot is held for the next 48 hours.
+        </td></tr>
+        <tr><td style="padding:20px 28px 0 28px;">
+          <div style="background:#1a2138;border:1px solid #2a3658;border-radius:14px;padding:18px;">
+            <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#f5b942;font-weight:700;">{{tier_name}} · ${{tier_price}}/mo</div>
+            <ul style="margin:10px 0 0 0;padding-left:20px;color:#e9ecf3;font-size:14px;line-height:1.7;">
+              <li>{{benefit_1}}</li>
+              <li>{{benefit_2}}</li>
+              <li>{{benefit_3}}</li>
+            </ul>
+            <a href="{{resume_url}}" style="display:inline-block;margin-top:14px;padding:12px 20px;background:#f5b942;color:#0b1020;font-weight:700;text-decoration:none;border-radius:999px;">Resume checkout →</a>
+          </div>
+        </td></tr>
+        <tr><td style="padding:20px 28px 0 28px;color:#b8c1d6;font-size:14px;line-height:1.55;">
+          On the fence? Reply to this email — we read every message. Or stay free and we'll keep showing you what we can.
+        </td></tr>
+        <tr><td style="padding:24px 28px 28px 28px;color:#7f89a6;font-size:12px;line-height:1.6;border-top:1px solid #1f2a44;margin-top:20px;">
+          You got this because you started a checkout. We won't send a second nudge. <a href="{{unsubscribe_url}}" style="color:#7f89a6;">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

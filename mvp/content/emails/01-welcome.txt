@@ -1,0 +1,21 @@
+Subject: You're in. Now let's find your spot.
+
+You're in. Now let's find your spot.
+
+The World Cup runs through 17 cities and 48 nations. GameDay Map is how you find the right room — the bar where your country shows up, the restaurant that turns the volume up, the supporter club that knows the chants.
+
+Set your home city: {{home_url}}/?utm_source=email&utm_campaign=welcome
+
+3 things worth doing right now:
+1. Pick the country you'll be cheering for. We'll filter every venue by your crowd.
+2. Save the matches you can't miss. We'll send a heads-up the morning of kickoff.
+3. Tell us your home city and we'll show what your nights look like during the tournament.
+
+Fan Pass · $4.99/mo
+Filter by all 48 countries. Save unlimited venues. Reserve from any spot.
+{{home_url}}/membership?utm_source=email&utm_campaign=welcome
+
+—
+GameDay Map · Built for World Cup 2026 fans, by fans.
+Unsubscribe: {{unsubscribe_url}}
+Preferences: {{preferences_url}}

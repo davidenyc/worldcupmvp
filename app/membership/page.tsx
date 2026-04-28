@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { MembershipCards } from "@/components/membership/MembershipCards";
+import { MemberPerksSection } from "@/components/membership/MemberPerksSection";
 import { TierBadge } from "@/components/membership/TierBadge";
 import { FEATURE_GATES, TIER_META, type PremiumFeature, useMembership } from "@/lib/store/membership";
 
@@ -104,6 +105,8 @@ export default function MembershipPage() {
         ) : null}
 
         <MembershipCards />
+
+        <MemberPerksSection />
 
         <section className="overflow-hidden rounded-[2rem] border border-[#d8e3f5] bg-white dark:border-white/10 dark:bg-[#161b22]">
           <div className="overflow-x-auto">

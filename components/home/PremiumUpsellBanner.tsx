@@ -22,7 +22,7 @@ export function PremiumUpsellBanner() {
       >
         See Fan Pass & Elite Plans
       </Link>
-      <div className="mt-3 text-xs text-white/30">Demo mode — upgrade free today</div>
+      <div className="mt-3 text-xs text-white/30">Unlock Fan Pass perks before kickoff</div>
     </div>
   );
 }

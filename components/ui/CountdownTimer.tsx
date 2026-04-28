@@ -16,9 +16,10 @@ function getTimeLeft(targetDate: string) {
 }
 
 export function CountdownTimer({ targetDate, label }: { targetDate: string; label?: string }) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
+  const [timeLeft, setTimeLeft] = useState<ReturnType<typeof getTimeLeft>>(null);
 
   useEffect(() => {
+    setTimeLeft(getTimeLeft(targetDate));
     const interval = window.setInterval(() => {
       setTimeLeft(getTimeLeft(targetDate));
     }, 1000);

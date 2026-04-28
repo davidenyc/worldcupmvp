@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, TouchEvent, useEffect, useRef, useState } from "react";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 function useSwipeDown(onSwipeDown?: () => void) {
   const startYRef = useRef<number | null>(null);
@@ -58,6 +59,7 @@ export function MapShell({
 }) {
   const [desktopResultsCollapsed, setDesktopResultsCollapsed] = useState(false);
   const resultsSwipe = useSwipeDown(onCloseResults);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -78,7 +80,7 @@ export function MapShell({
 
       {banner ? <div className="absolute inset-x-4 top-4 z-40">{banner}</div> : null}
 
-      {!hideDesktopResults && !desktopResultsCollapsed ? (
+      {isDesktop && !hideDesktopResults && !desktopResultsCollapsed ? (
         <div
           className={`pointer-events-none fixed right-4 top-[81px] bottom-4 z-40 hidden lg:block ${
             desktopResultsExpanded ? "w-[min(34rem,calc(100vw-2rem))]" : "w-72"
@@ -126,7 +128,7 @@ export function MapShell({
             <div className={`min-h-0 flex-1 overflow-y-auto p-3 ${desktopResultsExpanded ? "pr-2" : ""}`}>{results}</div>
           </div>
         </div>
-      ) : !hideDesktopResults ? (
+      ) : isDesktop && !hideDesktopResults ? (
         <button
           type="button"
           onClick={() => {
@@ -139,9 +141,9 @@ export function MapShell({
         </button>
       ) : null}
 
-      {!hideMobileResultsButton ? (
+      {!isDesktop && !hideMobileResultsButton ? (
         <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-          <div className="pb-safe border-t border-[#d8e3f5] bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96">
+          <div className="pb-safe border-t border-[#d8e3f5] bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
             <div className="grid min-h-[64px] grid-cols-3 gap-2">
               <button
                 type="button"
@@ -149,7 +151,7 @@ export function MapShell({
                 className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
                   mobileGamesOpen
                     ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
                 }`}
               >
                 🏟 Games
@@ -160,7 +162,7 @@ export function MapShell({
                 className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
                   mobileFilterOpen
                     ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
                 }`}
               >
                 ⚙ Filters
@@ -171,7 +173,7 @@ export function MapShell({
                 className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
                   mobileResultsOpen
                     ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
                 }`}
               >
                 📍 {resultsCountLabel ?? "Venues"}
@@ -181,37 +183,41 @@ export function MapShell({
         </div>
       ) : null}
 
-      <div
-        className={`fixed inset-0 z-40 bg-[#0a1628]/12 dark:bg-black/35 transition-opacity duration-300 lg:hidden ${
-          mobileResultsOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        onClick={onCloseResults}
-      />
-
-      <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white lg:hidden ${
-          mobileResultsOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
-        }`}
-        {...resultsSwipe}
-      >
-        <div className="flex justify-center pt-4">
-          <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
-        </div>
-        <div className="flex items-center justify-between border-b border-[#d8e3f5] px-4 py-3.5 dark:border-white/10">
-          <div>
-            <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Results</div>
-            <div className="text-sm font-semibold text-[#0a1628] dark:text-white">{resultsCountLabel ?? "Venues in view"}</div>
-          </div>
-          <button
-            type="button"
+      {!isDesktop ? (
+        <>
+          <div
+            className={`fixed inset-0 z-40 bg-[#0a1628]/12 dark:bg-black/35 transition-opacity duration-300 lg:hidden ${
+              mobileResultsOpen ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
             onClick={onCloseResults}
-            className="h-10 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-xs font-semibold text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+
+          <div
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 ease-in-out lg:hidden ${
+              mobileResultsOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
+            }`}
+            {...resultsSwipe}
           >
-            Close
-          </button>
-        </div>
-        <div className="pb-safe max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{results}</div>
-      </div>
+            <div className="flex justify-center pt-4">
+              <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12" />
+            </div>
+            <div className="flex items-center justify-between border-b border-[#d8e3f5] px-4 py-3.5">
+              <div>
+                <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45">Results</div>
+                <div className="text-sm font-semibold text-[#0a1628]">{resultsCountLabel ?? "Venues in view"}</div>
+              </div>
+              <button
+                type="button"
+                onClick={onCloseResults}
+                className="h-10 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 text-xs font-semibold text-[#0a1628]"
+              >
+                Close
+              </button>
+            </div>
+            <div className="pb-safe max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{results}</div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

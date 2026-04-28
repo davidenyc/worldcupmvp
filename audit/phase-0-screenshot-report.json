@@ -1,0 +1,398 @@
+[
+  {
+    "route": "/",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 9647
+  },
+  {
+    "route": "/",
+    "viewport": "tablet-768",
+    "ok": false,
+    "ms": 22423,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 17277
+  },
+  {
+    "route": "/tonight",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 8502
+  },
+  {
+    "route": "/tonight",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 7437
+  },
+  {
+    "route": "/tonight",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 4608
+  },
+  {
+    "route": "/nyc/map",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 7202
+  },
+  {
+    "route": "/nyc/map",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 10161
+  },
+  {
+    "route": "/nyc/map",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 11152
+  },
+  {
+    "route": "/la/map",
+    "viewport": "desktop-1440",
+    "ok": false,
+    "ms": 21449,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/la/map",
+    "viewport": "tablet-768",
+    "ok": false,
+    "ms": 21210,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/la/map",
+    "viewport": "mobile-390",
+    "ok": false,
+    "ms": 21234,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/mex/map",
+    "viewport": "desktop-1440",
+    "ok": false,
+    "ms": 21302,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/mex/map",
+    "viewport": "tablet-768",
+    "ok": false,
+    "ms": 22707,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/mex/map",
+    "viewport": "mobile-390",
+    "ok": false,
+    "ms": 21570,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/tor/map",
+    "viewport": "desktop-1440",
+    "ok": false,
+    "ms": 21297,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/tor/map",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 14577
+  },
+  {
+    "route": "/tor/map",
+    "viewport": "mobile-390",
+    "ok": false,
+    "ms": 21250,
+    "status": null,
+    "signal": "SIGTRAP"
+  },
+  {
+    "route": "/nyc/matches",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 5033
+  },
+  {
+    "route": "/nyc/matches",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 4776
+  },
+  {
+    "route": "/nyc/matches",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 4745
+  },
+  {
+    "route": "/membership",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 10225
+  },
+  {
+    "route": "/membership",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 7585
+  },
+  {
+    "route": "/membership",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 7560
+  },
+  {
+    "route": "/account",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 11454
+  },
+  {
+    "route": "/account",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 4000
+  },
+  {
+    "route": "/account",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 5769
+  },
+  {
+    "route": "/saved",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 17380
+  },
+  {
+    "route": "/saved",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 3539
+  },
+  {
+    "route": "/saved",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 2973
+  },
+  {
+    "route": "/search",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 6877
+  },
+  {
+    "route": "/search",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 5637
+  },
+  {
+    "route": "/search",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 5691
+  },
+  {
+    "route": "/search?city=nyc",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 5419
+  },
+  {
+    "route": "/search?city=nyc",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 5546
+  },
+  {
+    "route": "/search?city=nyc",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 5719
+  },
+  {
+    "route": "/submit",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 3932
+  },
+  {
+    "route": "/submit",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 3053
+  },
+  {
+    "route": "/submit",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 3386
+  },
+  {
+    "route": "/groups",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 3315
+  },
+  {
+    "route": "/groups",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 2992
+  },
+  {
+    "route": "/groups",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 3083
+  },
+  {
+    "route": "/country/brazil",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 6242
+  },
+  {
+    "route": "/country/brazil",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 7420
+  },
+  {
+    "route": "/country/brazil",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 5724
+  },
+  {
+    "route": "/country/japan",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 5722
+  },
+  {
+    "route": "/country/japan",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 6031
+  },
+  {
+    "route": "/country/japan",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 6027
+  },
+  {
+    "route": "/country/usa",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 6087
+  },
+  {
+    "route": "/country/usa",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 5645
+  },
+  {
+    "route": "/country/usa",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 6512
+  },
+  {
+    "route": "/venue/nyc-usa-the-u-bar-and-grill",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 7841
+  },
+  {
+    "route": "/venue/nyc-usa-the-u-bar-and-grill",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 5809
+  },
+  {
+    "route": "/venue/nyc-usa-the-u-bar-and-grill",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 5720
+  },
+  {
+    "route": "/privacy",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 3703
+  },
+  {
+    "route": "/privacy",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 2991
+  },
+  {
+    "route": "/privacy",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 2922
+  },
+  {
+    "route": "/terms",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 3440
+  },
+  {
+    "route": "/terms",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 2971
+  },
+  {
+    "route": "/terms",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 3233
+  },
+  {
+    "route": "/about",
+    "viewport": "desktop-1440",
+    "ok": true,
+    "ms": 4801
+  },
+  {
+    "route": "/about",
+    "viewport": "tablet-768",
+    "ok": true,
+    "ms": 3419
+  },
+  {
+    "route": "/about",
+    "viewport": "mobile-390",
+    "ok": true,
+    "ms": 3332
+  }
+]

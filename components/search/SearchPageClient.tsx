@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,6 +26,7 @@ export function SearchPageClient({
     (venuesByCity[searchParams.get("city") ?? initialCity] ?? []).slice(0, 20)
   );
   const [loading, setLoading] = useState(false);
+  const cityStripRef = useRef<HTMLDivElement | null>(null);
   const cityOptions = useMemo(() => HOST_CITIES, []);
   const allVenues = venuesByCity[city] ?? [];
 
@@ -55,17 +56,29 @@ export function SearchPageClient({
         placeholder="Search bars, restaurants, countries..."
         className="h-14 w-full rounded-full border border-[#d8e3f5] bg-white px-5 text-lg outline-none ring-[#f4b942] focus:ring-2"
       />
-      <div className="mt-4 flex gap-2 overflow-x-auto">
-        {cityOptions.map((item) => (
+      <div className="relative mt-4">
+        <div ref={cityStripRef} className="flex gap-2 overflow-x-auto pr-40 sm:pr-44">
+          {cityOptions.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setCity(item.key)}
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${city === item.key ? "bg-[#f4b942] text-[#0a1628]" : "border border-line bg-white text-navy"}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-[var(--bg-page)] pl-4">
+          <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-l from-transparent to-[var(--bg-page)]" />
           <button
-            key={item.key}
             type="button"
-            onClick={() => setCity(item.key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold ${city === item.key ? "bg-[#f4b942] text-[#0a1628]" : "border border-line bg-white text-navy"}`}
+            onClick={() => cityStripRef.current?.scrollTo({ left: cityStripRef.current.scrollWidth, behavior: "smooth" })}
+            className="pointer-events-auto relative z-10 rounded-full border border-line bg-[var(--bg-surface)] px-3 py-1.5 text-xs font-semibold text-navy shadow-sm"
           >
-            {item.label}
+            More cities →
           </button>
-        ))}
+        </div>
       </div>
       <div className="mt-6">
         {loading ? (

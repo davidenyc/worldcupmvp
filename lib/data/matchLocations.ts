@@ -17,11 +17,13 @@ export const HOST_CITY_STADIUMS: Record<string, string> = {
   vancouver: "BC Place",
   "mexico-city": "Estadio Azteca",
   guadalajara: "Estadio Akron",
-  monterrey: "Estadio Universitario"
+  monterrey: "Estadio Monterrey"
 };
 
 export const MATCH_STADIUM_TO_HOST_CITY_KEY: Record<string, string> = Object.fromEntries(
-  Object.entries(HOST_CITY_STADIUMS).map(([cityKey, stadiumName]) => [stadiumName, cityKey])
+  HOST_CITIES.flatMap((city) =>
+    [city.stadiumName, ...(city.matchStadiumAliases ?? [])].map((stadiumName) => [stadiumName, city.key] as const)
+  )
 );
 
 export const MATCH_CITY_STATE: Record<string, string> = {

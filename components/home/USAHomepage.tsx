@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { CountryFlag } from "@/components/ui/CountryFlag";
+import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
-import { getAllCountries, getMapPageData } from "@/lib/data/repository";
-import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
+import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
+import { HomeCityPrompt } from "./HomeCityPrompt";
 import { HomeCountryPicker } from "./HomeCountryPicker";
 import { HomeHeroActions } from "./HomeHeroActions";
 import { InstallAppBanner } from "./InstallAppBanner";
@@ -12,26 +14,36 @@ import { KickoffCountdown } from "./KickoffCountdown";
 import { NorthAmericaMap } from "./NorthAmericaMap";
 import { PremiumUpsellBanner } from "./PremiumUpsellBanner";
 
-const COUNTRY_GROUPS = [
-  { key: "usa", label: "United States", flag: "🇺🇸" },
-  { key: "canada", label: "Canada", flag: "🇨🇦" },
-  { key: "mexico", label: "Mexico", flag: "🇲🇽" }
-] as const;
-
 async function getCityVenueCount(cityKey: string) {
   const data = await getMapPageData(cityKey);
-  return data.venues.length;
+  return {
+    venueCount: data.venues.length,
+    reservableCount: data.venues.filter((venue) => venue.acceptsReservations).length
+  };
 }
 
 function getMatchCount(cityKey: string) {
   return worldCup2026Matches.filter((match) => getMatchHostCityKey(match) === cityKey).length;
 }
 
-function getCityUpcomingMatches(cityKey: string) {
-  return worldCup2026Matches
-    .filter((match) => getMatchHostCityKey(match) === cityKey)
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
-    .slice(0, 2);
+function getFeaturedMatchDay() {
+  const now = Date.now();
+  const upcoming = worldCup2026Matches
+    .filter((match) => Date.parse(match.startsAt) >= now)
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+
+  if (!upcoming.length) {
+    return { label: "Next match", matches: [] as typeof worldCup2026Matches };
+  }
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayMatches = upcoming.filter((match) => match.startsAt.slice(0, 10) === todayKey);
+  if (todayMatches.length) {
+    return { label: "Today's matches", matches: todayMatches.slice(0, 6) };
+  }
+
+  const nextKey = upcoming[0]!.startsAt.slice(0, 10);
+  return { label: "Next match day", matches: upcoming.filter((match) => match.startsAt.slice(0, 10) === nextKey).slice(0, 6) };
 }
 
 function formatMatchPreviewTime(startsAt: string) {
@@ -46,213 +58,234 @@ function formatMatchPreviewTime(startsAt: string) {
 export async function USAHomepage() {
   const allCountries = await getAllCountries();
   const countryLookup = new Map(allCountries.map((country) => [country.slug, country] as const));
-  const cityCards = await Promise.all(
-    HOST_CITIES.map(async (city) => ({
-      ...city,
-      matchCount: getMatchCount(city.key),
-      venueCount: await getCityVenueCount(city.key),
-      upcomingMatches: getCityUpcomingMatches(city.key)
-    }))
-  );
+  const [{ submissions }, cityCards] = await Promise.all([
+    getAdminQueue(),
+    Promise.all(
+      HOST_CITIES.map(async (city) => ({
+        ...city,
+        matchCount: getMatchCount(city.key),
+        ...(await getCityVenueCount(city.key))
+      }))
+    )
+  ]);
 
-  const groupedCities = COUNTRY_GROUPS.map((group) => ({
-    ...group,
-    cities: cityCards.filter((city) => city.country === group.key)
-  }));
+  const featuredMatchDay = getFeaturedMatchDay();
+  const latestSubmissions = [...submissions]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 5);
+  const totalVenues = cityCards.reduce((total, city) => total + city.venueCount, 0);
+  const reservableVenues = cityCards.reduce((total, city) => total + city.reservableCount, 0);
 
   return (
     <main className="bg-bg text-deep">
-      <section className="bg-bg lg:min-h-[calc(100vh-88px)]">
-        <div className="mx-auto grid w-full max-w-7xl items-center gap-4 px-4 py-8 sm:px-6 lg:min-h-[calc(100vh-88px)] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 lg:px-8">
-          <div className="order-1 flex min-w-0 flex-col justify-center gap-4 lg:pr-4 lg:gap-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.35em] text-mist">
-              GAMEDAY MAP
-            </div>
-            <div className="min-w-0 max-w-2xl">
-              <h1 className="text-4xl font-semibold tracking-tight text-deep sm:text-5xl lg:text-6xl">
-                Find your World Cup watch party
-              </h1>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-mist sm:text-base lg:mt-5">
-                17 host cities · 48 nations · Every bar and restaurant that matters
-              </p>
+      <section className="bg-bg">
+        <div className="container-shell py-8 lg:py-12">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_22rem] lg:items-start">
+            <div className="space-y-6">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">
+                World Cup 2026 watch parties
+              </div>
+              <HomeCityPrompt />
+              <div className="max-w-3xl">
+                <h1 className="text-display text-[color:var(--fg-primary)] max-sm:text-5xl">
+                  Find the right room before kickoff.
+                </h1>
+                <p className="mt-4 max-w-2xl text-body text-[color:var(--fg-secondary)]">
+                  Matchday is the headline here: what city you&apos;re in, what&apos;s playing next, and which bar or restaurant is worth your crew.
+                </p>
+              </div>
+
+              <HomeHeroActions />
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="surface p-4">
+                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Host cities</div>
+                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{cityCards.length}</div>
+                </div>
+                <div className="surface p-4">
+                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Venues</div>
+                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{totalVenues.toLocaleString()}</div>
+                </div>
+                <div className="surface p-4">
+                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Reservations</div>
+                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{reservableVenues.toLocaleString()}</div>
+                </div>
+              </div>
             </div>
 
-            <KickoffCountdown />
-            <HomeHeroActions />
+            <div className="surface-strong p-5">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Opening match countdown</div>
+              <div className="mt-3 text-h2 text-[color:var(--fg-primary)]">Tournament starts at Estadio Azteca.</div>
+              <div className="mt-4">
+                <KickoffCountdown />
+              </div>
+            </div>
           </div>
 
-          <div className="order-2 min-w-0 self-center">
-            <NorthAmericaMap cityCards={cityCards} />
+          <div className="mt-8 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-5 shadow-card">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="text-small uppercase tracking-[0.18em] text-ink-55">{featuredMatchDay.label}</div>
+                <div className="mt-1 text-h2 text-[color:var(--fg-primary)]">
+                  {featuredMatchDay.matches.length ? "Start with today's slate, then jump straight into the right city map." : "Next match in a few days."}
+                </div>
+              </div>
+            </div>
+
+            {featuredMatchDay.matches.length ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {featuredMatchDay.matches.map((match) => {
+                  const home = countryLookup.get(match.homeCountry);
+                  const away = countryLookup.get(match.awayCountry);
+                  const cityKey = getMatchHostCityKey(match) ?? "nyc";
+
+                  return (
+                    <Link
+                      key={match.id}
+                      href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
+                      className="surface flex h-full flex-col justify-between p-4 transition hover:-translate-y-0.5"
+                    >
+                      <div>
+                        <div className="text-small uppercase tracking-[0.18em] text-ink-55">{formatMatchPreviewTime(match.startsAt)}</div>
+                        <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
+                          <CountryFlag country={home} size="sm" />
+                          <span>{home?.fifaCode ?? match.homeCountry.toUpperCase()}</span>
+                          <span className="text-ink-55">vs</span>
+                          <CountryFlag country={away} size="sm" />
+                          <span>{away?.fifaCode ?? match.awayCountry.toUpperCase()}</span>
+                        </div>
+                        <div className="mt-2 text-sm text-[color:var(--fg-secondary)]">
+                          {match.stadiumName} · {match.city}
+                        </div>
+                      </div>
+                      <div className="mt-4 text-sm font-semibold text-[color:var(--fg-primary)]">Find a watch spot →</div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-state mt-4">
+                <div className="empty-state-emoji">⚽</div>
+                <h2 className="mt-4 text-h2 text-[color:var(--fg-primary)]">The next slate is on deck</h2>
+                <p className="mt-2 max-w-md text-sm text-[color:var(--fg-secondary)]">
+                  We&apos;ll surface the upcoming match cards here as soon as the next fixture day begins.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       <section className="bg-bg px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-12">
-          <InstallAppBanner />
-          <EmailCaptureBanner />
-
+        <div className="mx-auto max-w-7xl space-y-10">
           <section className="grid gap-4 md:grid-cols-3">
             {[
-              {
-                title: "🏙 Choose your city",
-                body: "Pick from 17 World Cup host cities"
-              },
-              {
-                title: "🏳 Find your country's bars",
-                body: "Filter by any of 48 nations"
-              },
-              {
-                title: "🍺 Go watch",
-                body: "Get directions and reserve your spot"
-              }
-            ].map((step) => (
-              <div key={step.title} className="rounded-[1.75rem] bg-[#0a1628] p-6 text-white shadow-lg">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#f4b942] text-xl text-[#0a1628]">
-                  {step.title.split(" ")[0]}
+              { title: "Pick your city", body: "Start with the host city where you'll actually be watching." },
+              { title: "Pick your team", body: "Filter by country to find the crowd and the right room." },
+              { title: "Go before kickoff", body: "See ratings, TV status, and reservation options fast." }
+            ].map((step, index) => (
+              <div key={step.title} className="surface p-5">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gold text-sm font-bold text-[color:var(--fg-on-accent)]">
+                  {index + 1}
                 </div>
-                <h2 className="text-xl font-semibold">{step.title.replace(/^[^ ]+ /, "")}</h2>
-                <p className="mt-3 text-sm leading-6 text-white/72">{step.body}</p>
+                <h2 className="mt-4 text-h2 text-[color:var(--fg-primary)]">{step.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{step.body}</p>
               </div>
             ))}
           </section>
 
-          {groupedCities.map((group) => (
-            <div key={group.key} className="space-y-6">
+          <NorthAmericaMap cityCards={cityCards} />
+
+          <section>
+            <div className="text-small uppercase tracking-[0.18em] text-ink-55">Browse by country</div>
+            <h2 className="mt-2 text-h1 text-[color:var(--fg-primary)]">Tap the nation you're backing.</h2>
+            <p className="mt-3 max-w-2xl text-body text-[color:var(--fg-secondary)]">
+              Every country chip routes into the live city map with the right supporter filter already applied.
+            </p>
+            <div className="mt-6">
+              <HomeCountryPicker countries={allCountries} />
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-end justify-between gap-4">
               <div>
-                <div className="text-sm uppercase tracking-[0.24em] text-mist">
-                  {group.flag} {group.label}
-                </div>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">
-                  {group.label}
-                </h2>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {group.cities.map((city) => (
-                  <Link
-                    key={city.key}
-                    href={`/${city.key}/map`}
-                    className="group cursor-pointer overflow-hidden rounded-[1.75rem] border p-5 transition hover:-translate-y-0.5 hover:shadow-lg dark:!border-white/10 dark:!bg-[#161b22] dark:!shadow-none"
-                    style={countryCardStyle(city.country, city.key)}
-                  >
-                    <div className="flex h-full flex-col justify-between gap-6">
-                      <div>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-2xl font-semibold text-deep dark:!text-white">{city.label}</div>
-                            <div className="mt-2 text-sm text-mist dark:!text-white/55">{city.stadiumName}</div>
-                          </div>
-                          <div className="rounded-full border border-white/70 bg-white/75 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0a1628] dark:border-white/10 dark:bg-white/10 dark:text-white/80">
-                            {city.shortLabel}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[1.35rem] border border-white/70 bg-white/72 p-4 shadow-[0_10px_30px_rgba(10,22,40,0.06)] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#0a1628]/55 dark:text-white/45">
-                            Upcoming
-                          </div>
-                          <div className="text-[11px] font-semibold text-[#0a1628]/55 dark:text-white/45">
-                            {city.matchCount} matches
-                          </div>
-                        </div>
-
-                        {city.upcomingMatches.length ? (
-                          <div className="mt-3 space-y-2.5">
-                            {city.upcomingMatches.map((match) => {
-                              const home = countryLookup.get(match.homeCountry);
-                              const away = countryLookup.get(match.awayCountry);
-
-                              return (
-                                <div
-                                  key={match.id}
-                                  className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2.5 dark:border-white/10 dark:bg-[#0f1724]"
-                                >
-                                  <div className="flex items-center gap-2 text-sm font-semibold text-[#0a1628] dark:text-white">
-                                    <span>{home?.flagEmoji ?? "🏳"}</span>
-                                    <span className="truncate">{home?.fifaCode ?? match.homeCountry.toUpperCase()}</span>
-                                    <span className="text-[#0a1628]/35 dark:text-white/35">vs</span>
-                                    <span>{away?.flagEmoji ?? "🏳"}</span>
-                                    <span className="truncate">{away?.fifaCode ?? match.awayCountry.toUpperCase()}</span>
-                                  </div>
-                                  <div className="mt-1 text-[11px] font-medium text-[#0a1628]/58 dark:text-white/55">
-                                    {formatMatchPreviewTime(match.startsAt)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="mt-3 rounded-2xl border border-white/80 bg-white/80 px-3 py-3 text-sm text-[#0a1628]/58 dark:border-white/10 dark:bg-[#0f1724] dark:text-white/55">
-                            Full schedule preview coming soon
-                          </div>
-                        )}
-
-                        <div className="mt-3 flex items-center justify-between gap-3 text-sm text-navy/80 dark:!text-white/70">
-                          <div className="inline-flex items-center gap-2">
-                            <span>📍</span>
-                            <span>{city.venueCount} venues</span>
-                          </div>
-                          <div className="text-xs font-semibold text-[#0a1628]/55 transition group-hover:text-[#0a1628] dark:text-white/45 dark:group-hover:text-white/75">
-                            Open city →
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                <div className="text-small uppercase tracking-[0.18em] text-ink-55">Browse by city</div>
+                <h2 className="mt-2 text-h1 text-[color:var(--fg-primary)]">All 17 host cities, trimmed for quick scanning.</h2>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {cityCards.map((city) => (
+                <Link
+                  key={city.key}
+                  href={`/${city.key}/map`}
+                  className="surface flex h-full flex-col gap-4 p-4 transition hover:-translate-y-0.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-lg font-semibold text-[color:var(--fg-primary)]">{city.label}</div>
+                      <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{city.stadiumName}</div>
+                    </div>
+                    <div className="rounded-full bg-[var(--bg-surface-elevated)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--fg-muted)]">
+                      {city.shortLabel}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-small uppercase tracking-[0.16em] text-ink-55">Matches</div>
+                      <div className="mt-1 font-semibold text-[color:var(--fg-primary)]">{city.matchCount}</div>
+                    </div>
+                    <div>
+                      <div className="text-small uppercase tracking-[0.16em] text-ink-55">Venues</div>
+                      <div className="mt-1 font-semibold text-[color:var(--fg-primary)]">{city.venueCount}</div>
+                    </div>
+                  </div>
+                  <div className="mt-auto text-sm font-semibold text-[color:var(--fg-primary)]">Open city →</div>
+                </Link>
+              ))}
+            </div>
+          </section>
 
-      <section className="bg-bg px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <PremiumUpsellBanner />
-          <div className="text-sm uppercase tracking-[0.24em] text-mist">
-            🏳 Find your team&apos;s spots
-          </div>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">
-            Which team are you watching?
-          </h2>
-          <p className="mt-3 max-w-xl text-sm text-mist">
-            Tap your country to find every bar and restaurant in NYC catering to your nation&apos;s supporters.
-          </p>
-          <div className="mt-6">
-            <HomeCountryPicker countries={allCountries} />
-          </div>
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="surface p-6">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Latest community submissions</div>
+              <h2 className="mt-2 text-h2 text-[color:var(--fg-primary)]">Fans are still adding rooms.</h2>
+              <div className="mt-5 space-y-3">
+                {latestSubmissions.length ? latestSubmissions.map((submission) => (
+                  <div key={submission.id} className="rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-semibold text-[color:var(--fg-primary)]">{submission.name}</div>
+                      <span className="rounded-full bg-[var(--accent-soft-bg)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--accent-soft-fg)]">
+                        {submission.status === "approved" ? "Approved" : "Pending review"}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">
+                      {submission.address} · {submission.countryAssociation}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="empty-state">
+                    <div className="empty-state-emoji">📍</div>
+                    <p className="mt-3 text-sm text-[color:var(--fg-secondary)]">
+                      No fresh submissions yet. Add a venue and we'll queue it for review.
+                    </p>
+                    <Link href="/submit" className="mt-4 inline-flex h-11 items-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
+                      Add a venue
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <InstallAppBanner />
+              <PremiumUpsellBanner />
+            </div>
+          </section>
+
+          <EmailCaptureBanner />
         </div>
       </section>
     </main>
   );
-}
-
-function countryCardStyle(country: "usa" | "canada" | "mexico", cityKey: string) {
-  const palettes: Record<"usa" | "canada" | "mexico", { backgroundColor: string; borderColor: string; boxShadow: string }> = {
-    usa: {
-      backgroundColor: "#eef3ff",
-      borderColor: "#c8d6f8",
-      boxShadow: "0 16px 34px rgba(22, 36, 66, 0.08)"
-    },
-    canada: {
-      backgroundColor: "#fdecef",
-      borderColor: "#f0b6c0",
-      boxShadow: "0 16px 34px rgba(230, 57, 70, 0.08)"
-    },
-    mexico: {
-      backgroundColor: "#e9f8ef",
-      borderColor: "#b8e2c8",
-      boxShadow: "0 16px 34px rgba(34, 197, 94, 0.08)"
-    }
-  };
-
-  const palette = palettes[country];
-  const hueOffset = cityKey.length % 2;
-  return {
-    ...palette,
-    filter: hueOffset ? "saturate(1.02)" : "saturate(0.98)"
-  };
 }

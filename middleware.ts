@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getHostCity } from "@/lib/data/hostCities";
+
 const VALID_CITY_KEYS = new Set([
   "nyc",
   "los-angeles",
@@ -36,6 +38,7 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "search",
   "submit",
   "terms",
+  "today",
   "tonight",
   "venue"
 ]);
@@ -52,10 +55,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname === "/tonight") {
+    const url = new URL(`/today${search}`, request.url);
+    return NextResponse.redirect(url, 301);
+  }
+
   const segments = pathname.split("/").filter(Boolean);
   const firstSegment = segments[0];
 
-  if (!firstSegment || VALID_CITY_KEYS.has(firstSegment) || VALID_TOP_LEVEL_ROUTES.has(firstSegment)) {
+  if (
+    !firstSegment ||
+    VALID_CITY_KEYS.has(firstSegment) ||
+    VALID_TOP_LEVEL_ROUTES.has(firstSegment) ||
+    getHostCity(firstSegment)
+  ) {
     return NextResponse.next();
   }
 

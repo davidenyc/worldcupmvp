@@ -172,6 +172,9 @@ export interface Venue {
   sourceConfidence: number;
   sourceNote?: string | null;
   isRealVenue?: boolean;
+  elitePartner?: boolean;
+  eliteHeldCapacityRemaining?: number;
+  matchFocus?: string[];
   verificationStatus: VerificationStatus;
   isFeatured: boolean;
   isOfficialFanHub: boolean;

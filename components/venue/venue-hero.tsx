@@ -10,43 +10,8 @@ import { usePremiumGate } from "@/lib/hooks/usePremiumGate";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { useMembership } from "@/lib/store/membership";
 import { RankedVenue } from "@/lib/types";
-import { formatPriceLevel, getSoccerAtmosphereRating } from "@/lib/utils";
+import { formatPriceLevel, getSoccerAtmosphereRating, getVenueEditorialCopy } from "@/lib/utils";
 import { getVenueImageSet } from "@/lib/utils/venueImages";
-
-function intentBanner(venueIntent: RankedVenue["venueIntent"]) {
-  if (venueIntent === "fan_fest") {
-    return {
-      label: "🏆 Fan Fest venue",
-      className: "bg-emerald-950 text-emerald-50"
-    };
-  }
-
-  if (venueIntent === "sports_bar") {
-    return {
-      label: "⚽ Sports bar — games always on",
-      className: "bg-sky-700 text-white"
-    };
-  }
-
-  if (venueIntent === "bar_with_tv") {
-    return {
-      label: "📺 Bar with TVs",
-      className: "bg-cyan-700 text-white"
-    };
-  }
-
-  if (venueIntent === "cultural_bar") {
-    return {
-      label: "🍺 Cultural bar with match coverage",
-      className: "bg-violet-700 text-white"
-    };
-  }
-
-  return {
-    label: "🍽️ Cultural restaurant — call ahead for game coverage",
-    className: "bg-amber-500 text-white"
-  };
-}
 
 export function VenueHero({ venue }: { venue: RankedVenue }) {
   const [toastVisible, setToastVisible] = useState(false);
@@ -54,7 +19,6 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const { canSaveVenue } = useMembership();
   const { showModal, setShowModal, requiredTier } = usePremiumGate("unlimited_saves");
-  const banner = intentBanner(venue.venueIntent);
   const galleryImages = getVenueImageSet(venue);
   const favorite = favorites.includes(venue.slug);
   const isAtLimit = !favorite && !canSaveVenue(favorites.length);
@@ -86,9 +50,6 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
           )}
         </div>
         <div className="surface-strong overflow-hidden p-4">
-          <div className={`mb-4 rounded-3xl px-4 py-3 text-sm font-semibold ${banner.className}`}>
-            {banner.label}
-          </div>
           <div className="flex items-center justify-between gap-4 pb-4">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Venue spotlight</div>
             <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +119,7 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
             <div className="mt-2 text-2xl font-semibold text-deep">
               {venue.gameDayScore >= 9 ? "Premium watch-party pick" : "Reliable match-day venue"}
             </div>
-            <p className="mt-3 text-sm leading-6 text-navy/72 dark:text-white/72">{venue.editorialNotes}</p>
+            <p className="mt-3 text-sm leading-6 text-navy/72 dark:text-white/72">{getVenueEditorialCopy(venue)}</p>
           </div>
           <div className="surface p-5">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Capacity and reservation</div>

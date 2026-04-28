@@ -7,6 +7,7 @@ import { Clock3, ExternalLink, Instagram, MapPin, Phone } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { RankedVenue } from "@/lib/types";
+import { getVenueTvLabel } from "@/lib/utils";
 import { getVenueImageSet } from "@/lib/utils/venueImages";
 
 type Cluster = {
@@ -69,6 +70,7 @@ export function NycMapPanel({
   const clusters = useMemo(() => clusterVenues(venues), [venues]);
   const [activeVenue, setActiveVenue] = useState<RankedVenue | null>(venues[0] ?? null);
   const activeVenueImages = activeVenue ? getVenueImageSet(activeVenue) : [];
+  const tvLabel = activeVenue ? getVenueTvLabel(activeVenue) : null;
 
   return (
     <div className="surface-strong p-5">
@@ -145,7 +147,7 @@ export function NycMapPanel({
               <p className="mt-3 text-sm leading-6 text-navy/75 dark:text-white/75">{activeVenue.supporterNotes}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.approximateCapacity ?? "?"} cap.</Badge>
-                <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.numberOfScreens} screens</Badge>
+                {tvLabel ? <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{tvLabel}</Badge> : null}
                 <Badge className="dark:border-white/15 dark:bg-white/8 dark:text-white">{activeVenue.gameDayScore.toFixed(1)} vibe</Badge>
                 <Badge className={`${activeVenue.openNow ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" : "dark:border-white/15 dark:bg-white/8 dark:text-white"}`}>
                   <Clock3 className="mr-1 inline h-3.5 w-3.5" />

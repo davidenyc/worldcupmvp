@@ -37,9 +37,27 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const themeScript = `
+    (() => {
+      try {
+        const stored = localStorage.getItem("gameday-theme");
+        const preference = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+        const resolved = preference === "system"
+          ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : preference;
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.classList.toggle("dark", resolved === "dark");
+        document.documentElement.style.colorScheme = resolved;
+      } catch (error) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  `;
+
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -48,7 +66,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="theme-color" content="#f4b942" />
       </head>
-      <body className="min-h-[100dvh] bg-bg text-deep">
+      <body className="min-h-[100dvh] bg-bg text-deep" suppressHydrationWarning>
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegistration />
         <SiteHeader />

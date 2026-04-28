@@ -11,12 +11,18 @@ export function HomeHeroActions() {
   const activeCity = getHostCity(activeCityKey) ?? getHostCity("nyc");
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <Link
         href={`/${activeCity?.key ?? "nyc"}/map`}
-        className="inline-flex w-full items-center justify-center rounded-full bg-[#f4b942] px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-card transition hover:bg-[#f0c86b] dark:text-[#0a1628] lg:w-auto lg:justify-start lg:py-2.5"
+        className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-[color:var(--fg-on-accent)] shadow-card transition hover:brightness-[0.98] sm:w-auto"
       >
         Find a watch spot →
+      </Link>
+      <Link
+        href="/today"
+        className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-6 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] sm:w-auto"
+      >
+        See today&apos;s matches
       </Link>
     </div>
   );

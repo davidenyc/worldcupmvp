@@ -1,0 +1,43 @@
+<!-- Email: Match alert (1 hour before kickoff)
+     Trigger: 60 min before kickoff for any match the user has saved or follows
+     Goal: drive immediate visit + reservation
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>{{match_short}} kicks off in 1 hour</title></head>
+<body style="margin:0;padding:0;background:#0b1020;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#e9ecf3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1020;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#11172a;border:1px solid #1f2a44;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:24px 24px 0 24px;">
+          <div style="display:inline-block;padding:6px 12px;background:#f5b942;color:#0b1020;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:0.06em;">KICKOFF IN 1 HOUR</div>
+          <h1 style="margin:14px 0 0 0;font-size:28px;line-height:1.15;color:#fff;">{{home_flag}} {{home_country}} vs {{away_country}} {{away_flag}}</h1>
+          <div style="margin-top:6px;color:#b8c1d6;font-size:14px;">{{kickoff_local}} · {{stadium}}, {{host_city}}</div>
+        </td></tr>
+        <tr><td style="padding:20px 24px 0 24px;color:#e9ecf3;font-size:15px;line-height:1.55;">
+          {{rooms_summary}}
+        </td></tr>
+        <tr><td style="padding:20px 24px 0 24px;">
+          <a href="{{best_spot_url}}" style="display:block;background:#1a2138;border:1px solid #2a3658;border-radius:14px;padding:16px;text-decoration:none;">
+            <div style="color:#7f89a6;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">Closest open spot to you</div>
+            <div style="margin-top:4px;color:#fff;font-size:18px;font-weight:700;">{{best_spot_name}}</div>
+            <div style="margin-top:2px;color:#b8c1d6;font-size:14px;">{{best_spot_distance}} · {{best_spot_atmosphere}} · {{best_spot_capacity_state}}</div>
+            <div style="margin-top:10px;color:#f5b942;font-weight:600;font-size:14px;">Open directions →</div>
+          </a>
+        </td></tr>
+        <tr><td style="padding:14px 24px 0 24px;">
+          <a href="{{reserve_url}}" style="display:inline-block;padding:14px 20px;background:#f5b942;color:#0b1020;font-weight:700;text-decoration:none;border-radius:999px;">Reserve now</a>
+          &nbsp;
+          <a href="{{all_spots_url}}" style="display:inline-block;padding:14px 20px;background:transparent;color:#f5b942;font-weight:700;text-decoration:none;border:1px solid #f5b942;border-radius:999px;">All {{total_spots}} watch spots</a>
+        </td></tr>
+        <tr><td style="padding:20px 24px 0 24px;color:#b8c1d6;font-size:13px;line-height:1.55;">
+          Tip: rooms with this match flagged are filling up — {{capacity_signal}}.
+        </td></tr>
+        <tr><td style="padding:24px 24px 24px 24px;color:#7f89a6;font-size:12px;line-height:1.6;border-top:1px solid #1f2a44;margin-top:20px;">
+          You're getting kickoff alerts for matches you saved. <a href="{{preferences_url}}" style="color:#7f89a6;">Manage alerts</a> · <a href="{{unsubscribe_url}}" style="color:#7f89a6;">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

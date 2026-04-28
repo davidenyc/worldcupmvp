@@ -6,7 +6,7 @@ import { Clock3, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CountrySummary, RankedVenue } from "@/lib/types";
-import { getSoccerAtmosphereRating, toTitleCase } from "@/lib/utils";
+import { getSoccerAtmosphereRating, getVenueTvLabel, toTitleCase } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
 
 function getCountryName(countries: CountrySummary[], slug: string | null) {
@@ -43,10 +43,19 @@ export function MapResultsPanel({
     () => new Map(countries.map((country) => [country.slug, country])),
     [countries]
   );
+  const uniqueVenues = useMemo(() => {
+    const seen = new Set<string>();
+    return venues.filter((venue) => {
+      const key = venue.id || venue.slug;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [venues]);
   const emptyFlagSlug = selectedCountrySlugs[0] ?? null;
   const emptyCountry = emptyFlagSlug ? countryLookup.get(emptyFlagSlug) ?? null : null;
 
-  if (!venues.length) {
+  if (!uniqueVenues.length) {
     return (
       <div className="flex min-h-[42vh] flex-col items-center justify-center px-6 py-12 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f8fbff] text-5xl dark:bg-white/5">
@@ -69,7 +78,7 @@ export function MapResultsPanel({
 
   return (
     <div className={columns === 2 ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
-      {venues.map((venue) => {
+      {uniqueVenues.map((venue) => {
         const selected = venue.id === selectedVenueId;
         const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) ?? null : null;
         const countryName = getCountryName(countries, venue.likelySupporterCountry);
@@ -80,6 +89,7 @@ export function MapResultsPanel({
         const primaryVenueType = venue.venueTypes[0];
         const phoneNumber = venue.reservationPhone ?? venue.phone ?? null;
         const soccerAtmosphere = getSoccerAtmosphereRating(venue);
+        const tvLabel = getVenueTvLabel(venue);
         const secondaryAction = venue.acceptsReservations && (venue.reservationUrl || venue.reservationPhone)
           ? {
               href: venue.reservationUrl ?? `tel:${venue.reservationPhone!}`,
@@ -107,43 +117,43 @@ export function MapResultsPanel({
             key={venue.id}
             type="button"
             onClick={() => onSelect(venue)}
-            className={`group w-full rounded-2xl border border-[#d8e3f5] bg-white p-3 text-left shadow-sm transition sm:p-4 dark:border-white/10 dark:bg-white/[0.03] ${
+            className={`group w-full rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-left shadow-sm transition sm:p-4 ${
               selected
-                ? "border-[#bfd4f3] bg-[#f8fbff] dark:border-white/20 dark:bg-white/[0.06]"
-                : "hover:border-[#cddcf5] hover:bg-[#f8fbff] dark:hover:border-white/15 dark:hover:bg-white/[0.05]"
+                ? "border-[color:var(--accent)] bg-[var(--bg-surface-elevated)]"
+                : "hover:border-[color:var(--border-strong)] hover:bg-[var(--bg-surface-elevated)]"
             }`}
           >
             <div className="flex items-start gap-3 transition">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f7ff] dark:bg-white/8">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--country-flag-bg)]">
                 {neutralSportsBar ? <span className="text-sm leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="font-semibold text-[#0a1628] dark:text-white">{venue.name}</div>
+                  <div className="font-semibold text-[color:var(--fg-primary)]">{venue.name}</div>
                   <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${intent.className}`}>
                     {intent.label}
                   </span>
                 </div>
-                <div className="mt-1 text-sm text-[#0a1628]/62 dark:text-white/58">{venue.neighborhood}</div>
-                <div className="mt-1 text-xs text-[#0a1628]/48 dark:text-white/42">
+                <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{venue.neighborhood}</div>
+                <div className="mt-1 text-xs text-[color:var(--fg-muted)]">
                   {neutralSportsBar ? "Mixed crowd" : countryName ?? venue.borough}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2.5 text-sm">
-                  <span className="inline-flex items-center gap-1 text-[#0a1628]/82 dark:text-white/78">
+                  <span className="inline-flex items-center gap-1 text-[color:var(--fg-secondary)]">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     {Number(venue.rating ?? 0).toFixed(1)}
-                    <span className="text-xs text-[#0a1628]/35 dark:text-white/40">({reviewCountLabel})</span>
+                    <span className="text-xs text-[color:var(--fg-muted)]">({reviewCountLabel})</span>
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[#0a1628]/82 dark:text-white/78">
-                    <span className={`h-2.5 w-2.5 rounded-full ${venue.acceptsReservations ? "bg-emerald-500" : "bg-[#0a1628]/18 dark:bg-white/20"}`} />
+                  <span className="inline-flex items-center gap-1 text-[color:var(--fg-secondary)]">
+                    <span className={`h-2.5 w-2.5 rounded-full ${venue.acceptsReservations ? "bg-emerald-500" : "bg-[color:var(--border-strong)]"}`} />
                     {reservationsLabel}
                   </span>
                   {primaryVenueType ? (
-                    <span className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/42 dark:text-white/40">
+                    <span className="text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
                       {toTitleCase(primaryVenueType.replace(/_/g, " "))}
                     </span>
                   ) : null}
-                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${venue.openNow ? "text-emerald-600 dark:text-emerald-400" : "text-[#0a1628]/45 dark:text-white/45"}`}>
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${venue.openNow ? "text-emerald-600 dark:text-emerald-400" : "text-[color:var(--fg-muted)]"}`}>
                     <Clock3 className="h-3.5 w-3.5" />
                     {venue.openNow ? "Open now" : "Hours vary"}
                   </span>
@@ -152,16 +162,23 @@ export function MapResultsPanel({
                       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                       : soccerAtmosphere === "Medium"
                         ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                        : "bg-[#f4f7fc] text-[#0a1628]/72 dark:bg-white/10 dark:text-white/72"
+                        : "bg-[var(--pill-bg)] text-[color:var(--pill-fg)]"
                   }`}>
                     {soccerAtmosphere} atmosphere
+                  </span>
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                    venue.numberOfScreens <= 0
+                      ? "bg-[var(--pill-bg)] text-[color:var(--pill-fg)]"
+                      : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                  }`}>
+                    {tvLabel}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <Link
                     href={`/venue/${venue.slug}`}
                     onClick={(event) => event.stopPropagation()}
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
+                    className="inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98] sm:text-xs"
                   >
                     Details
                   </Link>
@@ -174,13 +191,13 @@ export function MapResultsPanel({
                       className={`inline-flex h-11 items-center justify-center rounded-full px-3 text-[11px] font-semibold transition sm:text-xs ${
                         secondaryAction.highlight
                           ? "bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]"
-                          : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                          : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)] hover:brightness-[0.98]"
                       }`}
                     >
                       {secondaryAction.label}
                     </a>
                   ) : (
-                    <div className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628]/40 dark:border-white/10 dark:bg-white/5 dark:text-white/40 sm:text-xs">
+                    <div className="inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-muted)] sm:text-xs">
                       Venue info
                     </div>
                   )}
@@ -190,7 +207,7 @@ export function MapResultsPanel({
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="col-span-2 inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:text-xs"
+                      className="col-span-2 inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98] sm:text-xs"
                     >
                       Directions
                     </a>

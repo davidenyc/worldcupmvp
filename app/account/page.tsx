@@ -33,6 +33,16 @@ const LANGUAGES = [
   { code: "hr", label: "Hrvatski", flag: "🇭🇷" }
 ] as const;
 
+function getInitials(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!parts.length) return "GM";
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("") || "GM";
+}
+
 function SectionCard({
   title,
   children,
@@ -89,7 +99,7 @@ export default function AccountPage() {
   const updateUser = useUpdateUser();
   const resetUser = useResetUser();
   const { setUserCity } = useUserCity();
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { tier, reset: resetMembership } = useMembership();
   const favorites = useFavoritesStore((state) => state.favorites);
   const resetFavorites = useFavoritesStore((state) => state.resetFavorites);
@@ -193,16 +203,16 @@ export default function AccountPage() {
   return (
     <main className="min-h-[100dvh] bg-[#f7fafc] px-4 py-8 sm:px-6 lg:px-8">
       <div className="container-shell space-y-6">
-        <SectionCard title="Profile Header" dark>
+        <SectionCard title="Account" dark>
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-5">
               <div className="space-y-3">
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker((current) => !current)}
-                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#f4b942] bg-white/10 text-[40px]"
+                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#f4b942] bg-[#0f223f] text-2xl font-black tracking-[0.08em] text-[#f4b942]"
                 >
-                  {user.avatarEmoji}
+                  {user.avatarEmoji && user.avatarEmoji !== "⚽" ? user.avatarEmoji : getInitials(user.displayName)}
                 </button>
                 {showEmojiPicker ? (
                   <div className="grid grid-cols-5 gap-2 rounded-2xl bg-white/10 p-3">
@@ -243,6 +253,7 @@ export default function AccountPage() {
                 {showSavedFlash ? <div className="text-xs font-semibold text-[#f4b942]">✓ Saved</div> : null}
                 <TierBadge tier={tier} size="md" />
                 <div className="text-sm text-white/65">Member since {joinedLabel}</div>
+                <div className="text-xs text-white/50">Supporter profile</div>
               </div>
             </div>
 
@@ -372,17 +383,7 @@ export default function AccountPage() {
               <Toggle checked={user.notifyNewVenues} onClick={() => updateUser({ notifyNewVenues: !user.notifyNewVenues })} />
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (tier !== "elite") {
-                  router.push("/membership?feature=match_alerts&return=%2Faccount");
-                  return;
-                }
-                updateUser({ notifyMatchAlerts: !user.notifyMatchAlerts });
-              }}
-              className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4 text-left"
-            >
+            <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4 text-left">
               <div>
                 <div className="font-semibold text-[#0a1628]">⚡ Match day alerts</div>
                 <div className="mt-1 text-sm text-[#0a1628]/60">Get a reminder before your team kicks off.</div>
@@ -393,9 +394,19 @@ export default function AccountPage() {
                     Elite feature
                   </span>
                 ) : null}
-                <Toggle checked={user.notifyMatchAlerts} disabled={tier !== "elite"} onClick={() => undefined} />
+                <Toggle
+                  checked={user.notifyMatchAlerts}
+                  disabled={tier !== "elite"}
+                  onClick={() => {
+                    if (tier !== "elite") {
+                      router.push("/membership?feature=match_alerts&return=%2Faccount");
+                      return;
+                    }
+                    updateUser({ notifyMatchAlerts: !user.notifyMatchAlerts });
+                  }}
+                />
               </div>
-            </button>
+            </div>
 
             {(user.notifyNewVenues || user.notifyMatchAlerts || tier === "elite") ? (
               <div>
@@ -448,17 +459,29 @@ export default function AccountPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4">
               <div>
-                <div className="font-semibold text-[#0a1628]">Dark mode</div>
+                <div className="font-semibold text-[#0a1628]">Appearance</div>
                 <div className="mt-1 text-sm text-[#0a1628]/60">Current theme: {theme}</div>
               </div>
-              <Toggle
-                checked={isDark}
-                onClick={() => {
-                  const nextTheme = isDark ? "light" : "dark";
-                  setTheme(nextTheme);
-                  updateUser({ prefersDarkMode: nextTheme === "dark" });
-                }}
-              />
+              <div className="flex flex-wrap justify-end gap-2">
+                {(["light", "dark", "system"] as const).map((option) => {
+                  const active = theme === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setTheme(option);
+                        updateUser({ prefersDarkMode: option === "dark" });
+                      }}
+                      className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                        active ? "border-[#f4b942] bg-[#fff8e7] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                      }`}
+                    >
+                      {option === "light" ? "Light" : option === "dark" ? "Dark" : "System"}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {showInstallRow ? (

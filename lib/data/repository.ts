@@ -3,6 +3,13 @@ import "server-only";
 import { demoBoroughs, demoNeighborhoods } from "@/lib/data/demo";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { worldCup2026Matches } from "@/lib/data/matches";
+import {
+  type TodayPageMode,
+  filterVenuesByMatch,
+  filterVenuesByMode,
+  getMatchCollectionsForTimeZone,
+  sortTodayVenues
+} from "@/lib/data/today";
 import { dedupeVenues } from "@/lib/data/dedupe";
 import { getCachedProviderResult, getActiveVenueProvider } from "@/lib/providers";
 import { rankVenues } from "@/lib/ranking/venues";
@@ -86,6 +93,30 @@ export async function getMapPageData(city = "nyc") {
       neighborhoods: Array.from(new Set(ranked.map((venue) => venue.neighborhood))).sort()
     };
   });
+}
+
+export async function getTodayPageData(
+  cityKey: string,
+  mode: TodayPageMode,
+  matchId?: string,
+  timeZone = "America/New_York"
+) {
+  const mapData = await getMapPageData(cityKey);
+  const matches = [...worldCup2026Matches].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  const activeMatch = matches.find((match) => match.id === matchId) ?? null;
+  const todayMatches = getMatchCollectionsForTimeZone(matches, timeZone).todayMatches;
+  const venues = sortTodayVenues(
+    filterVenuesByMatch(filterVenuesByMode(mapData.venues, mode), activeMatch),
+    activeMatch
+  );
+
+  return {
+    allVenues: mapData.venues,
+    venues,
+    matches,
+    todayMatches,
+    activeMatch
+  };
 }
 
 export async function getBoroughs() {

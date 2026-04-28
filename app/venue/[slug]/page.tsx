@@ -4,6 +4,8 @@ import { ExternalLink, Phone } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { LockedFeature } from "@/components/membership/LockedFeature";
+import { PromoCard } from "@/components/promos/PromoCard";
+import { EliteAccessCard } from "@/components/promos/EliteAccessCard";
 import { FanGroupCreateForm } from "@/components/venue/FanGroupCreateForm";
 import { ReportUpdateForm } from "@/components/venue/report-update-form";
 import { ReservationRequestForm } from "@/components/venue/reservation-request-form";
@@ -15,9 +17,17 @@ import { VenueHero } from "@/components/venue/venue-hero";
 import { VenueCard } from "@/components/venue/venue-card";
 import { Badge } from "@/components/ui/badge";
 import { demoVenues } from "@/lib/data/demo";
+import { getHostCity } from "@/lib/data/hostCities";
+import { getVenuePromos } from "@/lib/data/promos";
 import { formatMatchStage, worldCup2026Matches } from "@/lib/data/matches";
 import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
-import { toTitleCase } from "@/lib/utils";
+import {
+  getVenueDescriptionCopy,
+  getVenueEditorialCopy,
+  getVenueMatchdayCopy,
+  getVenueSupporterCopy,
+  toTitleCase
+} from "@/lib/utils";
 
 function formatStarRating(rating: number | undefined | null) {
   if (!rating) return "★★★★☆";
@@ -85,16 +95,27 @@ export default async function VenuePage({
       notFound();
     }
 
-    const rankedVenue = {
+    const curatedVenue = {
       ...data.venue,
-      rankScore: data.venue.gameDayScore,
+      description: getVenueDescriptionCopy(data.venue, data.country?.name),
+      editorialNotes: getVenueEditorialCopy(data.venue, data.country?.name),
+      supporterNotes: getVenueSupporterCopy(data.venue, data.country?.name),
+      matchdayNotes: getVenueMatchdayCopy(data.venue, data.country?.name)
+    };
+
+    const rankedVenue = {
+      ...curatedVenue,
+      rankScore: curatedVenue.gameDayScore,
       rankingReasons: [
         `Strong ${data.country?.name ?? "country"} match`,
-        data.venue.acceptsReservations ? "Takes reservations" : "Walk-in friendly",
-        data.venue.goodForGroups ? "Good for large watch parties" : "Neighborhood-scale vibe"
+        curatedVenue.acceptsReservations ? "Takes reservations" : "Walk-in friendly",
+        curatedVenue.goodForGroups ? "Good for large watch parties" : "Neighborhood-scale vibe"
       ]
     };
-    const venueCityKey = data.venue.city ?? "nyc";
+    const venueCityKey = getHostCity(curatedVenue.city)?.key ?? "nyc";
+    const cityMapData = await getMapPageData(venueCityKey);
+    const venuePromos = getVenuePromos(venueCityKey, curatedVenue.slug, cityMapData.venues);
+    const hasEliteAccess = Boolean(curatedVenue.elitePartner) || venuePromos.some((promo) => promo.tier_required === "elite");
     const venueMatches = data.matches.length
       ? data.matches
       : worldCup2026Matches
@@ -108,13 +129,13 @@ export default async function VenuePage({
       <section className="container-shell py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <VenueActionBar
-            venueSlug={data.venue.slug}
-            venueName={data.venue.name}
-            venueAddress={data.venue.address}
+            venueSlug={curatedVenue.slug}
+            venueName={curatedVenue.name}
+            venueAddress={curatedVenue.address}
           />
-          {data.venue.website ? (
+          {curatedVenue.website ? (
             <a
-              href={data.venue.website}
+              href={curatedVenue.website}
               target="_blank"
               rel="noreferrer"
               className="inline-flex rounded-full bg-[#0a1628] px-4 py-2 text-sm font-semibold text-white"
@@ -124,6 +145,30 @@ export default async function VenuePage({
           ) : null}
         </div>
       </section>
+      {(venuePromos.length > 0 || hasEliteAccess) ? (
+        <section className="container-shell py-2">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            {venuePromos.length > 0 ? (
+              <div className="surface p-6">
+                <div className="text-sm uppercase tracking-[0.2em] text-mist">Active deals at this venue</div>
+                <h2 className="mt-2 text-2xl font-semibold text-deep">Today&apos;s promos and match-night perks</h2>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {venuePromos.map((promo) => (
+                    <PromoCard
+                      key={promo.id}
+                      promo={promo}
+                      venueName={curatedVenue.name}
+                      reservationUrl={curatedVenue.reservationUrl}
+                      compact
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {hasEliteAccess ? <EliteAccessCard venueId={curatedVenue.slug} venueName={curatedVenue.name} /> : null}
+          </div>
+        </section>
+      ) : null}
       <section className="container-shell -mt-2 py-4">
         <div className="surface p-6">
           <div className="text-sm uppercase tracking-[0.2em] text-mist">Upcoming matches to watch here</div>
@@ -170,7 +215,7 @@ export default async function VenuePage({
           <section className="surface p-6">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Likely fan base</div>
             <h2 className="mt-2 text-2xl font-semibold text-deep">Why supporters show up here</h2>
-            <p className="mt-4 text-navy/72">{data.venue.supporterNotes}</p>
+            <p className="mt-4 text-navy/72">{curatedVenue.supporterNotes}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               {rankedVenue.rankingReasons.map((reason) => (
                 <Badge key={reason}>{reason}</Badge>
@@ -183,22 +228,22 @@ export default async function VenuePage({
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl bg-white p-4">
                 <div className="text-xs text-mist">Approximate capacity</div>
-                <div className="mt-2 text-3xl font-semibold text-deep">{data.venue.approximateCapacity ?? "--"}</div>
+                <div className="mt-2 text-3xl font-semibold text-deep">{curatedVenue.approximateCapacity ?? "--"}</div>
               </div>
               <div className="rounded-2xl bg-white p-4">
                 <div className="text-xs text-mist">Capacity source</div>
-                <div className="mt-2 text-lg font-semibold text-deep">{data.venue.capacityConfidence.replace(/_/g, " ")}</div>
+                <div className="mt-2 text-lg font-semibold text-deep">{curatedVenue.capacityConfidence.replace(/_/g, " ")}</div>
               </div>
               <div className="rounded-2xl bg-white p-4">
                 <div className="text-xs text-mist">Reservation type</div>
-                <div className="mt-2 text-lg font-semibold text-deep">{data.venue.reservationType.replace(/_/g, " ")}</div>
+                <div className="mt-2 text-lg font-semibold text-deep">{curatedVenue.reservationType.replace(/_/g, " ")}</div>
               </div>
             </div>
-            {data.venue.acceptsReservations && (
+            {curatedVenue.acceptsReservations && (
               <div className="mt-5 flex flex-wrap gap-3">
-                {data.venue.reservationUrl && (
+                {curatedVenue.reservationUrl && (
                   <a
-                    href={data.venue.reservationUrl}
+                    href={curatedVenue.reservationUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
@@ -207,9 +252,9 @@ export default async function VenuePage({
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
-                {data.venue.reservationPhone && (
+                {curatedVenue.reservationPhone && (
                   <a
-                    href={`tel:${data.venue.reservationPhone}`}
+                    href={`tel:${curatedVenue.reservationPhone}`}
                     className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-navy"
                   >
                     <Phone className="h-4 w-4" />
@@ -223,20 +268,20 @@ export default async function VenuePage({
           <section className="surface p-6">
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Amenities</div>
             <div className="mt-4 flex flex-wrap gap-2">
-              {data.venue.venueTypes.map((type) => (
+              {curatedVenue.venueTypes.map((type) => (
                 <Badge key={type}>{toTitleCase(type.replace(/_/g, " "))}</Badge>
               ))}
-              {data.venue.cuisineTags.map((tag) => (
+              {curatedVenue.cuisineTags.map((tag) => (
                 <Badge key={tag}>{tag}</Badge>
               ))}
-              <Badge>{data.venue.numberOfScreens} screens</Badge>
-              {data.venue.hasProjector && <Badge>Projector</Badge>}
-              {data.venue.hasOutdoorViewing && <Badge>Outdoor seating</Badge>}
-              {data.venue.familyFriendly && <Badge>Family friendly</Badge>}
-              {data.venue.standingRoomFriendly && <Badge>Standing-room friendly</Badge>}
-              {data.venue.privateEventsAvailable && <Badge>Private events</Badge>}
+              <Badge>{curatedVenue.numberOfScreens} screens</Badge>
+              {curatedVenue.hasProjector && <Badge>Projector</Badge>}
+              {curatedVenue.hasOutdoorViewing && <Badge>Outdoor seating</Badge>}
+              {curatedVenue.familyFriendly && <Badge>Family friendly</Badge>}
+              {curatedVenue.standingRoomFriendly && <Badge>Standing-room friendly</Badge>}
+              {curatedVenue.privateEventsAvailable && <Badge>Private events</Badge>}
             </div>
-            <p className="mt-4 text-sm text-navy/72">{data.venue.matchdayNotes}</p>
+            <p className="mt-4 text-sm text-navy/72">{curatedVenue.matchdayNotes}</p>
           </section>
 
           <SingleVenueLeafletMap venue={rankedVenue} countries={countries} />
@@ -272,7 +317,7 @@ export default async function VenuePage({
           </section>
 
           <section id="reservation-section" className="surface p-6">
-            <ReservationRequestForm venueName={data.venue.name} venueSlug={data.venue.slug} />
+            <ReservationRequestForm venueName={curatedVenue.name} venueSlug={curatedVenue.slug} />
           </section>
 
           <div id="review-section">
@@ -285,8 +330,8 @@ export default async function VenuePage({
             <div className="mt-4">
               <FanGroupCreateForm
                 cityKey={venueCityKey}
-                venueId={data.venue.slug}
-                venueName={data.venue.name}
+                venueId={curatedVenue.slug}
+                venueName={curatedVenue.name}
                 matches={data.matches}
               />
             </div>

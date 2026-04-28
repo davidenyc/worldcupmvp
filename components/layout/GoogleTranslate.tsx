@@ -2,55 +2,31 @@
 
 import { useEffect } from "react";
 
-import { useUser } from "@/lib/store/user";
-
-declare global {
-  interface Window {
-    googleTranslateElementInit: () => void;
-    google: {
-      translate: {
-        TranslateElement: new (config: object, elementId: string) => void;
-      };
-    };
-  }
-}
+import { useUpdateUser, useUser } from "@/lib/store/user";
 
 export function GoogleTranslate() {
   const { language } = useUser();
+  const updateUser = useUpdateUser();
 
   useEffect(() => {
-    if (!document.getElementById("google_translate_element")) {
-      const div = document.createElement("div");
-      div.id = "google_translate_element";
-      div.style.display = "none";
-      document.body.appendChild(div);
-    }
+    const expires = "expires=Thu, 01 Jan 1970 00:00:00 UTC";
+    const host = window.location.hostname;
 
-    window.googleTranslateElementInit = function () {
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: "en",
-          includedLanguages: "es,pt,fr,de,ar,nl,ja,ko,zh-CN,pl,hr",
-          autoDisplay: false
-        },
-        "google_translate_element"
-      );
-    };
+    document.cookie = `googtrans=; ${expires}; path=/`;
+    document.cookie = `googtrans=; ${expires}; path=/; domain=${host}`;
+    document.cookie = `googtrans=; ${expires}; path=/; domain=.${host}`;
 
-    if (!document.getElementById("gt-script")) {
-      const script = document.createElement("script");
-      script.id = "gt-script";
-      script.src =
-        "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      document.body.appendChild(script);
-    }
+    document.documentElement.classList.remove("translated-ltr", "translated-rtl");
+    document.body.classList.remove("translated-ltr", "translated-rtl");
 
-    if (language && language !== "en") {
-      document.cookie = `googtrans=/en/${language}; path=/; domain=${window.location.hostname}`;
-      document.cookie = `googtrans=/en/${language}; path=/`;
+    document.querySelectorAll("#google_translate_element, #gt-script, .goog-te-banner-frame, .goog-te-balloon-frame, .skiptranslate").forEach((node) => {
+      node.remove();
+    });
+
+    if (language !== "en") {
+      updateUser({ language: "en" });
     }
-  }, [language]);
+  }, [language, updateUser]);
 
   return null;
 }

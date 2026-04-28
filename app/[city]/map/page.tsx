@@ -1,9 +1,30 @@
 import type { Metadata } from "next";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { notFound } from "next/navigation";
 
 import { MapPageClient } from "@/components/map/MapPageClient";
 import { getMapPageData } from "@/lib/data/repository";
 import { getHostCity } from "@/lib/data/hostCities";
+
+async function getCityGuideIntro(cityKey: string) {
+  try {
+    const city = getHostCity(cityKey);
+    if (!city) return null;
+    const code = city.shortLabel.toUpperCase();
+    const filePath = path.join(process.cwd(), "mvp/content/cities", `${code}.md`);
+    const raw = await readFile(filePath, "utf8");
+    const withoutFrontmatter = raw.replace(/^---[\s\S]*?---\n*/, "");
+    const withoutHeading = withoutFrontmatter.replace(/^# .*\n+/, "");
+    const paragraphs = withoutHeading
+      .split(/\n\s*\n/)
+      .map((block) => block.replace(/^##.*$/gm, "").trim())
+      .filter(Boolean);
+    return paragraphs[0] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function generateMetadata({
   params
@@ -49,7 +70,7 @@ export default async function MapPage({
   const city = getHostCity(params.city);
   if (!city) notFound();
 
-  const data = await getMapPageData(city.key);
+  const [data, cityGuideIntro] = await Promise.all([getMapPageData(city.key), getCityGuideIntro(city.key)]);
   const topVenue = data.venues[0];
 
   const localBusinessSchema = topVenue
@@ -72,7 +93,7 @@ export default async function MapPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
       ) : null}
-      <MapPageClient data={data} city={city.key} />
+      <MapPageClient data={data} city={city.key} cityGuideIntro={cityGuideIntro} />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CountrySummary } from "@/lib/types";
 import { formatMatchStage, WorldCupMatch } from "@/lib/data/matches";
 
@@ -107,12 +108,12 @@ export function MatchSchedule({
                     <div className="flex items-start justify-between gap-3">
                       <div className="text-sm font-semibold text-deep">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{home?.flagEmoji ?? "🏁"}</span>
+                          <CountryFlag country={home} size="sm" />
                           <span>{home?.name ?? match.homeCountry}</span>
                         </div>
                         <div className="my-2 text-xs uppercase tracking-[0.2em] text-mist">vs</div>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{away?.flagEmoji ?? "🏁"}</span>
+                          <CountryFlag country={away} size="sm" />
                           <span>{away?.name ?? match.awayCountry}</span>
                         </div>
                       </div>

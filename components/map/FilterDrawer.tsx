@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { FlagFilterBar } from "@/components/map/FlagFilterBar";
 import { WorldCupMatch } from "@/lib/data/matches";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import { MapSortKey } from "@/lib/maps/types";
 import { CountrySummary, VenueIntentKey } from "@/lib/types";
 
@@ -93,6 +94,7 @@ export function FilterDrawer({
   totalVenueCount: number;
 }) {
   const startYRef = useRef<number | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     startYRef.current = event.touches[0]?.clientY ?? null;
@@ -115,96 +117,98 @@ export function FilterDrawer({
         onClick={onClose}
       />
 
-      <div
-        className={`fixed left-0 top-[73px] bottom-0 z-50 hidden w-80 overflow-y-auto border-r border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:block ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <DrawerBody
-          countries={countries}
-          selectedCountrySlugs={selectedCountrySlugs}
-          selectedVenueIntents={selectedVenueIntents}
-          soccerBarsMode={soccerBarsMode}
-          topCountries={topCountries}
-          cityMatches={cityMatches}
-          neighborhoodOptions={neighborhoodOptions}
-          query={query}
-          sortKey={sortKey}
-          venueType={venueType}
-          borough={borough}
-          neighborhood={neighborhood}
-          capacityBucket={capacityBucket}
-          acceptsReservations={acceptsReservations}
-          familyFriendly={familyFriendly}
-          outdoorSeating={outdoorSeating}
-          onQueryChange={onQueryChange}
-          onSortKeyChange={onSortKeyChange}
-          onVenueTypeChange={onVenueTypeChange}
-          onBoroughChange={onBoroughChange}
-          onNeighborhoodChange={onNeighborhoodChange}
-          onCapacityBucketChange={onCapacityBucketChange}
-          onToggleReservations={onToggleReservations}
-          onToggleFamilyFriendly={onToggleFamilyFriendly}
-          onToggleOutdoorSeating={onToggleOutdoorSeating}
-          onToggleSoccerBars={onToggleSoccerBars}
-          onToggleVenueIntent={onToggleVenueIntent}
-          onToggleCountry={onToggleCountry}
-          onApplyMatch={onApplyMatch}
-          onClearAll={onClearAll}
-          onToggleShowAllMapVenues={onToggleShowAllMapVenues}
-          canToggleShowAllMapVenues={canToggleShowAllMapVenues}
-          showAllMapVenues={showAllMapVenues}
-          totalVenueCount={totalVenueCount}
-          onClose={onClose}
-        />
-      </div>
-
-      <div
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:hidden ${
-          open ? "translate-y-0" : "pointer-events-none translate-y-full"
-        }`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <DrawerBody
-          countries={countries}
-          selectedCountrySlugs={selectedCountrySlugs}
-          selectedVenueIntents={selectedVenueIntents}
-          soccerBarsMode={soccerBarsMode}
-          topCountries={topCountries}
-          cityMatches={cityMatches}
-          neighborhoodOptions={neighborhoodOptions}
-          query={query}
-          sortKey={sortKey}
-          venueType={venueType}
-          borough={borough}
-          neighborhood={neighborhood}
-          capacityBucket={capacityBucket}
-          acceptsReservations={acceptsReservations}
-          familyFriendly={familyFriendly}
-          outdoorSeating={outdoorSeating}
-          onQueryChange={onQueryChange}
-          onSortKeyChange={onSortKeyChange}
-          onVenueTypeChange={onVenueTypeChange}
-          onBoroughChange={onBoroughChange}
-          onNeighborhoodChange={onNeighborhoodChange}
-          onCapacityBucketChange={onCapacityBucketChange}
-          onToggleReservations={onToggleReservations}
-          onToggleFamilyFriendly={onToggleFamilyFriendly}
-          onToggleOutdoorSeating={onToggleOutdoorSeating}
-          onToggleSoccerBars={onToggleSoccerBars}
-          onToggleVenueIntent={onToggleVenueIntent}
-          onToggleCountry={onToggleCountry}
-          onApplyMatch={onApplyMatch}
-          onClearAll={onClearAll}
-          onToggleShowAllMapVenues={onToggleShowAllMapVenues}
-          canToggleShowAllMapVenues={canToggleShowAllMapVenues}
-          showAllMapVenues={showAllMapVenues}
-          totalVenueCount={totalVenueCount}
-          onClose={onClose}
-          mobile
-        />
-      </div>
+      {isDesktop ? (
+        <div
+          className={`fixed left-0 top-[73px] bottom-0 z-50 hidden w-80 overflow-y-auto border-r border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:block ${
+            open ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <DrawerBody
+            countries={countries}
+            selectedCountrySlugs={selectedCountrySlugs}
+            selectedVenueIntents={selectedVenueIntents}
+            soccerBarsMode={soccerBarsMode}
+            topCountries={topCountries}
+            cityMatches={cityMatches}
+            neighborhoodOptions={neighborhoodOptions}
+            query={query}
+            sortKey={sortKey}
+            venueType={venueType}
+            borough={borough}
+            neighborhood={neighborhood}
+            capacityBucket={capacityBucket}
+            acceptsReservations={acceptsReservations}
+            familyFriendly={familyFriendly}
+            outdoorSeating={outdoorSeating}
+            onQueryChange={onQueryChange}
+            onSortKeyChange={onSortKeyChange}
+            onVenueTypeChange={onVenueTypeChange}
+            onBoroughChange={onBoroughChange}
+            onNeighborhoodChange={onNeighborhoodChange}
+            onCapacityBucketChange={onCapacityBucketChange}
+            onToggleReservations={onToggleReservations}
+            onToggleFamilyFriendly={onToggleFamilyFriendly}
+            onToggleOutdoorSeating={onToggleOutdoorSeating}
+            onToggleSoccerBars={onToggleSoccerBars}
+            onToggleVenueIntent={onToggleVenueIntent}
+            onToggleCountry={onToggleCountry}
+            onApplyMatch={onApplyMatch}
+            onClearAll={onClearAll}
+            onToggleShowAllMapVenues={onToggleShowAllMapVenues}
+            canToggleShowAllMapVenues={canToggleShowAllMapVenues}
+            showAllMapVenues={showAllMapVenues}
+            totalVenueCount={totalVenueCount}
+            onClose={onClose}
+          />
+        </div>
+      ) : (
+        <div
+          className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 lg:hidden ${
+            open ? "translate-y-0" : "pointer-events-none translate-y-full"
+          }`}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <DrawerBody
+            countries={countries}
+            selectedCountrySlugs={selectedCountrySlugs}
+            selectedVenueIntents={selectedVenueIntents}
+            soccerBarsMode={soccerBarsMode}
+            topCountries={topCountries}
+            cityMatches={cityMatches}
+            neighborhoodOptions={neighborhoodOptions}
+            query={query}
+            sortKey={sortKey}
+            venueType={venueType}
+            borough={borough}
+            neighborhood={neighborhood}
+            capacityBucket={capacityBucket}
+            acceptsReservations={acceptsReservations}
+            familyFriendly={familyFriendly}
+            outdoorSeating={outdoorSeating}
+            onQueryChange={onQueryChange}
+            onSortKeyChange={onSortKeyChange}
+            onVenueTypeChange={onVenueTypeChange}
+            onBoroughChange={onBoroughChange}
+            onNeighborhoodChange={onNeighborhoodChange}
+            onCapacityBucketChange={onCapacityBucketChange}
+            onToggleReservations={onToggleReservations}
+            onToggleFamilyFriendly={onToggleFamilyFriendly}
+            onToggleOutdoorSeating={onToggleOutdoorSeating}
+            onToggleSoccerBars={onToggleSoccerBars}
+            onToggleVenueIntent={onToggleVenueIntent}
+            onToggleCountry={onToggleCountry}
+            onApplyMatch={onApplyMatch}
+            onClearAll={onClearAll}
+            onToggleShowAllMapVenues={onToggleShowAllMapVenues}
+            canToggleShowAllMapVenues={canToggleShowAllMapVenues}
+            showAllMapVenues={showAllMapVenues}
+            totalVenueCount={totalVenueCount}
+            onClose={onClose}
+            mobile
+          />
+        </div>
+      )}
     </>
   );
 }
@@ -291,15 +295,15 @@ function DrawerBody({
           <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
         </div>
       ) : null}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eef4ff] bg-white/95 px-4 py-4 backdrop-blur dark:border-white/8 dark:bg-[#161b22]/95">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eef4ff] bg-white/95 px-4 py-4 backdrop-blur">
         <div>
-          <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white">Filters</div>
-          <div className="text-sm font-semibold text-[#0a1628] dark:text-white">Adjust your search</div>
+          <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45">Filters</div>
+          <div className="text-sm font-semibold text-[#0a1628]">Adjust your search</div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff]"
           aria-label="Close filters"
         >
           <X className="h-4 w-4" />

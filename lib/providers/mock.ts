@@ -1,4 +1,5 @@
 import { demoCountries, demoImportJobs, demoSubmissions, demoVenues } from "@/lib/data/demo";
+import { getHostCity } from "@/lib/data/hostCities";
 import { CsvVenueProvider } from "@/lib/providers/csv";
 import { dedupeVenues } from "@/lib/data/dedupe";
 import { findPlacesVenueBySlug, readPlacesCache, readPlacesCacheForCity } from "@/lib/cache/places";
@@ -14,13 +15,16 @@ function withRealVenueFlag(venues: Venue[], isRealVenue: boolean) {
   }));
 }
 
+function normalizeCityKey(value: string) {
+  return getHostCity(value)?.key ?? value.toLowerCase().trim().replace(/\s+/g, "-");
+}
+
 function applySearchFilters(venues: Venue[], params?: VenueSearchParams) {
   let results = [...venues];
-  const normalizeCity = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
 
   if (params?.city) {
-    const cityKey = normalizeCity(params.city);
-    results = results.filter((venue) => normalizeCity(venue.city) === cityKey);
+    const cityKey = normalizeCityKey(params.city);
+    results = results.filter((venue) => normalizeCityKey(venue.city) === cityKey);
   }
 
   if (params?.countrySlug) {
@@ -80,6 +84,12 @@ function applySearchFilters(venues: Venue[], params?: VenueSearchParams) {
   return results;
 }
 
+function isNewYorkCityKey(city?: string) {
+  if (!city) return false;
+  const normalized = city.toLowerCase().trim().replace(/\s+/g, "-");
+  return normalized === "nyc" || normalized === "new-york" || normalized === "new-york-city";
+}
+
 export class MockVenueProvider implements VenueProvider {
   id = "mock";
   label = "Curated Demo Data";
@@ -94,10 +104,13 @@ export class MockVenueProvider implements VenueProvider {
 
   async listVenues(params?: VenueSearchParams): Promise<Venue[]> {
     if (params?.city) {
-      const cachedVenues = params.countrySlug
-        ? (await readPlacesCache(params.city, params.countrySlug)) ?? []
-        : await readPlacesCacheForCity(params.city);
       const curatedVenues = await csvProvider.listVenues(params);
+      const shouldUseCityCache = !isNewYorkCityKey(params.city);
+      const cachedVenues = shouldUseCityCache
+        ? params.countrySlug
+          ? (await readPlacesCache(params.city, params.countrySlug)) ?? []
+          : await readPlacesCacheForCity(params.city)
+        : [];
       const merged = dedupeVenues([
         ...withRealVenueFlag(curatedVenues, true),
         ...withRealVenueFlag(cachedVenues, true)
@@ -107,11 +120,14 @@ export class MockVenueProvider implements VenueProvider {
         return applySearchFilters(merged, params);
       }
 
+      const normalizedCity = normalizeCityKey(params.city);
       return applySearchFilters(
         withRealVenueFlag(
-          demoVenues.filter((venue) =>
-            params.countrySlug ? venue.associatedCountries.includes(params.countrySlug) : true
-          ),
+          demoVenues.filter((venue) => {
+            if (normalizeCityKey(venue.city) !== normalizedCity) return false;
+            if (params.countrySlug) return venue.associatedCountries.includes(params.countrySlug);
+            return true;
+          }),
           false
         ),
         params

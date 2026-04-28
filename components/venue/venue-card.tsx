@@ -10,7 +10,14 @@ import { VenueShareButton } from "@/components/venue/VenueShareButton";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { useMembership } from "@/lib/store/membership";
 import { toast } from "@/lib/toast";
-import { formatCapacityBucket, formatPriceLevel, formatScore, toTitleCase } from "@/lib/utils";
+import {
+  formatCapacityBucket,
+  formatPriceLevel,
+  formatScore,
+  getVenueDescriptionCopy,
+  getVenueTvLabel,
+  toTitleCase
+} from "@/lib/utils";
 import { RankedVenue } from "@/lib/types";
 
 function capacityLabel(venue: RankedVenue) {
@@ -26,6 +33,7 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
   const isAtLimit = !favorite && !canSaveVenue(favorites.length);
   const canSeeBadges = hasFeature("premium_venue_badges");
   const isHotSpot = Boolean(venue.isRealVenue && (venue.rating ?? 0) >= 4.4);
+  const tvLabel = getVenueTvLabel(venue);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
 
@@ -47,122 +55,103 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
 
   return (
     <div className="surface relative p-5 transition hover:-translate-y-0.5 hover:border-accent/40">
-      <button
-        type="button"
-        aria-pressed={favorite}
-        aria-label={favorite ? "Remove from favorites" : "Save to favorites"}
-        onClick={(event) => {
-          event.stopPropagation();
-          handleSave();
-        }}
-        className={`absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-          favorite
-            ? "border-rose-200 bg-rose-50 text-rose-700"
-            : "border-line bg-white text-navy hover:bg-sky/50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-        }`}
-      >
-        <Heart className={`h-3.5 w-3.5 ${favorite ? "fill-current" : ""}`} />
-        {favorite ? "Saved" : "Save"}
-        {isAtLimit ? <span className="ml-1 text-[10px]">🔒</span> : null}
-      </button>
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {venue.isRealVenue ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full border border-[#c8d6f8] bg-[#eef4ff] px-2 py-0.5 text-[10px] font-semibold text-[#0a1628]">
-                ✓ Curated
-              </span>
-            ) : null}
-            {isHotSpot && canSeeBadges ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#e63946] px-2 py-0.5 text-[10px] font-bold text-white">
-                🔥 Hot Spot
-              </span>
-            ) : null}
+            <Badge className="border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]">
+              {toTitleCase(venue.venueIntent.replace(/_/g, " "))}
+            </Badge>
+            <Badge className={venue.numberOfScreens <= 0 ? "border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"}>
+              {tvLabel}
+            </Badge>
+            <Badge className="border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]">
+              {venue.acceptsReservations ? "Reservations" : "Walk-in"}
+            </Badge>
+            {isHotSpot && canSeeBadges ? <Badge className="bg-red text-white">Hot Spot</Badge> : null}
             {isHotSpot && !canSeeBadges ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowBadgeModal(true)}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#f4b942]/50 bg-[#fff8e7] px-2 py-0.5 text-[10px] font-bold text-[#0a1628]/50 blur-[0.5px] select-none"
-                >
-                  🔥 Hot Spot
-                </button>
-                <span
-                  title="Fan feature"
-                  className="inline-flex items-center rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-2 py-0.5 text-[10px] font-bold text-[#c98a00]"
-                >
-                  ⭐
-                </span>
-              </>
+              <button
+                type="button"
+                onClick={() => setShowBadgeModal(true)}
+                className="inline-flex items-center rounded-full border border-gold/40 bg-[var(--accent-soft-bg)] px-2 py-1 text-[10px] font-bold text-[color:var(--accent-soft-fg)]"
+              >
+                Hot Spot
+              </button>
             ) : null}
-            {venue.isOfficialFanHub && <Badge className="bg-accent text-white">Official fan hub</Badge>}
-            {venue.acceptsReservations && <Badge>Reservations available</Badge>}
-            {venue.goodForGroups && <Badge>Good for big groups</Badge>}
           </div>
-          <Link href={`/venue/${venue.slug}`} className="mt-3 block text-xl font-semibold tracking-tight text-deep">
+          <Link href={`/venue/${venue.slug}`} className="mt-3 block text-xl font-semibold tracking-tight text-[color:var(--fg-primary)]">
             {venue.name}
           </Link>
-          <div className="mt-2 flex items-center gap-2 text-sm text-navy/65">
+          <div className="mt-2 flex items-center gap-2 text-sm text-[color:var(--fg-secondary)]">
             <MapPin className="h-4 w-4" />
-            {venue.address}
+            {venue.neighborhood || venue.address}
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[color:var(--fg-secondary)]">{getVenueDescriptionCopy(venue)}</p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <button
+            type="button"
+            aria-pressed={favorite}
+            aria-label={favorite ? "Remove from favorites" : "Save to favorites"}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleSave();
+            }}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+              favorite
+                ? "border-rose-200 bg-rose-50 text-rose-700"
+                : "border-line bg-white text-navy hover:bg-sky/50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 ${favorite ? "fill-current" : ""}`} />
+            {favorite ? "Saved" : "Save"}
+            {isAtLimit ? <span className="ml-1 text-[10px]">🔒</span> : null}
+          </button>
+          <div className="rounded-2xl bg-[var(--bg-surface-elevated)] px-3 py-2 text-right">
+            <div className="text-xs uppercase tracking-[0.2em] text-[color:var(--fg-muted)]">Rating</div>
+            <div className="mt-1 flex items-center justify-end gap-2 text-base font-semibold text-[color:var(--fg-primary)]">
+              <Star className="h-4 w-4 text-accent" />
+              <span>{venue.rating ?? "N/A"}</span>
+              <span className="text-xs text-[color:var(--fg-muted)]">({venue.reviewCount ?? 0})</span>
+            </div>
           </div>
         </div>
-        <div className="rounded-2xl bg-sky/60 px-3 py-2 text-right">
-          <div className="text-xs uppercase tracking-[0.2em] text-navy/55">Vibe</div>
-          <div className="text-xl font-semibold text-deep">{formatScore(venue.gameDayScore)}</div>
-        </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {venue.venueTypes.map((type) => (
-          <Badge key={type}>{toTitleCase(type.replace(/_/g, " "))}</Badge>
-        ))}
-        {venue.associatedCountries.map((country) => (
-          <Link key={country} href={`/country/${country}`}>
-            <Badge className="bg-white">{toTitleCase(country.replace(/-/g, " "))}</Badge>
-          </Link>
-        ))}
-        {venue.cuisineTags.slice(0, 3).map((tag) => (
-          <Badge key={tag} className="bg-white">
-            {tag}
-          </Badge>
-        ))}
-      </div>
-
-      <p className="mt-4 text-sm leading-6 text-navy/75">{venue.description}</p>
-
-      <div className="mt-4 grid gap-3 rounded-2xl border border-line bg-white/80 p-4 md:grid-cols-5 dark:border-white/10 dark:bg-white/5">
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-mist dark:text-white/55">Rating</div>
+      <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-line bg-white/80 p-4 sm:grid-cols-3 dark:border-white/10 dark:bg-white/5">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-mist dark:text-white/55">Rating</div>
           <div className="mt-1 flex items-center gap-2 text-sm text-navy dark:text-white">
             <Star className="h-4 w-4 text-accent" />
             {venue.rating ?? "N/A"}
           </div>
         </div>
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-mist dark:text-white/55">Fan score</div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-mist dark:text-white/55">Vibe</div>
           <div className="mt-1 text-sm text-navy dark:text-white">{formatScore(venue.fanLikelihoodScore)}/10</div>
         </div>
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-mist dark:text-white/55">Capacity</div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-mist dark:text-white/55">Capacity</div>
           <div className="mt-1 text-sm text-navy dark:text-white">{capacityLabel(venue)}</div>
         </div>
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-mist dark:text-white/55">Reservations</div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-mist dark:text-white/55">Reservations</div>
           <div className="mt-1 text-sm text-navy dark:text-white">{venue.acceptsReservations ? "Available" : "Walk-in"}</div>
         </div>
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-mist dark:text-white/55">Price</div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-mist dark:text-white/55">Price</div>
           <div className="mt-1 text-sm text-navy dark:text-white">{formatPriceLevel(venue.priceLevel)}</div>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {venue.rankingReasons.map((reason) => (
-          <Badge key={reason} className="bg-accent/12 text-accent">
-            {reason}
-          </Badge>
+        {venue.associatedCountries.slice(0, 2).map((country) => (
+          <Link key={country} href={`/country/${country}`}>
+            <Badge className="border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]">
+              {toTitleCase(country.replace(/-/g, " "))}
+            </Badge>
+          </Link>
         ))}
+        {venue.goodForGroups ? <Badge className="bg-accent/12 text-accent">Good for groups</Badge> : null}
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -17,6 +19,22 @@ async function getCountryVenueBuckets() {
     city,
     venues: data.venues.filter((venue) => venue.likelySupporterCountry)
   }));
+}
+
+async function getCountryGuideIntro(slug: string) {
+  try {
+    const filePath = path.join(process.cwd(), "mvp/content/countries", `${slug}.md`);
+    const raw = await readFile(filePath, "utf8");
+    const withoutFrontmatter = raw.replace(/^---[\s\S]*?---\n*/, "");
+    const withoutHeading = withoutFrontmatter.replace(/^# .*\n+/, "");
+    const paragraphs = withoutHeading
+      .split(/\n\s*\n/)
+      .map((block) => block.replace(/^##.*$/gm, "").trim())
+      .filter(Boolean);
+    return paragraphs[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function generateStaticParams() {
@@ -42,7 +60,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function CountryPage({ params }: { params: { slug: string } }) {
   try {
-    const [countries, buckets] = await Promise.all([getAllCountries(), getCountryVenueBuckets()]);
+    const [countries, buckets, guideIntro] = await Promise.all([
+      getAllCountries(),
+      getCountryVenueBuckets(),
+      getCountryGuideIntro(params.slug)
+    ]);
     const country = countries.find((item) => item.slug === params.slug);
 
     if (!country) notFound();
@@ -78,6 +100,12 @@ export default async function CountryPage({ params }: { params: { slug: string }
         </section>
 
         <div className="container-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+          {guideIntro ? (
+            <section className="rounded-[1.75rem] border border-[#d8e3f5] bg-white p-5 text-[#0a1628] shadow-sm">
+              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0a1628]/45">Country guide</div>
+              <p className="mt-3 max-w-3xl text-base leading-7 text-[#0a1628]/78">{guideIntro}</p>
+            </section>
+          ) : null}
           {citySections.length ? (
             citySections.map((section) => (
               <section key={section.city.key} className="space-y-4">

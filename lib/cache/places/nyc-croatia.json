@@ -260,5 +260,70 @@
     "imageUrls": [],
     "createdAt": "2026-04-25T05:31:56.421Z",
     "updatedAt": "2026-04-25T05:49:07.308Z"
+  },
+  {
+    "id": "nyc-croatia-kafana",
+    "slug": "nyc-croatia-kafana",
+    "name": "Kafana",
+    "description": "Kafana — Croatia restaurant in NYC.",
+    "address": "116 Loisaida Ave, New York, NY 10009, USA",
+    "city": "nyc",
+    "state": "NY",
+    "postalCode": "10009",
+    "lat": 40.724319799999996,
+    "lng": -73.9784447,
+    "borough": "Manhattan",
+    "neighborhood": "Croatia",
+    "website": "http://www.kafananyc.com/",
+    "googleMapsUrl": "https://maps.google.com/?cid=5130124114630987547&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+    "venueTypes": [
+      "restaurant"
+    ],
+    "associatedCountries": [
+      "croatia"
+    ],
+    "likelySupporterCountry": "croatia",
+    "venueIntent": "cultural_restaurant",
+    "cuisineTags": [
+      "croatia",
+      "croatia cuisine"
+    ],
+    "atmosphereTags": [
+      "authentic-food",
+      "casual"
+    ],
+    "showsSoccer": false,
+    "openNow": false,
+    "priceLevel": 2,
+    "rating": 4.4,
+    "reviewCount": 1209,
+    "numberOfScreens": 0,
+    "hasProjector": false,
+    "hasOutdoorViewing": false,
+    "familyFriendly": true,
+    "standingRoomFriendly": false,
+    "privateEventsAvailable": true,
+    "goodForGroups": true,
+    "acceptsReservations": true,
+    "reservationType": "external_url",
+    "reservationUrl": "http://www.kafananyc.com/",
+    "approximateCapacity": 45,
+    "capacityBucket": "30_60",
+    "capacityConfidence": "estimated",
+    "sourceType": "official_api",
+    "sourceName": "Google Places (cultural)",
+    "sourceExternalId": "ChIJoRWJ3XlZwokRG88-orPcMUc",
+    "sourceConfidence": 0.92,
+    "verificationStatus": "imported",
+    "isRealVenue": true,
+    "isFeatured": false,
+    "isOfficialFanHub": false,
+    "gameDayScore": 7.0200000000000005,
+    "fanLikelihoodScore": 7.5200000000000005,
+    "editorialBoost": 0.1,
+    "editorialNotes": "Cultural restaurant for Croatia (query: \"Croatian Balkan restaurant\").",
+    "imageUrls": [],
+    "createdAt": "2026-04-27T07:18:39.270Z",
+    "updatedAt": "2026-04-27T07:18:39.270Z"
   }
 ]

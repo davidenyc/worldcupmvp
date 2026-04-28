@@ -1,29 +1,37 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import { FilterDrawer } from "@/components/map/FilterDrawer";
 import { MatchdayBanner } from "@/components/map/MatchdayBanner";
+import { NYCFlagPinMap } from "@/components/map/NYCFlagPinMap";
 import { MapResultsPanel } from "@/components/map/MapResultsPanel";
 import { MapShell } from "@/components/map/MapShell";
 import { CitySelector } from "@/components/ui/CitySelector";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
+import { getPromosByCity } from "@/lib/data/promos";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { WorldCupMatch, getMatchDateKey, worldCup2026Matches } from "@/lib/data/matches";
 import { MapPageData, MapSortKey } from "@/lib/maps/types";
 import { useMembership } from "@/lib/store/membership";
 import { RankedVenue, VenueIntentKey } from "@/lib/types";
 import { getSoccerAtmosphereRating } from "@/lib/utils";
-import { DEFAULT_GAMES_FOCUSED_VENUE_INTENTS } from "@/lib/venueIntents";
 
-const defaultVenueIntents: VenueIntentKey[] = DEFAULT_GAMES_FOCUSED_VENUE_INTENTS;
+const allVenueIntents: VenueIntentKey[] = [
+  "sports_bar",
+  "bar_with_tv",
+  "cultural_restaurant",
+  "cultural_bar",
+  "fan_fest"
+];
+const defaultVenueIntents: VenueIntentKey[] = allVenueIntents;
 const emptySearchParams = new URLSearchParams();
-const INITIAL_MAP_VENUE_COUNT = 42;
-const MID_MAP_VENUE_COUNT = 72;
-const LATE_MAP_VENUE_COUNT = 110;
+const INITIAL_MAP_VENUE_COUNT = 80;
+const MID_MAP_VENUE_COUNT = 140;
+const LATE_MAP_VENUE_COUNT = 240;
 const FULL_AUTO_REVEAL_RATIO = 0.82;
 const MID_MAP_REVEAL_ZOOM = 12;
 const LATE_MAP_REVEAL_ZOOM = 13;
@@ -291,7 +299,7 @@ function getQuickMatchBuckets(matches: WorldCupMatch[], now: Date) {
 
 function parseIntentParam(value: string | null) {
   const parsed = parseCsvParam(value).filter((item): item is VenueIntentKey =>
-    ["sports_bar", "bar_with_tv", "cultural_restaurant", "cultural_bar", "fan_fest"].includes(item)
+    allVenueIntents.some((intent) => intent === item)
   );
   return parsed.length ? parsed : defaultVenueIntents;
 }
@@ -368,25 +376,33 @@ function serializeFilterState({
   return params;
 }
 
-const NYCFlagPinMap = dynamic(
-  () => import("@/components/map/NYCFlagPinMap").then((mod) => mod.NYCFlagPinMap),
-  { ssr: false }
-);
-
-export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?: string }) {
+export function MapPageClient({
+  data,
+  city = "nyc",
+  cityGuideIntro
+}: {
+  data: MapPageData;
+  city?: string;
+  cityGuideIntro?: string | null;
+}) {
   const initialCityConfig = getHostCity(city) ?? HOST_CITIES[0];
   const router = useRouter();
   const { canAddCountryFilter, tier } = useMembership();
   const pathname = usePathname() ?? "/map";
   const searchParams = useSearchParams();
   const params = searchParams ?? emptySearchParams;
+  const initialSelectedCountries = normalizeSelectedCountries(params);
   const [selectedVenue, setSelectedVenue] = useState<RankedVenue | null>(null);
   const [selectedVenueSlug, setSelectedVenueSlug] = useState(params.get("venue") ?? "");
   const [selectedCountrySlugs, setSelectedCountrySlugs] = useState<string[]>(
-    normalizeSelectedCountries(params)
+    initialSelectedCountries
   );
   const [selectedVenueIntents, setSelectedVenueIntents] = useState<VenueIntentKey[]>(
-    parseIntentParam(params.get("intents"))
+    params.get("intents")
+      ? parseIntentParam(params.get("intents"))
+      : initialSelectedCountries.length
+        ? allVenueIntents
+        : defaultVenueIntents
   );
   const [soccerBarsMode, setSoccerBarsMode] = useState(parseBooleanParam(params.get("soccerBars")));
   const [venueType, setVenueType] = useState(params.get("venueType") ?? "");
@@ -414,13 +430,22 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   const [showAllMapVenues, setShowAllMapVenues] = useState(false);
   const [showAllLockedVenues, setShowAllLockedVenues] = useState<RankedVenue[] | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [upsellDismissed, setUpsellDismissed] = useState(false);
   const [quickMatchBucket, setQuickMatchBucket] = useState<QuickMatchBucket>("local");
   const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
+  const [mobileBrowseExpanded, setMobileBrowseExpanded] = useState(true);
+  const [mobileDealsExpanded, setMobileDealsExpanded] = useState(true);
+  const [mobileCityExpanded, setMobileCityExpanded] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const countryLookup = useMemo(
     () => new Map(data.countries.map((country) => [country.slug, country] as const)),
     [data.countries]
   );
   const hydratedRef = useRef(false);
+
+  const usingDefaultGamesFocusedIntents =
+    selectedVenueIntents.length === defaultVenueIntents.length &&
+    defaultVenueIntents.every((intent) => selectedVenueIntents.includes(intent));
 
   useEffect(() => {
     const nextIntents = parseIntentParam(params.get("intents"));
@@ -655,6 +680,11 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
   }, [city, initialMapView]);
 
   useEffect(() => {
+    if (!selectedCountrySlugs.length || !usingDefaultGamesFocusedIntents) return;
+    setSelectedVenueIntents(allVenueIntents);
+  }, [selectedCountrySlugs, usingDefaultGamesFocusedIntents]);
+
+  useEffect(() => {
     setShowAllMapVenues(false);
     setShowAllLockedVenues(null);
   }, [
@@ -770,6 +800,16 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
     quickMatchOptions.find((option) => option.matches.length > 0) ??
     null;
 
+  const promoVenues = useMemo(
+    () => {
+      const promoVenueIds = new Set(getPromosByCity(city, data.venues).map((promo) => promo.venue_id));
+      return displayedVenues.filter((venue) => promoVenueIds.has(venue.slug) || promoVenueIds.has(venue.id)).slice(0, 3);
+    },
+    [city, data.venues, displayedVenues]
+  );
+  const promoVenueIds = useMemo(() => getPromosByCity(city, data.venues).map((promo) => promo.venue_id), [city, data.venues]);
+  const activePromoCount = useMemo(() => getPromosByCity(city, data.venues).length, [city, data.venues]);
+
   const getMatchVenueStats = (match: WorldCupMatch) => {
     const relevantVenues = displayedVenues.filter(
       (venue) =>
@@ -789,6 +829,13 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
       setQuickMatchBucket(activeQuickMatchOption.key);
     }
   }, [activeQuickMatchOption, quickMatchBucket]);
+
+  useEffect(() => {
+    if (!mobileGamesOpen) return;
+    setMobileBrowseExpanded(true);
+    setMobileDealsExpanded(true);
+    setMobileCityExpanded(false);
+  }, [mobileGamesOpen, city]);
 
   const topCountries = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1002,77 +1049,26 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
 
   const resultsPanel = (
     <div className="space-y-3">
-      {canToggleShowAllMapVenues ? (
-        <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
-          <div>
-            {showAllMapVenues
-              ? `Showing all ${candidateMapVenues.length} spots on the map right now.`
-              : `Showing ${mapVenues.length} spots on the map right now.`}
-          </div>
-          <div className="mt-1 text-xs font-normal text-[#0a1628]/60 dark:text-white/60">
-            {showAllMapVenues
-              ? "Too crowded? Switch back to a lighter map view any time."
-              : shouldShowRegionalVenues
-                ? `Regional host-city spots are in view. Show all ${candidateMapVenues.length} now if you want the full spread.`
-              : `Zoom in to reveal more, or show all ${candidateMapVenues.length} now.`}
-          </div>
-        </div>
+      {cityGuideIntro ? (
+        <section className="rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-4 py-3 text-sm text-[color:var(--fg-secondary)] shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">City guide</div>
+          <p className="mt-2 leading-6">{cityGuideIntro}</p>
+        </section>
       ) : null}
-      {comparisonBannerCountries.length === 2 ? (
-        <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{comparisonBannerCountries[0]?.flagEmoji ?? "🏁"}</span>
-            <span>{comparisonBannerCountries[0]?.name}</span>
-            <span className="text-[#0a1628]/40 dark:text-white/40">vs</span>
-            <span className="text-lg">{comparisonBannerCountries[1]?.flagEmoji ?? "🏁"}</span>
-            <span>{comparisonBannerCountries[1]?.name}</span>
-          </div>
-          <div className="mt-1 text-xs font-normal text-[#0a1628]/60 dark:text-white/60">Watching spots for both sets of fans</div>
-          {tier === "free" ? (
-            <button
-              type="button"
-              onClick={() => setShowFilterModal(true)}
-              className="mt-3 inline-flex rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-[11px] font-bold text-[#c98a00]"
-            >
-              + Upgrade to compare more
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-      {tier === "free" && selectedCountrySlugs.length >= 1 ? (
-        <div className="flex items-center gap-2 rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-xs font-semibold text-[#0a1628]">
-          <span>{selectedCountrySlugs.length}/2 countries</span>
-          {selectedCountrySlugs.length >= 2 ? (
-            <button
-              type="button"
-              onClick={() => setShowFilterModal(true)}
-              className="ml-1 font-bold text-[#c98a00] underline"
-            >
-              Upgrade for all 48
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-      {tier === "free" ? (
-        <div className="mt-1 text-xs text-[#0a1628]/50 dark:text-white/50">
+      {tier === "free" && !upsellDismissed ? (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--accent-soft-bg)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
+          <button type="button" onClick={() => setShowFilterModal(true)} className="min-w-0 text-left">
+            <span className="font-semibold">Unlock ranked results, watch-party priority booking, and city alerts.</span>
+            <span className="mt-1 block text-xs text-[color:var(--accent-soft-fg)]">Fan Pass $4.99/mo</span>
+          </button>
           <button
             type="button"
-            onClick={() => setShowFilterModal(true)}
-            className="font-semibold text-[#c98a00] hover:underline"
+            onClick={() => setUpsellDismissed(true)}
+            className="shrink-0 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1 text-xs font-semibold text-[color:var(--fg-muted)]"
           >
-            ⭐ Fan Pass
-          </button>{" "}
-          unlocks all 48 country filters
+            Dismiss
+          </button>
         </div>
-      ) : null}
-      {tier === "free" && filteredVenues.length > 20 ? (
-        <button
-          type="button"
-          onClick={() => setShowFilterModal(true)}
-          className="inline-flex rounded-full border border-[#f4b942]/40 bg-[#fff8e7] px-3 py-1.5 text-xs font-semibold text-[#0a1628]"
-        >
-          ⭐ Fan Pass members see all {filteredVenues.length} venues ranked by quality
-        </button>
       ) : null}
       <MapResultsPanel
         venues={displayedVenues}
@@ -1133,10 +1129,11 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
           <div className="relative h-full">
             <NYCFlagPinMap
               countries={data.countries}
+              promoVenueIds={promoVenueIds}
               venues={mapVenues}
               initialCenter={initialMapView.center}
               initialZoom={initialMapView.zoom}
-              compactMarkers={showAllMapVenues && mapZoom <= LATE_MAP_REVEAL_ZOOM}
+              compactMarkers={isDesktop && showAllMapVenues && mapZoom <= LATE_MAP_REVEAL_ZOOM}
               selectedVenueId={selectedVenue?.id}
               activeCountrySlug={selectedCountrySlugs.length === 1 ? selectedCountrySlugs[0] : null}
               activeVenueIntent={selectedVenueIntents.length === 1 ? selectedVenueIntents[0] : null}
@@ -1354,68 +1351,199 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
       ) : null}
 
       {activeQuickMatchOption && mobileGamesOpen ? (
-        <div className="fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 lg:hidden">
-          <div className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#161b22]/96 text-white shadow-2xl backdrop-blur-md">
-            <div className="overflow-x-auto px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max items-stretch gap-2 pr-1">
-                <div className="flex items-stretch gap-1.5">
-                  {quickMatchOptions.map((option) => (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() => setQuickMatchBucket(option.key)}
-                      disabled={!option.matches.length}
-                      className={`shrink-0 rounded-full px-3 py-2 text-[11px] font-semibold transition ${
-                        option.key === activeQuickMatchOption.key
-                          ? "bg-[#f4b942] text-[#0a1628]"
-                          : option.matches.length
-                            ? "border border-white/10 bg-white/5 text-white"
-                            : "border border-white/10 bg-white/5 text-white/35"
-                      }`}
-                    >
-                      {option.key === "local" ? selectedCityConfig.label : option.label}
-                    </button>
-                  ))}
+        <>
+          <button
+            type="button"
+            aria-label="Close games sheet"
+            onClick={() => setMobileGamesOpen(false)}
+            className="fixed inset-0 z-40 bg-[#0a1628]/18 lg:hidden"
+          />
+          <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
+            <div className="mx-3 mb-[calc(env(safe-area-inset-bottom)+0.5rem)] overflow-hidden rounded-[1.75rem] border border-[#d8e3f5] bg-white text-[#0a1628] shadow-2xl">
+              <div className="flex justify-center pt-3">
+                <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12" />
+              </div>
+              <div className="border-b border-[#eef4ff] px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">
+                      Games in {selectedCityConfig.label}
+                    </div>
+                    <div className="mt-1 text-base font-semibold">
+                      {activeQuickMatchOption.key === "local" ? "Best matches for this city" : activeQuickMatchOption.label}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileGamesOpen(false)}
+                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628]"
+                  >
+                    Close
+                  </button>
                 </div>
-                {activeQuickMatchOption.matches.slice(0, 8).map((match) => {
-                    const home = countryLookup.get(match.homeCountry);
-                    const away = countryLookup.get(match.awayCountry);
-                    const stats = getMatchVenueStats(match);
+              </div>
 
-                    return (
+              <div className="max-h-[72vh] space-y-3 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <section className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Next up</div>
+                  <div className="space-y-2">
+                    {activeQuickMatchOption.matches.slice(0, 3).map((match) => {
+                      const home = countryLookup.get(match.homeCountry);
+                      const away = countryLookup.get(match.awayCountry);
+                      const stats = getMatchVenueStats(match);
+
+                      return (
+                        <button
+                          key={match.id}
+                          type="button"
+                          onClick={() => handleApplyMatch(match)}
+                          className="w-full rounded-[1.35rem] border border-[#d8e3f5] bg-[#f8fbff] px-4 py-3 text-left shadow-sm transition hover:bg-[#eef4ff]"
+                        >
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[#0a1628]">
+                            <span>{home?.flagEmoji ?? "🏁"}</span>
+                            <span className="truncate">{home?.name ?? match.homeCountry}</span>
+                            <span className="text-[#0a1628]/35">vs</span>
+                            <span>{away?.flagEmoji ?? "🏁"}</span>
+                            <span className="truncate">{away?.name ?? match.awayCountry}</span>
+                          </div>
+                          <div className="mt-1 text-xs text-[#0a1628]/60">
+                            {new Date(match.startsAt).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              timeZone: "America/New_York"
+                            })}{" "}
+                            ET
+                          </div>
+                          <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0a1628]/75">
+                            {stats.spots} watch spots · {stats.sportsBars} sports bars
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-white shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setMobileBrowseExpanded((current) => !current)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Browse by day</div>
+                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">Today, tomorrow, or popular upcoming</div>
+                    </div>
+                    <span className="text-sm text-[#0a1628]/55">{mobileBrowseExpanded ? "−" : "+"}</span>
+                  </button>
+                  {mobileBrowseExpanded ? (
+                    <div className="border-t border-[#eef4ff] px-4 py-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        {quickMatchOptions.map((option) => (
+                          <button
+                            key={option.key}
+                            type="button"
+                            onClick={() => setQuickMatchBucket(option.key)}
+                            disabled={!option.matches.length}
+                            className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
+                              option.key === activeQuickMatchOption.key
+                                ? "bg-[#f4b942] text-[#0a1628]"
+                                : option.matches.length
+                                  ? "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]"
+                                  : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35"
+                            }`}
+                          >
+                            {option.key === "local" ? selectedCityConfig.label : option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-white shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setMobileCityExpanded((current) => !current)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Host city</div>
+                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">{selectedCityConfig.label}</div>
+                    </div>
+                    <span className="text-sm text-[#0a1628]/55">{mobileCityExpanded ? "−" : "+"}</span>
+                  </button>
+                  {mobileCityExpanded ? (
+                    <div className="border-t border-[#eef4ff] px-4 py-3">
                       <button
-                        key={match.id}
                         type="button"
-                        onClick={() => handleApplyMatch(match)}
-                        className="w-[12.25rem] shrink-0 rounded-2xl border border-white/10 bg-white/5 px-2.5 py-2 text-left transition hover:bg-white/10"
+                        onClick={() => {
+                          setMobileGamesOpen(false);
+                          setCitySelectorOpen(true);
+                        }}
+                        className="inline-flex w-full items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2.5 text-sm font-semibold text-[#0a1628]"
                       >
-                        <div className="text-[11px] font-semibold leading-tight text-white">
-                          <span>{home?.flagEmoji ?? "🏁"}</span>
-                          <span className="mx-1">{home?.name ?? match.homeCountry}</span>
-                          <span className="text-white/40">vs</span>
-                          <span className="ml-1">{away?.flagEmoji ?? "🏁"}</span>
-                          <span className="ml-1">{away?.name ?? match.awayCountry}</span>
-                        </div>
-                        <div className="mt-1 truncate text-[10px] text-white/65">
-                          {new Date(match.startsAt).toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                            timeZone: "America/New_York"
-                          })}{" "}
-                          ET
-                        </div>
-                        <div className="mt-1 text-[9px] text-white/70">
-                          {stats.spots} spots · {stats.sportsBars} bars
-                        </div>
+                        Switch city
                       </button>
-                    );
-                  })}
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-[#fff8e7] shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setMobileDealsExpanded((current) => !current)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#c98a00]">Game-day deals</div>
+                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">
+                        {activePromoCount > 0 ? `${activePromoCount} live deals in ${selectedCityConfig.shortLabel}` : "Sponsored match-night perks"}
+                      </div>
+                    </div>
+                    <span className="text-sm text-[#0a1628]/55">{mobileDealsExpanded ? "−" : "+"}</span>
+                  </button>
+                  {mobileDealsExpanded ? (
+                    <div className="space-y-2 border-t border-[#f4d18c] px-4 py-3">
+                      <div className="text-xs text-[#0a1628]/70">
+                        Show up 30 minutes before the match or reserve ahead to unlock participating venue promos.
+                      </div>
+                      {promoVenues.map((venue) => (
+                        <div key={venue.id} className="rounded-2xl border border-[#f4d18c] bg-white px-3 py-3">
+                          <div className="text-sm font-semibold text-[#0a1628]">{venue.name}</div>
+                          <div className="mt-1 text-xs text-[#0a1628]/60">{venue.neighborhood} · {venue.acceptsReservations ? "Reserve to lock it in" : "Walk in 30 min early"}</div>
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMobileGamesOpen(false);
+                                handleSelectVenue(venue);
+                              }}
+                              className="inline-flex flex-1 items-center justify-center rounded-full bg-[#f4b942] px-3 py-2 text-xs font-semibold text-[#0a1628]"
+                            >
+                              View on map
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMobileGamesOpen(false);
+                                setMobileResultsOpen(true);
+                              }}
+                              className="inline-flex flex-1 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-xs font-semibold text-[#0a1628]"
+                            >
+                              Reserve / lock in
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
               </div>
             </div>
           </div>
-        </div>
+        </>
       ) : null}
 
       {citySelectorOpen ? (
@@ -1428,11 +1556,11 @@ export function MapPageClient({ data, city = "nyc" }: { data: MapPageData; city?
           />
           <div className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 lg:hidden">
             <div className="flex justify-center pt-4">
-              <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
+              <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12" />
             </div>
-            <div className="border-b border-[#d8e3f5] px-4 py-3 dark:border-white/10">
-              <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Switch city</div>
-              <div className="mt-1 text-sm font-semibold text-[#0a1628] dark:text-white">Choose your host city</div>
+            <div className="border-b border-[#d8e3f5] px-4 py-3">
+              <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45">Switch city</div>
+              <div className="mt-1 text-sm font-semibold text-[#0a1628]">Choose your host city</div>
             </div>
             <div className="max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <CitySelector

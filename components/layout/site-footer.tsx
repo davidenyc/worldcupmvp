@@ -2,41 +2,25 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="pb-safe mt-auto border-t border-[#d8e3f5] bg-white py-10 dark:border-white/8 dark:bg-[#0d1117]">
+    <footer className="pb-safe mt-auto border-t border-[color:var(--border-subtle)] bg-[var(--bg-surface)] py-8">
       <div className="container-shell">
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f4b942] text-sm font-black text-[#0a1628]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-gold text-sm font-black text-[color:var(--fg-on-accent)]">
                 GM
-              </div>
-              <span className="font-semibold text-[#0a1628] dark:text-white">GameDay Map</span>
             </div>
-            <p className="mt-3 text-sm text-[#0a1628]/60 dark:text-white/55">
-              GameDay Map · World Cup 2026 · Built for fans, by fans
-            </p>
+            <div>
+              <div className="font-semibold text-[color:var(--fg-primary)]">GameDay Map</div>
+              <div className="text-sm text-[color:var(--fg-muted)]">World Cup 2026 watch parties</div>
+            </div>
           </div>
 
-          <nav className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#0a1628]/70 dark:text-white/60">
-            <Link href="/" className="hover:text-[#0a1628] dark:hover:text-white">Home</Link>
-            <Link href="/tonight" className="hover:text-[#0a1628] dark:hover:text-white">Tonight</Link>
-            <Link href="/search" className="hover:text-[#0a1628] dark:hover:text-white">Search</Link>
-            <Link href="/nyc/map" className="hover:text-[#0a1628] dark:hover:text-white">Map</Link>
-            <Link href="/nyc/matches" className="hover:text-[#0a1628] dark:hover:text-white">Matches</Link>
-            <Link href="/country/brazil" className="hover:text-[#0a1628] dark:hover:text-white">Country Guides</Link>
-            <Link href="/membership" className="hover:text-[#0a1628] dark:hover:text-white">Membership</Link>
-            <Link href="/account" className="hover:text-[#0a1628] dark:hover:text-white">Account</Link>
-            <Link href="/groups" className="hover:text-[#0a1628] dark:hover:text-white">Groups</Link>
-            <Link href="/privacy" className="hover:text-[#0a1628] dark:hover:text-white">Privacy</Link>
-            <Link href="/terms" className="hover:text-[#0a1628] dark:hover:text-white">Terms</Link>
-            <Link href="/about" className="hover:text-[#0a1628] dark:hover:text-white">About</Link>
-            <Link href="/submit" className="hover:text-[#0a1628] dark:hover:text-white">Submit a venue</Link>
+          <nav className="flex flex-col gap-3 text-sm text-[color:var(--fg-secondary)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-6">
+            <Link href="/submit" className="hover:text-[color:var(--fg-primary)]">Add a venue</Link>
+            <Link href="/about" className="hover:text-[color:var(--fg-primary)]">About</Link>
+            <Link href="/privacy" className="hover:text-[color:var(--fg-primary)]">Privacy</Link>
+            <Link href="/contact" className="hover:text-[color:var(--fg-primary)]">Contact</Link>
           </nav>
-        </div>
-
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#eef4ff] pt-6 text-xs text-[#0a1628]/40 dark:border-white/6 dark:text-white/30">
-          <span>© 2026 GameDay Map</span>
-          <span>GameDay Map · World Cup 2026 · Built for fans, by fans</span>
         </div>
       </div>
     </footer>

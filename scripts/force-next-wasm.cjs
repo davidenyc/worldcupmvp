@@ -14,8 +14,46 @@ try {
 }
 
 const distServerDir = path.join(process.cwd(), ".next", "server");
+const distStaticCssDir = path.join(process.cwd(), ".next", "static", "css");
 const interceptionManifestPath = path.join(distServerDir, "interception-route-rewrite-manifest.js");
 const pagesManifestPath = path.join(distServerDir, "pages-manifest.json");
+const appLayoutCssAliasPath = path.join(distStaticCssDir, "app", "layout.css");
+
+function syncDevCssAlias() {
+  try {
+    if (!fs.existsSync(distStaticCssDir)) {
+      return;
+    }
+
+    const cssFiles = fs
+      .readdirSync(distStaticCssDir)
+      .filter((fileName) => fileName.endsWith(".css"))
+      .sort();
+
+    const sourceFileName = cssFiles.find((fileName) => fileName !== "app");
+    if (!sourceFileName) {
+      return;
+    }
+
+    const sourcePath = path.join(distStaticCssDir, sourceFileName);
+    if (!fs.existsSync(sourcePath)) {
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(appLayoutCssAliasPath), { recursive: true });
+
+    const sourceStat = fs.statSync(sourcePath);
+    const aliasStat = fs.existsSync(appLayoutCssAliasPath) ? fs.statSync(appLayoutCssAliasPath) : null;
+
+    if (aliasStat && aliasStat.size === sourceStat.size && aliasStat.mtimeMs >= sourceStat.mtimeMs) {
+      return;
+    }
+
+    fs.copyFileSync(sourcePath, appLayoutCssAliasPath);
+  } catch {
+    // Ignore alias sync failures in local dev; Next will retry on the next poll.
+  }
+}
 
 try {
   fs.mkdirSync(distServerDir, { recursive: true });
@@ -30,6 +68,9 @@ try {
 } catch {
   // Ignore filesystem prep failures here; targeted read fallback below handles the same manifests.
 }
+
+syncDevCssAlias();
+setInterval(syncDevCssAlias, 500).unref();
 
 try {
   const downloadSwc = require("next/dist/lib/download-swc");

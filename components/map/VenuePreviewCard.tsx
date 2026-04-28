@@ -18,7 +18,7 @@ const popupChipBaseClass =
   "inline-flex h-6.5 items-center justify-center rounded-full px-2 text-[9px] font-semibold tracking-[0.07em]";
 
 const popupSecondaryChipClass =
-  `${popupChipBaseClass} w-full border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`;
+  `${popupChipBaseClass} w-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]`;
 
 const popupActionClass =
   "flex h-8 items-center justify-center rounded-full px-2 text-center text-[11px] font-semibold transition";
@@ -120,7 +120,7 @@ export function VenuePreviewCard({
     return `${popupChipBaseClass} w-full border ${
       active
         ? "border-[#f4b942] bg-[#fff4d6] text-[#0a1628] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
-        : "border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white"
+        : "border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"
     } transition`;
   }
 
@@ -157,26 +157,26 @@ export function VenuePreviewCard({
         </div>
 
         <div className="grid grid-cols-[28px_minmax(0,1fr)_28px] items-start gap-1.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f8fbff] shadow-[0_1px_3px_rgba(10,22,40,0.12)] dark:bg-white/10">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--country-flag-bg)] shadow-[0_1px_3px_rgba(10,22,40,0.12)]">
             {neutralSportsBar ? <span className="text-base leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
           </div>
           <div className="min-w-0 space-y-0.5">
-            <div className="text-[0.82rem] font-semibold leading-tight text-[#0a1628] dark:text-white">
+            <div className="text-[0.82rem] font-semibold leading-tight text-[color:var(--fg-primary)]">
               {venue.name}
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-[#0a1628]/60 dark:text-white">
+            <div className="flex items-center gap-1 text-[11px] text-[color:var(--fg-secondary)]">
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">
                 {[venue.neighborhood, venue.borough].filter(Boolean).join(", ")}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] text-[#0a1628]/68 dark:text-white">
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] text-[color:var(--fg-secondary)]">
               <span className="inline-flex items-center gap-1">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span>{Number(venue.rating ?? 0).toFixed(1)}</span>
               </span>
               {venue.reviewCount ? (
-                <span className="text-[9px] text-[#0a1628]/42 dark:text-white">
+                <span className="text-[9px] text-[color:var(--fg-muted)]">
                   {venue.reviewCount.toLocaleString()} reviews
                 </span>
               ) : null}
@@ -189,7 +189,7 @@ export function VenuePreviewCard({
             className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
               favorite
                 ? "border-[#f4b942] bg-[#fff4d6] text-[#c98a00] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
-                : "border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f8fbff] dark:border-white/15 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
+                : "border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)] hover:brightness-[0.98]"
             }`}
           >
             <Heart className={`h-3 w-3 ${favorite ? "fill-current" : ""}`} />
@@ -274,19 +274,19 @@ export function VenuePreviewCard({
               href={venue.website}
               target="_blank"
               rel="noreferrer"
-              className={`${popupActionClass} border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
+              className={`${popupActionClass} border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]`}
             >
               Website
             </a>
           ) : venue.reservationPhone || venue.phone ? (
             <a
               href={`tel:${venue.reservationPhone ?? venue.phone ?? ""}`}
-              className={`${popupActionClass} border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
+              className={`${popupActionClass} border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]`}
             >
               Call
             </a>
           ) : (
-            <div className={`${popupActionClass} border border-[#d8e3f5] bg-white/70 text-[#0a1628]/45 dark:border-white/15 dark:bg-white/5 dark:text-white`}>
+            <div className={`${popupActionClass} border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-muted)]`}>
               Venue info
             </div>
           )}
@@ -297,7 +297,7 @@ export function VenuePreviewCard({
             href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
             target="_blank"
             rel="noreferrer"
-            className={`${popupActionClass} border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
+            className={`${popupActionClass} border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]`}
           >
             Directions
           </a>
@@ -308,7 +308,7 @@ export function VenuePreviewCard({
               href={utilityLinks[0].href}
               target={utilityLinks[0].href.startsWith("tel:") ? undefined : "_blank"}
               rel={utilityLinks[0].href.startsWith("tel:") ? undefined : "noreferrer"}
-              className={`${popupActionClass} gap-1.5 border border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/15 dark:bg-white/8 dark:text-white`}
+              className={`${popupActionClass} gap-1.5 border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]`}
               aria-label={utilityLinks[0].label}
             >
               {utilityLinks[0].icon}

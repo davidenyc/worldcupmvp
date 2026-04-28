@@ -1,0 +1,46 @@
+<!-- Email: Weekly preview (Monday 8am local)
+     Trigger: Monday 8am for opted-in users during the tournament
+     Goal: get the week on the calendar
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Your week in {{city_name}}</title></head>
+<body style="margin:0;padding:0;background:#0b1020;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#e9ecf3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1020;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#11172a;border:1px solid #1f2a44;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:28px 28px 0 28px;">
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#f5b942;font-weight:800;">Week of {{week_start_date}}</div>
+          <h1 style="margin:6px 0 0 0;font-size:26px;line-height:1.2;color:#fff;">{{match_count}} matches that matter for you in {{city_name}}</h1>
+        </td></tr>
+        <tr><td style="padding:18px 28px 0 28px;color:#b8c1d6;font-size:15px;line-height:1.55;">
+          {{week_intro}}
+        </td></tr>
+
+        <!-- Day block — repeat per day with matches -->
+        <tr><td style="padding:24px 28px 0 28px;">
+          <div style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#7f89a6;font-weight:700;border-bottom:1px solid #1f2a44;padding-bottom:8px;">{{day_label}}</div>
+          <div style="margin-top:10px;color:#fff;font-size:15px;line-height:1.6;">
+            {{day_summary}}
+          </div>
+          <div style="margin-top:8px;">
+            <a href="{{day_url}}" style="color:#f5b942;text-decoration:none;font-weight:600;font-size:14px;">See {{day_label}}'s spots →</a>
+          </div>
+        </td></tr>
+
+        <tr><td style="padding:28px 28px 0 28px;border-top:1px solid #1f2a44;">
+          <div style="background:#1a2138;border:1px solid #2a3658;border-radius:14px;padding:18px;">
+            <div style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#f5b942;font-weight:700;">Plan with friends</div>
+            <div style="margin-top:6px;color:#fff;font-size:16px;font-weight:700;">Create a watch group, share one link, everyone gets the same room.</div>
+            <a href="{{groups_url}}" style="display:inline-block;margin-top:12px;color:#f5b942;text-decoration:none;font-weight:600;">Start a group →</a>
+          </div>
+        </td></tr>
+
+        <tr><td style="padding:24px 28px 28px 28px;color:#7f89a6;font-size:12px;line-height:1.6;">
+          Weekly preview for {{city_name}} · <a href="{{preferences_url}}" style="color:#7f89a6;">Change city</a> · <a href="{{unsubscribe_url}}" style="color:#7f89a6;">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

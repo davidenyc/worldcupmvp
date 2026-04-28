@@ -115,9 +115,6 @@ export function MembershipCards() {
                         : `Downgrade to ${meta.label}`}
                 </button>
               )}
-              <div className="text-center text-xs text-[#0a1628]/45 dark:text-white/35">
-                Demo mode — no payment required
-              </div>
             </div>
           </section>
         );

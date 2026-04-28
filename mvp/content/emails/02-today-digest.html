@@ -1,0 +1,49 @@
+<!-- Email: Today Digest
+     Trigger: 9am local time on any day with at least one WC match
+     Goal: surface the day's matches + 3 picks per match in user's home city
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Today on GameDay Map</title></head>
+<body style="margin:0;padding:0;background:#0b1020;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#e9ecf3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b1020;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#11172a;border:1px solid #1f2a44;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:28px 28px 0 28px;">
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#f5b942;font-weight:800;">Today in {{city_name}}</div>
+          <h1 style="margin:6px 0 0 0;font-size:24px;line-height:1.2;color:#fff;">{{match_count}} matches. {{pick_count}} spots worth your night.</h1>
+        </td></tr>
+        <tr><td style="padding:18px 28px 0 28px;color:#b8c1d6;font-size:15px;line-height:1.55;">
+          {{intro_line}}
+        </td></tr>
+
+        <!-- Match block — repeat per match -->
+        <tr><td style="padding:24px 28px 0 28px;">
+          <div style="background:#1a2138;border:1px solid #2a3658;border-radius:14px;padding:16px;">
+            <div style="font-size:12px;color:#7f89a6;letter-spacing:0.08em;text-transform:uppercase;">{{kickoff_local}} · {{stadium}}</div>
+            <div style="margin-top:6px;color:#fff;font-size:18px;font-weight:700;">{{home_flag}} {{home_country}} vs {{away_country}} {{away_flag}}</div>
+            <div style="margin-top:4px;color:#b8c1d6;font-size:14px;">{{match_blurb}}</div>
+            <div style="margin-top:12px;color:#fff;font-size:13px;font-weight:600;">Your top 3 spots today</div>
+            <ol style="padding-left:18px;margin:6px 0 0 0;color:#b8c1d6;font-size:14px;line-height:1.7;">
+              <li><a href="{{venue_url_1}}" style="color:#f5b942;text-decoration:none;">{{venue_1}}</a> — {{venue_1_why}}</li>
+              <li><a href="{{venue_url_2}}" style="color:#f5b942;text-decoration:none;">{{venue_2}}</a> — {{venue_2_why}}</li>
+              <li><a href="{{venue_url_3}}" style="color:#f5b942;text-decoration:none;">{{venue_3}}</a> — {{venue_3_why}}</li>
+            </ol>
+            <a href="{{match_url}}" style="display:inline-block;margin-top:14px;padding:10px 16px;background:#f5b942;color:#0b1020;font-weight:700;text-decoration:none;border-radius:999px;font-size:14px;">See all watch spots →</a>
+          </div>
+        </td></tr>
+        <!-- end match block -->
+
+        <tr><td style="padding:28px 28px 0 28px;border-top:1px solid #1f2a44;">
+          <div style="color:#fff;font-size:15px;font-weight:700;">Heads up before tomorrow</div>
+          <div style="margin-top:6px;color:#b8c1d6;font-size:14px;line-height:1.55;">{{tomorrow_teaser}}</div>
+        </td></tr>
+
+        <tr><td style="padding:24px 28px 28px 28px;color:#7f89a6;font-size:12px;line-height:1.6;">
+          You're getting Today digests for {{city_name}}. <a href="{{preferences_url}}" style="color:#7f89a6;">Change city</a> · <a href="{{unsubscribe_url}}" style="color:#7f89a6;">Unsubscribe</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
