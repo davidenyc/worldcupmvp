@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { CountryFlag } from "@/components/ui/CountryFlag";
 import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
@@ -8,8 +7,8 @@ import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
 import { HomeCountryPicker } from "./HomeCountryPicker";
 import { HomeHeroIntro } from "./HomeHeroIntro";
+import { HomeMatchesStrip } from "./HomeMatchesStrip";
 import { InstallAppBanner } from "./InstallAppBanner";
-import { KickoffCountdown } from "./KickoffCountdown";
 import { NorthAmericaMap } from "./NorthAmericaMap";
 import { PremiumUpsellBanner } from "./PremiumUpsellBanner";
 
@@ -45,18 +44,8 @@ function getFeaturedMatchDay() {
   return { label: "Next match day", matches: upcoming.filter((match) => match.startsAt.slice(0, 10) === nextKey).slice(0, 6) };
 }
 
-function formatMatchPreviewTime(startsAt: string) {
-  return new Date(startsAt).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
-}
-
 export async function USAHomepage() {
   const allCountries = await getAllCountries();
-  const countryLookup = new Map(allCountries.map((country) => [country.slug, country] as const));
   const [{ submissions }, cityCards] = await Promise.all([
     getAdminQueue(),
     Promise.all(
@@ -80,64 +69,7 @@ export async function USAHomepage() {
       <section className="bg-bg">
         <div className="container-shell py-8 lg:py-12">
           <HomeHeroIntro />
-
-          <div className="mt-6 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4 shadow-card sm:p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-small uppercase tracking-[0.18em] text-ink-55">{featuredMatchDay.label}</div>
-                <div className="mt-1 text-xl font-semibold text-[color:var(--fg-primary)] sm:text-2xl">
-                  {featuredMatchDay.matches.length
-                    ? "Start with today's slate, then jump straight into the right city map."
-                    : "Next match in a few days."}
-                </div>
-              </div>
-              {featuredMatchDay.label !== "Today's matches" ? <KickoffCountdown compact /> : null}
-            </div>
-
-            {featuredMatchDay.matches.length ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {featuredMatchDay.matches.map((match) => {
-                  const home = countryLookup.get(match.homeCountry);
-                  const away = countryLookup.get(match.awayCountry);
-                  const cityKey = getMatchHostCityKey(match) ?? "nyc";
-
-                  return (
-                    <Link
-                      key={match.id}
-                      href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
-                      className="surface flex h-full flex-col justify-between p-4 transition hover:-translate-y-0.5"
-                    >
-                      <div>
-                        <div className="text-small uppercase tracking-[0.18em] text-ink-55">{formatMatchPreviewTime(match.startsAt)}</div>
-                        <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
-                          <CountryFlag country={home} size="sm" />
-                          <span>{home?.fifaCode ?? match.homeCountry.toUpperCase()}</span>
-                          <span className="text-ink-55">vs</span>
-                          <CountryFlag country={away} size="sm" />
-                          <span>{away?.fifaCode ?? match.awayCountry.toUpperCase()}</span>
-                        </div>
-                        <div className="mt-2 text-sm text-[color:var(--fg-secondary)]">
-                          {match.stadiumName} · {match.city}
-                        </div>
-                      </div>
-                      <div className="mt-4 text-sm font-semibold text-[color:var(--fg-primary)]">Find a watch spot →</div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="empty-state mt-4">
-                <div className="empty-state-emoji">⚽</div>
-                <h2 className="mt-4 text-h2 text-[color:var(--fg-primary)]">The next slate is on deck</h2>
-                <div className="mt-3">
-                  <KickoffCountdown compact />
-                </div>
-                <p className="mt-2 max-w-md text-sm text-[color:var(--fg-secondary)]">
-                  We&apos;ll surface the upcoming match cards here as soon as the next fixture day begins.
-                </p>
-              </div>
-            )}
-          </div>
+          <HomeMatchesStrip label={featuredMatchDay.label} matches={featuredMatchDay.matches} countries={allCountries} />
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="surface p-4">
