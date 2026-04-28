@@ -161,16 +161,16 @@ export function SiteHeader() {
       >
         <div className="container-shell flex min-h-[52px] items-center justify-between gap-3 py-2 lg:min-h-[64px] lg:py-3">
           <div className="flex min-w-0 shrink-0 items-center">
-            <Link href="/" className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)]">
+            <Link href="/" className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)] hover:text-[color:var(--fg-primary)]">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
                 style={{ backgroundColor: "#f4b942", color: "#ffffff" }}
               >
                 GM
               </div>
-              <div className="hidden min-w-0 md:block">
-                <div className="truncate text-xl font-extrabold tracking-tight text-deep">
-                  GameDay Ma<span className="text-gold">p</span>
+              <div className="min-w-0">
+                <div className="truncate text-lg font-extrabold tracking-tight text-deep sm:text-xl">
+                  GameDay Map<span className="ml-0.5 text-gold">.</span>
                 </div>
                 <div className="hidden truncate text-xs text-mist lg:block">
                   World Cup 2026 watch parties
