@@ -42,10 +42,10 @@ function actionButtonClass() {
 }
 
 const PRIMARY_NAV_ITEMS = [
-  { href: "/", label: "Home", matches: (path: string, _cityMapHref: string) => path === "/" },
-  { href: "MAP", label: "Map", matches: (path: string) => path.includes("/map") },
-  { href: "/promos", label: "Promos", matches: (path: string) => path.startsWith("/promos") },
-  { href: "/me", label: "My Cup", matches: (path: string) => path.startsWith("/me") }
+  { label: "Home", getHref: (_cityMapHref: string) => "/", matches: (path: string, _cityMapHref: string) => path === "/" },
+  { label: "Map", getHref: (cityMapHref: string) => cityMapHref, matches: (path: string) => path.includes("/map") },
+  { label: "Promos", getHref: (_cityMapHref: string) => "/promos", matches: (path: string) => path.startsWith("/promos") },
+  { label: "My Cup", getHref: (_cityMapHref: string) => "/me", matches: (path: string) => path.startsWith("/me") }
 ] as const;
 
 export function SiteHeader() {
@@ -74,7 +74,7 @@ export function SiteHeader() {
   const searchHref = `/search?city=${activeCity}`;
   const hideMobileNav = currentPath === "/welcome";
   const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
-    href: item.href === "MAP" ? mapHref : item.href,
+    href: item.getHref(mapHref),
     label: item.label,
     active: item.matches(currentPath, mapHref)
   }));
@@ -135,7 +135,12 @@ export function SiteHeader() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const onPageShow = () => setMobileNavVisible(true);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, []);
 
   function navigateToCity(nextCity: string) {
@@ -166,7 +171,7 @@ export function SiteHeader() {
   return (
     <>
       <header
-        className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_92%,transparent)] backdrop-blur-xl"
+        className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_94%,transparent)] backdrop-blur-xl"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <div className="container-shell flex min-h-[52px] items-center justify-between gap-3 py-2 lg:min-h-[64px] lg:py-3">
@@ -180,7 +185,7 @@ export function SiteHeader() {
               </div>
               <div className="min-w-0">
                 <div className="truncate text-lg font-extrabold tracking-tight text-deep sm:text-xl">
-                  GameDay Map<span className="ml-0.5 text-gold">.</span>
+                  GameDay Map<span className="ml-0.5 font-black text-gold">.</span>
                 </div>
                 <div className="hidden truncate text-xs text-mist lg:block">
                   World Cup 2026 watch parties
