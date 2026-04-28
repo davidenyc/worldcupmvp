@@ -1,16 +1,21 @@
 import Link from "next/link";
 
 import { PromoCard } from "@/components/promos/PromoCard";
+import { PromoFilterBar } from "@/components/promos/PromoFilterBar";
+import { PromosHero } from "@/components/promos/PromosHero";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
-import { getPromosByCity } from "@/lib/data/promos";
+import { getAllPromos, getPromosByCity } from "@/lib/data/promos";
 import { getMapPageData } from "@/lib/data/repository";
 
 export default async function PromosPage({
   searchParams
 }: {
-  searchParams?: { city?: string };
+  searchParams?: { city?: string; country?: string; matchId?: string };
 }) {
   const requestedCity = getHostCity(searchParams?.city)?.key ?? null;
+  const allPromos = getAllPromos();
+  const defaultCountry = allPromos.find((promo) => promo.countrySlugs.length > 0)?.countrySlugs[0];
+  const defaultMatchId = allPromos.find((promo) => (promo.matchIds ?? []).length > 0)?.matchIds?.[0];
   const cityOrder = requestedCity
     ? [requestedCity, ...HOST_CITIES.map((city) => city.key).filter((key) => key !== requestedCity)]
     : HOST_CITIES.map((city) => city.key);
@@ -38,14 +43,13 @@ export default async function PromosPage({
 
   return (
     <main className="container-shell space-y-8 py-6 sm:py-10">
-      <section className="max-w-3xl">
-        <div className="text-sm uppercase tracking-[0.2em] text-mist">Promos</div>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">
-          Match-day deals, perks, and offers
-        </h1>
-        <p className="mt-3 text-sm leading-7 text-navy/72 sm:text-base">
-          Browse current watch-party discounts, member perks, and reserved-table offers across host cities.
-        </p>
+      <section className="space-y-5">
+        <PromosHero cityLabel={getHostCity(requestedCity ?? "nyc")?.label ?? "New York"} />
+        <PromoFilterBar
+          defaultCity={requestedCity ?? "nyc"}
+          defaultCountry={defaultCountry}
+          defaultMatchId={defaultMatchId}
+        />
       </section>
 
       {populatedSections.map(({ city, promos, venueLookup }) => (
