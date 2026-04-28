@@ -172,7 +172,7 @@ export function WelcomeFlow() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[35rem] flex-col px-4 pb-28 pt-6 sm:px-6 sm:pt-8">
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[35rem] flex-col items-center px-4 pb-28 pt-6 sm:px-6 sm:pt-8">
       <div className="flex items-center justify-center gap-2">
         {STEPS.map((_, index) => (
           <span
@@ -182,7 +182,7 @@ export function WelcomeFlow() {
         ))}
       </div>
 
-      <section className="mt-6 rounded-[1.75rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.16),transparent_36%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:mt-8 sm:rounded-[2rem] sm:p-8 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] dark:shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
+      <section className="mt-6 w-full rounded-[1.75rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.16),transparent_36%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:mt-8 sm:rounded-[2rem] sm:p-8 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] dark:shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
         <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{step.eyebrow}</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">{step.title}</h1>
         <p className="mt-3 text-sm leading-7 text-mist sm:max-w-[32rem] sm:text-base">{step.body}</p>
@@ -223,34 +223,38 @@ export function WelcomeFlow() {
             </div>
           ) : stepIndex === 1 ? (
             <div className="space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-deep">Search countries</span>
-                <input
-                  value={countrySearchDraft}
-                  onChange={(event) => setCountrySearchDraft(event.target.value)}
-                  placeholder="Mexico, USA, Brazil…"
-                  className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                {countrySuggestions.map((country) => {
-                  const selected = favoriteCountryDraft === country.slug;
-                  return (
-                    <button
-                      key={country.slug}
-                      type="button"
-                      onClick={() => setFavoriteCountryDraft(country.slug)}
-                      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-xs font-semibold transition ${
-                        selected
-                          ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
-                          : "border-line bg-surface text-deep hover:bg-surface-2"
-                      }`}
-                    >
-                      <span className="text-3xl leading-none">{country.flagEmoji}</span>
-                      <span>{country.name}</span>
-                    </button>
-                  );
-                })}
+              <div className="max-h-[50vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
+                <div className="sticky top-0 z-10 -mx-1 bg-[var(--bg-surface)] px-1 py-2">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-deep">Search countries</span>
+                    <input
+                      value={countrySearchDraft}
+                      onChange={(event) => setCountrySearchDraft(event.target.value)}
+                      placeholder="Mexico, USA, Brazil…"
+                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
+                    />
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {countrySuggestions.map((country) => {
+                    const selected = favoriteCountryDraft === country.slug;
+                    return (
+                      <button
+                        key={country.slug}
+                        type="button"
+                        onClick={() => setFavoriteCountryDraft(country.slug)}
+                        className={`flex min-h-16 flex-col items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-center text-xs font-semibold transition sm:min-h-24 ${
+                          selected
+                            ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
+                            : "border-line bg-surface text-deep hover:bg-surface-2"
+                        }`}
+                      >
+                        <span className="text-xl leading-none sm:text-3xl">{country.flagEmoji}</span>
+                        <span>{country.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : stepIndex === 2 ? (
@@ -261,27 +265,40 @@ export function WelcomeFlow() {
                   <div className="mt-1 text-mist">$4.99/mo in the full product. For now, you can skip and keep moving.</div>
                 </div>
               ) : null}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                {countrySuggestions.map((country) => {
-                  const selected = followingDraft.includes(country.slug) || favoriteCountryDraft === country.slug;
-                  const locked = tier === "free" && !selected && followingDraft.length >= followCap;
-                  return (
-                    <button
-                      key={country.slug}
-                      type="button"
-                      onClick={() => toggleFollowingCountry(country.slug)}
-                      disabled={country.slug === favoriteCountryDraft || locked}
-                      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-xs font-semibold transition ${
-                        selected
-                          ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
-                          : "border-line bg-surface text-deep hover:bg-surface-2"
-                      } ${locked ? "opacity-50" : ""}`}
-                    >
-                      <span className="text-3xl leading-none">{country.flagEmoji}</span>
-                      <span>{country.name}</span>
-                    </button>
-                  );
-                })}
+              <div className="max-h-[50vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
+                <div className="sticky top-0 z-10 -mx-1 bg-[var(--bg-surface)] px-1 py-2">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-deep">Search countries</span>
+                    <input
+                      value={countrySearchDraft}
+                      onChange={(event) => setCountrySearchDraft(event.target.value)}
+                      placeholder="Add more nations to follow…"
+                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
+                    />
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {countrySuggestions.map((country) => {
+                    const selected = followingDraft.includes(country.slug) || favoriteCountryDraft === country.slug;
+                    const locked = tier === "free" && !selected && followingDraft.length >= followCap;
+                    return (
+                      <button
+                        key={country.slug}
+                        type="button"
+                        onClick={() => toggleFollowingCountry(country.slug)}
+                        disabled={country.slug === favoriteCountryDraft || locked}
+                        className={`flex min-h-16 flex-col items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-center text-xs font-semibold transition sm:min-h-24 ${
+                          selected
+                            ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
+                            : "border-line bg-surface text-deep hover:bg-surface-2"
+                        } ${locked ? "opacity-50" : ""}`}
+                      >
+                        <span className="text-xl leading-none sm:text-3xl">{country.flagEmoji}</span>
+                        <span>{country.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : stepIndex === 3 ? (
