@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "@/app/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
+import { OnboardingGate } from "@/components/layout/OnboardingGate";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { PushNotificationBridge } from "@/components/native/PushNotificationBridge";
 import { StatusBarInit } from "@/components/native/StatusBarInit";
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-[100dvh] bg-bg text-deep" suppressHydrationWarning>
         <Toaster richColors position="top-center" />
+        <OnboardingGate />
         <ServiceWorkerRegistration />
         <SiteHeader />
         <main>{children}</main>
