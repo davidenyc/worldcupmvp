@@ -4,6 +4,7 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { demoCountries } from "@/lib/data/demo";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useOnboardingActions, useUser } from "@/lib/store/user";
@@ -45,7 +46,7 @@ export function WelcomeFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useUser();
-  const { setFirstName, setHomeCity, markWelcomeSeen } = useOnboardingActions();
+  const { setFirstName, setHomeCity, setFavoriteCountry, markWelcomeSeen } = useOnboardingActions();
   const { suggestedCity, setUserCity } = useUserCity();
   const [stepIndex, setStepIndex] = useState(0);
   const [firstNameDraft, setFirstNameDraft] = useState(user.firstName ?? "");
@@ -56,6 +57,8 @@ export function WelcomeFlow() {
         ? (getHostCity(suggestedCity)?.label ?? suggestedCity)
         : ""
   );
+  const [favoriteCountryDraft, setFavoriteCountryDraft] = useState(user.favoriteCountrySlug ?? "");
+  const [countrySearchDraft, setCountrySearchDraft] = useState("");
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
@@ -69,6 +72,17 @@ export function WelcomeFlow() {
         city.key.toLowerCase().includes(query)
     ).slice(0, 6);
   }, [homeCityDraft]);
+  const countrySuggestions = useMemo(() => {
+    const query = countrySearchDraft.trim().toLowerCase();
+    return demoCountries.filter((country) => {
+      if (!query) return true;
+      return (
+        country.name.toLowerCase().includes(query) ||
+        country.slug.toLowerCase().includes(query) ||
+        country.fifaCode.toLowerCase().includes(query)
+      );
+    });
+  }, [countrySearchDraft]);
 
   function resolveHomeCity(value: string) {
     return getHostCity(value)?.key ?? getHostCity(value.toLowerCase().replace(/\s+/g, "-"))?.key ?? null;
@@ -90,6 +104,7 @@ export function WelcomeFlow() {
     if (stepIndex === 0) {
       commitStepOne(true);
     }
+    if (stepIndex === 1) return;
     if (searchParams.get("skip") === "1" && isLast) {
       markWelcomeSeen();
       router.push("/me");
@@ -101,6 +116,10 @@ export function WelcomeFlow() {
   function handleContinue() {
     if (stepIndex === 0) {
       commitStepOne(false);
+    }
+    if (stepIndex === 1) {
+      if (!favoriteCountryDraft) return;
+      setFavoriteCountry(favoriteCountryDraft);
     }
     if (isLast) {
       markWelcomeSeen();
@@ -160,6 +179,38 @@ export function WelcomeFlow() {
                 ))}
               </div>
             </div>
+          ) : stepIndex === 1 ? (
+            <div className="space-y-4">
+              <label className="block">
+                <span className="text-sm font-semibold text-deep">Search countries</span>
+                <input
+                  value={countrySearchDraft}
+                  onChange={(event) => setCountrySearchDraft(event.target.value)}
+                  placeholder="Mexico, USA, Brazil…"
+                  className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none placeholder:text-mist"
+                />
+              </label>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {countrySuggestions.map((country) => {
+                  const selected = favoriteCountryDraft === country.slug;
+                  return (
+                    <button
+                      key={country.slug}
+                      type="button"
+                      onClick={() => setFavoriteCountryDraft(country.slug)}
+                      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-xs font-semibold transition ${
+                        selected
+                          ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
+                          : "border-line bg-surface text-deep"
+                      }`}
+                    >
+                      <span className="text-3xl leading-none">{country.flagEmoji}</span>
+                      <span>{country.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ) : (
             <div className="rounded-[1.5rem] border border-dashed border-line bg-surface px-5 py-10 text-center text-sm text-mist">
               Step content lands here in the next commits.
@@ -188,7 +239,8 @@ export function WelcomeFlow() {
           <button
             type="button"
             onClick={handleContinue}
-            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-deep"
+            disabled={stepIndex === 1 && !favoriteCountryDraft}
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLast ? "Finish →" : "Continue →"}
           </button>
