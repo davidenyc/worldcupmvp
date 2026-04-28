@@ -48,7 +48,7 @@ export function WelcomeFlow() {
   const searchParams = useSearchParams();
   const user = useUser();
   const { tier } = useMembership();
-  const { setFirstName, setHomeCity, setFavoriteCountry, setFollowing, markWelcomeSeen } = useOnboardingActions();
+  const { setFirstName, setHomeCity, setFavoriteCountry, setFollowing, setDefaultFilters, markWelcomeSeen } = useOnboardingActions();
   const { suggestedCity, setUserCity } = useUserCity();
   const [stepIndex, setStepIndex] = useState(0);
   const [firstNameDraft, setFirstNameDraft] = useState(user.firstName ?? "");
@@ -62,6 +62,7 @@ export function WelcomeFlow() {
   const [favoriteCountryDraft, setFavoriteCountryDraft] = useState(user.favoriteCountrySlug ?? "");
   const [countrySearchDraft, setCountrySearchDraft] = useState("");
   const [followingDraft, setFollowingDraft] = useState(user.followingCountrySlugs);
+  const [defaultFiltersDraft, setDefaultFiltersDraft] = useState(user.defaultFilters);
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
@@ -130,6 +131,9 @@ export function WelcomeFlow() {
     }
     if (stepIndex === 2) {
       setFollowing(followingDraft);
+    }
+    if (stepIndex === 3) {
+      setDefaultFilters(defaultFiltersDraft);
     }
     if (isLast) {
       markWelcomeSeen();
@@ -263,6 +267,36 @@ export function WelcomeFlow() {
                   );
                 })}
               </div>
+            </div>
+          ) : stepIndex === 3 ? (
+            <div className="space-y-3">
+              {[
+                ["soundOn", "I want sound on for matches"],
+                ["reservationsPossible", "I want reservations possible"],
+                ["outdoorSeating", "I want outdoor seating"]
+              ].map(([key, label]) => {
+                const typedKey = key as keyof typeof defaultFiltersDraft;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() =>
+                      setDefaultFiltersDraft((current) => ({
+                        ...current,
+                        [typedKey]: !current[typedKey]
+                      }))
+                    }
+                    className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 text-left text-sm font-semibold transition ${
+                      defaultFiltersDraft[typedKey]
+                        ? "border-gold bg-gold/10 text-deep"
+                        : "border-line bg-surface text-deep"
+                    }`}
+                  >
+                    <span>{label}</span>
+                    <span className="text-xs text-mist">{defaultFiltersDraft[typedKey] ? "On" : "Off"}</span>
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-[1.5rem] border border-dashed border-line bg-surface px-5 py-10 text-center text-sm text-mist">
