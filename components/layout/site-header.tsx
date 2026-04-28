@@ -8,7 +8,6 @@ import {
   MapPin,
   MoonStar,
   Search,
-  Star,
   SunMedium,
   User2
 } from "lucide-react";
@@ -17,7 +16,6 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { useUserCity } from "@/lib/hooks/useUserCity";
-import { useMembership } from "@/lib/store/membership";
 import { useTheme } from "@/lib/store/theme";
 
 const CITY_LOOKUP = new Map(HOST_CITIES.map((city) => [city.key, city] as const));
@@ -47,7 +45,6 @@ export function SiteHeader() {
   const router = useRouter();
   const { userCity, suggestedCity, hasChosenCity, setUserCity } = useUserCity();
   const { isDark, setTheme } = useTheme();
-  const tier = useMembership((state) => state.tier);
   const [cityOpen, setCityOpen] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
 
@@ -61,15 +58,9 @@ export function SiteHeader() {
   const nearestCity = suggestedCity ?? null;
   const currentPath = pathname ?? "/";
   const mapHref = `/${activeCity}/map`;
-  const matchesHref = `/${activeCity}/matches`;
-  const todayHref = "/today";
+  const promosHref = "/promos";
+  const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
-  const membershipHref = tier === "free" ? `/membership?return=${encodeURIComponent(currentPath)}` : "/membership";
-  const hasMatchesToday = useMemo(() => {
-    const today = new Date();
-    const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    return worldCup2026Matches.some((match) => match.startsAt.slice(0, 10) === dateKey);
-  }, []);
 
   useEffect(() => {
     const handleOpenCitySwitcher = () => setCityOpen(true);
@@ -133,9 +124,9 @@ export function SiteHeader() {
 
             <nav className="hidden items-center gap-1 lg:flex">
               <Link href="/" className={primaryNavClass(currentPath === "/")}>Home</Link>
-              <Link href={todayHref} className={primaryNavClass(currentPath === "/today")}>Today</Link>
               <Link href={mapHref} className={primaryNavClass(currentPath.includes("/map"))}>Map</Link>
-              <Link href={matchesHref} className={primaryNavClass(currentPath.includes("/matches"))}>Matches</Link>
+              <Link href={promosHref} className={primaryNavClass(currentPath.startsWith("/promos"))}>Promos</Link>
+              <Link href={myHref} className={primaryNavClass(currentPath.startsWith("/me"))}>My</Link>
             </nav>
           </div>
 
@@ -153,14 +144,6 @@ export function SiteHeader() {
 
             <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} lg:h-11 lg:w-11`}>
               <Search className="h-4 w-4" />
-            </Link>
-
-            <Link
-              href={membershipHref}
-              aria-label={tier === "free" ? "Go Pro" : tier === "fan" ? "Fan Pass" : "Supporter Elite"}
-              className={`${actionButtonClass()} border-gold text-gold lg:h-11 lg:w-11`}
-            >
-              <Star className={`h-4 w-4 ${tier === "free" ? "" : "fill-current"}`} />
             </Link>
 
             <button
@@ -292,17 +275,17 @@ export function SiteHeader() {
               <span>🏠</span>
               <span>Home</span>
             </Link>
-            <Link href={todayHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/today" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span className={hasMatchesToday ? "mobile-tonight-pulse" : ""}>⚽</span>
-              <span>Today</span>
-            </Link>
             <Link href={mapHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>🗺️</span>
               <span>Map</span>
             </Link>
-            <Link href={matchesHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/matches") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>📅</span>
-              <span>Matches</span>
+            <Link href={promosHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/promos") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>🏷️</span>
+              <span>Promos</span>
+            </Link>
+            <Link href={myHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>⭐</span>
+              <span>My</span>
             </Link>
             <Link
               href="/account"

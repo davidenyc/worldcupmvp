@@ -30,6 +30,7 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "groups",
   "map",
   "matches",
+  "me",
   "membership",
   "offline",
   "og",
