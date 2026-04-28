@@ -1,11 +1,10 @@
 "use client";
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { usePromosStore } from "@/lib/store/promos";
 
 import type { SavedPromo } from "@/lib/data/promos";
 
-interface SavedPromosState {
+export interface SavedPromosState {
   savedPromos: SavedPromo[];
   savePromo: (promo: SavedPromo) => void;
   markRedeemed: (promoId: string, redeemedAt?: string) => void;
@@ -14,34 +13,17 @@ interface SavedPromosState {
   resetSavedPromos: () => void;
 }
 
-export const useSavedPromosStore = create<SavedPromosState>()(
-  persist(
-    (set) => ({
-      savedPromos: [],
-      savePromo: (promo) =>
-        set((state) => ({
-          savedPromos: state.savedPromos.some((entry) => entry.promoId === promo.promoId)
-            ? state.savedPromos.map((entry) => (entry.promoId === promo.promoId ? promo : entry))
-            : [promo, ...state.savedPromos]
-        })),
-      markRedeemed: (promoId, redeemedAt = new Date().toISOString()) =>
-        set((state) => ({
-          savedPromos: state.savedPromos.map((entry) =>
-            entry.promoId === promoId ? { ...entry, redeemedAt } : entry
-          )
-        })),
-      removePromo: (promoId) =>
-        set((state) => ({
-          savedPromos: state.savedPromos.filter((entry) => entry.promoId !== promoId)
-        })),
-      clearExpiredPromos: (now = new Date().toISOString()) =>
-        set((state) => ({
-          savedPromos: state.savedPromos.filter((entry) => Date.parse(entry.expiresAt) > Date.parse(now))
-        })),
-      resetSavedPromos: () => set({ savedPromos: [] })
-    }),
-    {
-      name: "gameday-saved-promos"
-    }
-  )
-);
+function toSavedPromosState(state: ReturnType<typeof usePromosStore.getState>): SavedPromosState {
+  return {
+    savedPromos: state.savedPromos,
+    savePromo: state.savePromo,
+    markRedeemed: state.markRedeemed,
+    removePromo: state.removePromo,
+    clearExpiredPromos: state.clearExpiredPromos,
+    resetSavedPromos: state.resetPromos
+  };
+}
+
+export function useSavedPromosStore<T>(selector: (state: SavedPromosState) => T) {
+  return usePromosStore((state) => selector(toSavedPromosState(state)));
+}
