@@ -12,6 +12,7 @@ import { PromoCityGrid } from "@/components/promos/PromoCityGrid";
 import { PromoFilterBar } from "@/components/promos/PromoFilterBar";
 import { PromosHero } from "@/components/promos/PromosHero";
 import { PromoRecord, isPromoActive } from "@/lib/data/promos";
+import { useUser } from "@/lib/store/user";
 
 type VenueMeta = {
   slug: string;
@@ -36,6 +37,7 @@ export function PromosPageClient({
   initialCity: string;
   cityPayloads: CityPayload[];
 }) {
+  const user = useUser();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,6 +46,7 @@ export function PromosPageClient({
   const activeCountry = searchParams.get("country");
   const activeMatchId = searchParams.get("matchId");
   const activeFilter = searchParams.get("filter");
+  const preferredCountries = user.followedCountries.length ? user.followedCountries : FEATURED_COUNTRIES;
 
   const allPromos = useMemo(() => cityPayloads.flatMap((payload) => payload.promos), [cityPayloads]);
   const venueLookup = useMemo(
@@ -84,11 +87,11 @@ export function PromosPageClient({
 
   const carousels = useMemo(
     () =>
-      FEATURED_COUNTRIES.map((country) => ({
+      preferredCountries.map((country) => ({
         country,
         promos: filteredPromos.filter((promo) => promo.country_slugs.includes(country)).slice(0, 8)
       })).filter((group) => group.promos.length),
-    [filteredPromos]
+    [filteredPromos, preferredCountries]
   );
 
   const countsByCity = useMemo(() => {

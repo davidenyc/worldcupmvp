@@ -24,7 +24,7 @@ export function PromoCarousel({
     <section className="space-y-4">
       <div>
         <div className="text-sm uppercase tracking-[0.18em] text-mist">By country</div>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">{title}</h2>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">{title} watch-party deals</h2>
       </div>
       <div className="flex snap-x gap-4 overflow-x-auto pb-2">
         {promos.map((promo) => (
