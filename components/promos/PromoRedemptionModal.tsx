@@ -189,7 +189,7 @@ export function PromoRedemptionModal({
               disabled={redeemed}
               className="inline-flex w-full items-center justify-center rounded-full bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {savedPromo ? "Saved to My World Cup" : redeemed ? "Redeemed" : "Tap to mark redeemed"}
+              {savedPromo ? "Saved to My Cup" : redeemed ? "Redeemed" : "Tap to mark redeemed"}
             </button>
           </div>
         )}

@@ -80,7 +80,7 @@ export function PromoCard({
     }
 
     savePromo(payload.savedPromo);
-    toast.success("Saved to My World Cup");
+    toast.success("Saved to My Cup");
     setOpen(true);
   }
 

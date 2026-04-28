@@ -13,7 +13,7 @@ export function PromosHero({
         Get to the bar early. Get rewarded.
       </h1>
       <p className="mt-3 text-sm leading-7 text-mist sm:text-base">
-        Promo codes from {cityLabel}&apos;s top watch spots. Save them to My World Cup, then show the QR at the door.
+        Promo codes from {cityLabel}&apos;s top watch spots. Save them to My Cup, then show the QR at the door.
       </p>
     </section>
   );

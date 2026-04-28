@@ -28,7 +28,7 @@ export function MyHeroIdentity({
             {monogram}
           </div>
           <div>
-            <div className="text-sm uppercase tracking-[0.2em] text-mist">My World Cup</div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup</div>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-deep">
               {user.displayName?.trim() ? user.displayName : `Fan #${user.id.slice(0, 4)}`}
             </h1>
