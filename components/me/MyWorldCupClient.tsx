@@ -42,7 +42,11 @@ export function MyWorldCupClient({
   return (
     <div className="space-y-6">
       <MyHeroIdentity user={user} tier={tier} />
-      <MyFollowing followedCountries={user.followedCountries} favoriteCity={user.favoriteCity} />
+      <MyFollowing
+        favoriteCountry={user.favoriteCountries[0] ?? user.followedCountries[0] ?? null}
+        followedCountries={user.followedCountries}
+        favoriteCity={user.favoriteCity}
+      />
       <MySavedVenues venues={savedVenueList} />
       <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
       <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
