@@ -40,7 +40,7 @@ export function MyWorldCupClient({
     <div className="space-y-6">
       <MyHeroIdentity user={user} tier={tier} />
       <MyFollowing followedCountries={user.followedCountries} favoriteCity={user.favoriteCity} />
-      <MySavedVenues venues={savedVenueList} tier={tier} />
+      <MySavedVenues venues={savedVenueList} />
       <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} />
       <MyQRCodes savedPromos={savedPromos} />
       <MyActivity tier={tier} />
