@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
 import type { HostCity } from "@/lib/data/hostCities";
@@ -47,13 +47,13 @@ type LabelDir =
 const LABEL_DIR: Record<string, LabelDir> = {
   vancouver: "left",
   seattle: "left",
-  toronto: "top",
-  boston: "right",
+  toronto: "top-left",
+  boston: "top-right",
   nyc: "right",
   philadelphia: "bottom-right",
   "kansas-city": "top",
   "san-francisco": "left",
-  "las-vegas": "top-left",
+  "las-vegas": "top",
   "los-angeles": "bottom-left",
   dallas: "bottom",
   houston: "right",
@@ -62,6 +62,18 @@ const LABEL_DIR: Record<string, LabelDir> = {
   monterrey: "right",
   guadalajara: "left",
   "mexico-city": "bottom"
+};
+
+const CLUSTER_LABELS = new Set(["nyc", "boston", "philadelphia", "toronto", "san-francisco", "las-vegas", "los-angeles"]);
+
+const LABEL_PAD_BY_CITY: Partial<Record<string, number>> = {
+  nyc: 2,
+  boston: 2,
+  philadelphia: 2,
+  toronto: 2,
+  "san-francisco": 2,
+  "las-vegas": 2,
+  "los-angeles": 2
 };
 
 interface NorthAmericaMapProps {
@@ -73,6 +85,8 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
   const user = useUser();
   const [hovered, setHovered] = useState<string | null>(null);
   const [compactLabels, setCompactLabels] = useState(false);
+  const [revealedLabel, setRevealedLabel] = useState<string | null>(null);
+  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sortedCities = [...cityCards].sort((a, b) => (a.venueCount ?? 0) - (b.venueCount ?? 0));
 
@@ -87,6 +101,32 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
     window.addEventListener("resize", updateLabelMode);
     return () => window.removeEventListener("resize", updateLabelMode);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (revealTimeoutRef.current) {
+        clearTimeout(revealTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const revealCityLabel = (cityKey: string) => {
+    setRevealedLabel(cityKey);
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
+    }
+    revealTimeoutRef.current = setTimeout(() => {
+      setRevealedLabel((current) => (current === cityKey ? null : current));
+    }, 3000);
+  };
+
+  const handleCityActivate = (cityKey: string) => {
+    if (compactLabels && revealedLabel !== cityKey) {
+      revealCityLabel(cityKey);
+      return;
+    }
+    goTo(cityKey);
+  };
 
   return (
     <div className="rounded-3xl border border-line bg-surface-2 p-3 shadow-card sm:p-4">
@@ -165,15 +205,14 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
 
             {sortedCities.map((city) => {
               const isHovered = hovered === city.key;
+              const isRevealed = revealedLabel === city.key;
+              const showLabel = compactLabels ? isRevealed : true;
               const dotR = 8 + Math.min((city.venueCount ?? 0) / 60, 6);
-              const labelText = compactLabels
-                ? city.shortLabel
-                : isHovered
-                ? `${city.label} · ${city.venueCount.toLocaleString()}`
-                : city.shortLabel;
+              const labelText = isHovered && !compactLabels ? `${city.label} · ${city.venueCount.toLocaleString()}` : city.shortLabel;
               const labelW = labelText.length * 6.6 + 18;
               const dir = LABEL_DIR[city.key] ?? "right";
-              const labelOffset = computeLabelOffset(dir, dotR, labelW);
+              const labelOffset = computeLabelOffset(dir, dotR, labelW, LABEL_PAD_BY_CITY[city.key]);
+              const labelFontSize = CLUSTER_LABELS.has(city.key) ? 9 : 10;
 
               return (
                 <Marker key={city.key} coordinates={[city.lng, city.lat]}>
@@ -185,11 +224,11 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
                     onMouseLeave={() => setHovered(null)}
                     onFocus={() => setHovered(city.key)}
                     onBlur={() => setHovered(null)}
-                    onClick={() => goTo(city.key)}
+                    onClick={() => handleCityActivate(city.key)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        goTo(city.key);
+                        handleCityActivate(city.key);
                       }
                     }}
                     style={{ cursor: "pointer" }}
@@ -207,29 +246,32 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
                       strokeWidth={2.2}
                     />
 
-                    <g
-                      transform={`translate(${labelOffset.x}, ${labelOffset.y})`}
-                      style={{
-                        pointerEvents: "none"
-                      }}
-                    >
-                      <rect
-                        width={labelW}
-                        height={20}
-                        rx={10}
-                        fill="white"
-                        stroke="rgba(10,22,40,0.14)"
-                        strokeWidth={1}
-                      />
-                      <text
-                        x={labelW / 2}
-                        y={13}
-                        textAnchor="middle"
-                        style={{ fontSize: compactLabels ? 9 : 11, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
+                    {showLabel ? (
+                      <g
+                        transform={`translate(${labelOffset.x}, ${labelOffset.y})`}
+                        style={{
+                          pointerEvents: "none"
+                        }}
                       >
-                        {labelText}
-                      </text>
-                    </g>
+                        <rect
+                          width={labelW}
+                          height={20}
+                          rx={10}
+                          fill="white"
+                          stroke="rgba(10,22,40,0.14)"
+                          strokeWidth={1.5}
+                          style={{ filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.18))" }}
+                        />
+                        <text
+                          x={labelW / 2}
+                          y={13}
+                          textAnchor="middle"
+                          style={{ fontSize: labelFontSize, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
+                        >
+                          {labelText}
+                        </text>
+                      </g>
+                    ) : null}
                   </g>
                 </Marker>
               );
@@ -246,8 +288,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
   );
 }
 
-function computeLabelOffset(dir: LabelDir, dotR: number, labelW: number) {
-  const pad = 4;
+function computeLabelOffset(dir: LabelDir, dotR: number, labelW: number, pad = 4) {
   const labelH = 20;
   const offsets: Record<LabelDir, { x: number; y: number }> = {
     right: { x: dotR + pad, y: -labelH / 2 },
