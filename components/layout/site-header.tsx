@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Crown,
   Heart,
@@ -50,6 +51,9 @@ export function SiteHeader() {
   const { tier } = useMembership();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const [menuMounted, setMenuMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
+  const accountButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const activeCity = useMemo(() => {
     const fromPath = getActiveCityFromPath(pathname);
@@ -68,6 +72,31 @@ export function SiteHeader() {
   useEffect(() => {
     setAccountMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    setMenuMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!accountMenuOpen || !accountButtonRef.current) return;
+
+    const updatePosition = () => {
+      const rect = accountButtonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: Math.max(16, window.innerWidth - rect.right)
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, { passive: true });
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition);
+    };
+  }, [accountMenuOpen]);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -176,6 +205,7 @@ export function SiteHeader() {
             </Link>
 
             <button
+              ref={accountButtonRef}
               type="button"
               onClick={() => setAccountMenuOpen((current) => !current)}
               aria-label="Account menu"
@@ -185,52 +215,57 @@ export function SiteHeader() {
             </button>
           </div>
         </div>
-
-        {accountMenuOpen ? (
-          <div className="container-shell relative">
-            <div className="absolute right-0 top-2 z-50 w-[min(92vw,18rem)] overflow-hidden rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover">
-              <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
-                <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Account</div>
-              </div>
-              <div className="grid gap-2 p-3">
-                <button
-                  type="button"
-                  onClick={() => navigateToCity(activeCityData.key)}
-                  className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
-                >
-                  <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {activeCityData.label}</span>
-                  <span>{activeCityData.shortLabel}</span>
-                </button>
-                <Link href="/account" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
-                  <span>Account</span>
-                  <span>→</span>
-                </Link>
-                <Link href="/saved" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
-                  <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4" /> Saved</span>
-                  <span>→</span>
-                </Link>
-                <Link href="/submit" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
-                  <span>Submit a venue</span>
-                  <span>→</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setTheme(isDark ? "light" : "dark")}
-                  className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    {isDark ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
-                    {isDark ? "Light mode" : "Dark mode"}
-                  </span>
-                  <span>→</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </header>
 
-      {accountMenuOpen ? <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setAccountMenuOpen(false)} /> : null}
+      {menuMounted && accountMenuOpen
+        ? createPortal(
+            <>
+              <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setAccountMenuOpen(false)} />
+              <div
+                className="fixed z-50 w-[min(92vw,18rem)] overflow-hidden rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover"
+                style={{ top: menuPosition.top, right: menuPosition.right }}
+              >
+                <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
+                  <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Account</div>
+                </div>
+                <div className="grid gap-2 p-3">
+                  <button
+                    type="button"
+                    onClick={() => navigateToCity(activeCityData.key)}
+                    className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+                  >
+                    <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {activeCityData.label}</span>
+                    <span>{activeCityData.shortLabel}</span>
+                  </button>
+                  <Link href="/account" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
+                    <span>Account</span>
+                    <span>→</span>
+                  </Link>
+                  <Link href="/saved" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
+                    <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4" /> Saved</span>
+                    <span>→</span>
+                  </Link>
+                  <Link href="/submit" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
+                    <span>Submit a venue</span>
+                    <span>→</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setTheme(isDark ? "light" : "dark")}
+                    className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      {isDark ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
+                      {isDark ? "Light mode" : "Dark mode"}
+                    </span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            </>,
+            document.body
+          )
+        : null}
 
       <div
         className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
