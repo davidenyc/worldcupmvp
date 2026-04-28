@@ -13,11 +13,15 @@
   --bg-surface: #ffffff;
   --bg-surface-elevated: #f4f8ff;
   --bg-surface-inverse: #0d1117;
+  --bg-surface-strong: #0a1628;
+  --bg-avatar-deep: #12233f;
+  --bg-deep: #0a1628;
 
   --fg-primary: #0a1628;
   --fg-secondary: rgba(10, 22, 40, 0.72);
   --fg-muted: rgba(10, 22, 40, 0.55);
   --fg-on-accent: #0a1628;
+  --fg-on-strong: #ffffff;
 
   --border-subtle: #d8e3f5;
   --border-strong: rgba(10, 22, 40, 0.12);
@@ -60,11 +64,15 @@
   --bg-surface: #161b22;
   --bg-surface-elevated: #1c2330;
   --bg-surface-inverse: #f7fafc;
+  --bg-surface-strong: #0f1724;
+  --bg-avatar-deep: #12233f;
+  --bg-deep: #0f1724;
 
   --fg-primary: #e6edf3;
   --fg-secondary: rgba(230, 237, 243, 0.78);
   --fg-muted: rgba(230, 237, 243, 0.6);
   --fg-on-accent: #0a1628;
+  --fg-on-strong: #f7fafc;
 
   --border-subtle: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.07);

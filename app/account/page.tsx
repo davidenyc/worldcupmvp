@@ -55,10 +55,12 @@ function SectionCard({
   return (
     <section
       className={`rounded-[1.75rem] p-5 shadow-sm ring-1 ${
-        dark ? "bg-[#0a1628] text-white ring-white/10" : "bg-white text-[#0a1628] ring-[#d8e3f5]"
+        dark
+          ? "bg-[var(--bg-surface-strong)] text-[color:var(--fg-on-strong)] ring-[color:var(--border-strong)]"
+          : "bg-[var(--bg-surface)] text-[color:var(--fg-primary)] ring-[color:var(--border-subtle)]"
       }`}
     >
-      <h2 className={`text-xl font-semibold ${dark ? "text-white" : "text-[#0a1628]"}`}>{title}</h2>
+      <h2 className={`text-xl font-semibold ${dark ? "text-[color:var(--fg-on-strong)]" : "text-deep"}`}>{title}</h2>
       <div className="mt-5">{children}</div>
     </section>
   );
@@ -81,7 +83,11 @@ function Toggle({
       disabled={disabled}
       onClick={onClick}
       className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-        disabled ? "cursor-not-allowed bg-gray-200" : checked ? "bg-[#f4b942]" : "bg-[#d8e3f5]"
+        disabled
+          ? "cursor-not-allowed bg-[color:var(--border-subtle)] opacity-60"
+          : checked
+            ? "bg-gold"
+            : "bg-[color:var(--border-subtle)]"
       }`}
     >
       <span
@@ -210,7 +216,7 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="min-h-[100dvh] bg-[#f7fafc] px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-[100dvh] bg-bg px-4 py-8 sm:px-6 lg:px-8">
       <div className="container-shell space-y-6">
         <SectionCard title="Account" dark>
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -219,7 +225,7 @@ export default function AccountPage() {
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker((current) => !current)}
-                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#f4b942] bg-[#0f223f] text-2xl font-black tracking-[0.08em] text-[#f4b942]"
+                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-gold bg-[var(--bg-avatar-deep)] text-2xl font-black tracking-[0.08em] text-gold"
                 >
                   {user.avatarEmoji && user.avatarEmoji !== "⚽" ? user.avatarEmoji : getInitials(user.displayName)}
                 </button>
@@ -252,7 +258,7 @@ export default function AccountPage() {
                       if (event.key === "Enter") saveDisplayName();
                     }}
                     autoFocus
-                    className="rounded-full border border-[#f4b942] bg-white px-4 py-2 text-xl font-semibold text-[#0a1628] outline-none"
+                    className="rounded-full border border-gold bg-surface px-4 py-2 text-xl font-semibold text-deep outline-none"
                   />
                 ) : (
                   <div className="flex w-full items-start justify-between gap-3">
@@ -268,14 +274,14 @@ export default function AccountPage() {
                     </div>
                   </div>
                 )}
-                {showSavedFlash ? <div className="text-xs font-semibold text-[#f4b942]">✓ Saved</div> : null}
+                {showSavedFlash ? <div className="text-xs font-semibold text-gold">✓ Saved</div> : null}
                 <div className="text-sm text-white/65">Member since {joinedLabel}</div>
                 <div className="text-xs text-white/50">Supporter profile</div>
               </div>
             </div>
 
             {tier === "free" ? (
-              <Link href="/membership?return=%2Faccount" className="inline-flex rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]">
+              <Link href="/membership?return=%2Faccount" className="inline-flex rounded-full bg-gold px-5 py-3 text-sm font-bold text-[color:var(--fg-on-accent)]">
                 ⭐ Upgrade to Fan Pass →
               </Link>
             ) : null}
@@ -299,7 +305,7 @@ export default function AccountPage() {
               ))}
             </div>
 
-            <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+            <div className="rounded-[1.5rem] border border-line bg-surface p-4">
               <div className="grid gap-3 text-sm text-[color:var(--fg-secondary)]">
                 <div>🏟 {favorites.length} venues saved</div>
                 <div>🌍 {user.favoriteCountries.length} countries filtered</div>
@@ -307,11 +313,11 @@ export default function AccountPage() {
               </div>
               <div className="mt-5">
                 {tier === "free" ? (
-                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]">
+                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-gold px-5 py-3 text-sm font-bold text-[color:var(--fg-on-accent)]">
                     Upgrade to Fan Pass — $4.99/mo
                   </Link>
                 ) : tier === "fan" ? (
-                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-[#0a1628] px-5 py-3 text-sm font-bold text-white">
+                  <Link href="/membership?return=%2Faccount" className="inline-flex w-full justify-center rounded-full bg-[var(--bg-surface-strong)] px-5 py-3 text-sm font-bold text-[color:var(--fg-on-strong)]">
                     Upgrade to Elite — $12.99/mo
                   </Link>
                 ) : (
@@ -327,7 +333,7 @@ export default function AccountPage() {
         <SectionCard title="My Preferences">
           <div className="space-y-6">
             <div>
-              <div className="text-sm font-semibold text-[#0a1628]">Favorite City</div>
+              <div className="text-sm font-semibold text-deep">Favorite City</div>
               <select
                 value={user.favoriteCity}
                 onChange={(event) => {
@@ -335,7 +341,7 @@ export default function AccountPage() {
                   setUserCity(event.target.value);
                   toast.success("✓ Saved");
                 }}
-                className="mt-3 h-12 w-full rounded-2xl border border-[#d8e3f5] bg-white px-4 text-sm text-[#0a1628]"
+                className="mt-3 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep"
               >
                 {HOST_CITIES.map((city) => (
                   <option key={city.key} value={city.key}>
@@ -347,8 +353,8 @@ export default function AccountPage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-[#0a1628]">Favorite Countries</div>
-                <div className="text-xs font-semibold text-[#0a1628]/55">{user.favoriteCountries.length}/5 selected</div>
+                <div className="text-sm font-semibold text-deep">Favorite Countries</div>
+                <div className="text-xs font-semibold text-mist">{user.favoriteCountries.length}/5 selected</div>
               </div>
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                 {demoCountries.map((country) => {
@@ -359,7 +365,7 @@ export default function AccountPage() {
                       type="button"
                       onClick={() => toggleFavoriteCountry(country.slug)}
                       className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                        active ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                        active ? "border-gold bg-gold text-[color:var(--fg-on-accent)]" : "border-line bg-surface text-deep"
                       }`}
                     >
                       <span>{country.flagEmoji}</span>
@@ -371,7 +377,7 @@ export default function AccountPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-[#0a1628]">Avatar Emoji</div>
+              <div className="text-sm font-semibold text-deep">Avatar Emoji</div>
               <div className="mt-3 grid grid-cols-5 gap-3 sm:grid-cols-10">
                 {AVATAR_EMOJIS.map((emoji) => (
                   <button
@@ -379,7 +385,7 @@ export default function AccountPage() {
                     type="button"
                     onClick={() => updateUser({ avatarEmoji: emoji })}
                     className={`flex h-12 items-center justify-center rounded-2xl border text-2xl transition ${
-                      user.avatarEmoji === emoji ? "border-[#f4b942] bg-[#fff8e7]" : "border-[#d8e3f5] bg-white"
+                      user.avatarEmoji === emoji ? "border-gold bg-[var(--accent-soft-bg)]" : "border-line bg-surface"
                     }`}
                   >
                     {emoji}
@@ -392,22 +398,22 @@ export default function AccountPage() {
 
         <SectionCard title="Notifications">
           <div className="space-y-5">
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-line px-4 py-4">
               <div>
-                <div className="font-semibold text-[#0a1628]">🔔 New venue alerts</div>
-                <div className="mt-1 text-sm text-[#0a1628]/60">Know when new bars are added to your city.</div>
+                <div className="font-semibold text-deep">🔔 New venue alerts</div>
+                <div className="mt-1 text-sm text-mist">Know when new bars are added to your city.</div>
               </div>
               <Toggle checked={user.notifyNewVenues} onClick={() => updateUser({ notifyNewVenues: !user.notifyNewVenues })} />
             </div>
 
-            <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4 text-left">
+            <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-line px-4 py-4 text-left">
               <div>
-                <div className="font-semibold text-[#0a1628]">⚡ Match day alerts</div>
-                <div className="mt-1 text-sm text-[#0a1628]/60">Get a reminder before your team kicks off.</div>
+                <div className="font-semibold text-deep">⚡ Match day alerts</div>
+                <div className="mt-1 text-sm text-mist">Get a reminder before your team kicks off.</div>
               </div>
               <div className="flex items-center gap-3">
                 {tier !== "elite" ? (
-                  <span className="rounded-full border border-[#f4b942] px-3 py-1 text-xs font-bold text-[#c98a00]">
+                  <span className="rounded-full border border-gold px-3 py-1 text-xs font-bold text-[color:var(--accent-soft-fg)]">
                     Elite feature
                   </span>
                 ) : null}
@@ -427,7 +433,7 @@ export default function AccountPage() {
 
             {(user.notifyNewVenues || user.notifyMatchAlerts || tier === "elite") ? (
               <div>
-                <div className="text-sm font-semibold text-[#0a1628]">Alert email</div>
+                <div className="text-sm font-semibold text-deep">Alert email</div>
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                   <input
                     type="email"
@@ -437,14 +443,14 @@ export default function AccountPage() {
                     onKeyDown={(event) => {
                       if (event.key === "Enter") saveEmail();
                     }}
-                    className="h-12 flex-1 rounded-2xl border border-[#d8e3f5] px-4 text-sm text-[#0a1628]"
+                    className="h-12 flex-1 rounded-2xl border border-line bg-surface px-4 text-sm text-deep"
                     placeholder="your@email.com"
                   />
-                  <button type="button" onClick={saveEmail} className="inline-flex h-12 items-center justify-center rounded-2xl bg-[#f4b942] px-5 text-sm font-bold text-[#0a1628]">
+                  <button type="button" onClick={saveEmail} className="inline-flex h-12 items-center justify-center rounded-2xl bg-gold px-5 text-sm font-bold text-[color:var(--fg-on-accent)]">
                     Save
                   </button>
                 </div>
-                <div className="mt-2 text-xs text-[#0a1628]/45">Stored locally on this device · Never shared</div>
+                <div className="mt-2 text-xs text-[color:var(--ink-45)]">Stored locally on this device · Never shared</div>
               </div>
             ) : null}
           </div>
@@ -460,7 +466,7 @@ export default function AccountPage() {
                   type="button"
                   onClick={() => applyLanguage(language.code)}
                   className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
-                    active ? "border-[#f4b942] bg-[#fff8e7] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                    active ? "border-gold bg-[var(--accent-soft-bg)] text-deep" : "border-line bg-surface text-deep"
                   }`}
                 >
                   <span className="text-xl">{language.flag}</span>
@@ -469,15 +475,15 @@ export default function AccountPage() {
               );
             })}
           </div>
-          <div className="mt-4 text-xs text-[#0a1628]/45">Powered by Google Translate · Some UI may stay in English</div>
+          <div className="mt-4 text-xs text-[color:var(--ink-45)]">Powered by Google Translate · Some UI may stay in English</div>
         </SectionCard>
 
         <SectionCard title="App Settings">
           <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#d8e3f5] px-4 py-4">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-line px-4 py-4">
               <div>
-                <div className="font-semibold text-[#0a1628]">Appearance</div>
-                <div className="mt-1 text-sm text-[#0a1628]/60">Current theme: {theme}</div>
+                <div className="font-semibold text-deep">Appearance</div>
+                <div className="mt-1 text-sm text-mist">Current theme: {theme}</div>
               </div>
               <div className="flex flex-wrap justify-end gap-2">
                 {(["light", "dark", "system"] as const).map((option) => {
@@ -491,7 +497,7 @@ export default function AccountPage() {
                         updateUser({ prefersDarkMode: option === "dark" });
                       }}
                       className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                        active ? "border-[#f4b942] bg-[#fff8e7] text-[#0a1628]" : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                        active ? "border-gold bg-[var(--accent-soft-bg)] text-deep" : "border-line bg-surface text-deep"
                       }`}
                     >
                       {option === "light" ? "Light" : option === "dark" ? "Dark" : "System"}
@@ -502,21 +508,21 @@ export default function AccountPage() {
             </div>
 
             {showInstallRow ? (
-              <div className="rounded-2xl border border-[#d8e3f5] px-4 py-4 text-sm text-[#0a1628]">
+              <div className="rounded-2xl border border-line px-4 py-4 text-sm text-deep">
                 📲 Tap Share → Add to Home Screen to install GameDay Map
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-[#d8e3f5] px-4 py-4">
+            <div className="rounded-2xl border border-line px-4 py-4">
               {!confirmClearSaved ? (
-                <button type="button" onClick={() => setConfirmClearSaved(true)} className="text-sm font-semibold text-[#0a1628]">
+                <button type="button" onClick={() => setConfirmClearSaved(true)} className="text-sm font-semibold text-deep">
                   Clear saved venues
                 </button>
               ) : (
                 <div className="space-y-3">
-                  <div className="text-sm text-[#0a1628]/70">Are you sure? This removes all {favorites.length} saved venues.</div>
+                  <div className="text-sm text-[color:var(--fg-secondary)]">Are you sure? This removes all {favorites.length} saved venues.</div>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => setConfirmClearSaved(false)} className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]">
+                    <button type="button" onClick={() => setConfirmClearSaved(false)} className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-deep">
                       Cancel
                     </button>
                     <button
@@ -526,7 +532,7 @@ export default function AccountPage() {
                         setConfirmClearSaved(false);
                         toast.success("Saved venues cleared");
                       }}
-                      className="rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+                      className="rounded-full bg-gold px-4 py-2 text-sm font-bold text-[color:var(--fg-on-accent)]"
                     >
                       Yes, clear
                     </button>
@@ -539,14 +545,14 @@ export default function AccountPage() {
 
         <SectionCard title="About">
           <div className="space-y-4 text-sm">
-            <div className="text-[#0a1628]/60">GameDay Map · v1.0.0 · World Cup 2026</div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[#0a1628]">
+            <div className="text-mist">GameDay Map · v1.0.0 · World Cup 2026</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-deep">
               <Link href="/privacy" className="underline">Privacy Policy</Link>
               <Link href="/terms" className="underline">Terms</Link>
               <Link href="/submit" className="underline">Submit a Venue</Link>
               <Link href="mailto:hello@gamedaymap.com" className="underline">Contact</Link>
               {myGroupsCount > 0 ? <Link href="/groups" className="underline">Groups ({myGroupsCount})</Link> : null}
-              {reviewCount > 0 ? <span className="text-[#0a1628]/60">Reviews written: {reviewCount}</span> : null}
+              {reviewCount > 0 ? <span className="text-mist">Reviews written: {reviewCount}</span> : null}
             </div>
 
             {!confirmResetAll ? (
@@ -574,8 +580,8 @@ export default function AccountPage() {
         <SectionCard title="Demo & Reset">
           <div className="space-y-4 text-sm">
             <div>
-              <div className="font-semibold text-[#0a1628]">Replay onboarding (demo mode)</div>
-              <div className="mt-1 text-[#0a1628]/60">
+              <div className="font-semibold text-deep">Replay onboarding (demo mode)</div>
+              <div className="mt-1 text-mist">
                 Reset your personalization and walk through the welcome flow again.
               </div>
             </div>
@@ -584,27 +590,27 @@ export default function AccountPage() {
               <button
                 type="button"
                 onClick={() => setConfirmReplayOnboarding(true)}
-                className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-deep"
               >
                 Reset & Replay
               </button>
             ) : (
-              <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-4">
-                <div className="text-sm text-[#0a1628]/70">
+              <div className="rounded-2xl border border-line bg-surface px-4 py-4">
+                <div className="text-sm text-[color:var(--fg-secondary)]">
                   This clears your name, country picks, filters, and plan choice. Saved venues are kept. Continue?
                 </div>
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
                     onClick={() => setConfirmReplayOnboarding(false)}
-                    className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                    className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-deep"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleReplayOnboarding}
-                    className="rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+                    className="rounded-full bg-gold px-4 py-2 text-sm font-bold text-[color:var(--fg-on-accent)]"
                   >
                     Reset & Replay
                   </button>
