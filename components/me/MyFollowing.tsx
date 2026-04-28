@@ -9,7 +9,7 @@ import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { demoCountries } from "@/lib/data/demo";
 import { useMembership } from "@/lib/store/membership";
-import { useUpdateUser } from "@/lib/store/user";
+import { useAppendActivity, useUpdateUser } from "@/lib/store/user";
 
 export function MyFollowing({
   favoriteCountry,
@@ -22,6 +22,7 @@ export function MyFollowing({
 }) {
   const { tier, getLimit } = useMembership();
   const updateUser = useUpdateUser();
+  const appendActivity = useAppendActivity();
   const followLimit = getLimit("maxCountryFilters");
   const isAtCap = tier === "free" && followedCountries.length >= followLimit;
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -54,6 +55,11 @@ export function MyFollowing({
     if (!window.confirm(`Stop following ${formatCountryLabel(country)}?`)) return;
     const nextCountries = followedCountries.filter((entry) => entry !== country);
     updateUser({ followedCountries: nextCountries, favoriteCountries: nextCountries });
+    appendActivity({
+      kind: "country_unfollowed",
+      label: `Stopped following ${formatCountryLabel(country)}.`,
+      href: "/me"
+    });
   }
 
   function addCountry(country: string) {
@@ -67,6 +73,11 @@ export function MyFollowing({
     updateUser({
       followedCountries: nextCountries,
       favoriteCountries: favoriteCountry ? [favoriteCountry, ...nextCountries.filter((entry) => entry !== favoriteCountry)] : nextCountries
+    });
+    appendActivity({
+      kind: "country_followed",
+      label: `Started following ${formatCountryLabel(country)}.`,
+      href: "/me"
     });
   }
 

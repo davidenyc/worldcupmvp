@@ -88,6 +88,18 @@ function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
   };
 }
 
+function appendActivityEntry(
+  profile: UserProfile,
+  entry: Omit<UserActivityEntry, "at"> & { at?: number }
+) {
+  return normalizeProfile({
+    ...profile,
+    activity: [{ ...entry, at: entry.at ?? Date.now() }, ...profile.activity]
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 25)
+  });
+}
+
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -122,24 +134,32 @@ export const useUserStore = create<UserStore>()(
             delete nextWatchVenues[matchId];
 
             return {
-              profile: normalizeProfile({
+              profile: appendActivityEntry(normalizeProfile({
                 ...state.profile,
                 watchlistMatchIds: state.profile.watchlistMatchIds.filter((entry) => entry !== matchId),
                 watchVenues: nextWatchVenues
+              }), {
+                kind: "watchlist_removed",
+                label: "Removed a match from My Cup watchlist.",
+                href: "/matches"
               })
             };
           }
 
           return {
-            profile: normalizeProfile({
-              ...state.profile,
-              watchlistMatchIds: [...state.profile.watchlistMatchIds, matchId]
+            profile: appendActivityEntry(normalizeProfile({
+                ...state.profile,
+                watchlistMatchIds: [...state.profile.watchlistMatchIds, matchId]
+            }), {
+              kind: "watchlist_added",
+              label: "Added a match to My Cup watchlist.",
+              href: "/matches"
             })
           };
         }),
       setWatchVenue: (matchId, venueSlug) =>
         set((state) => ({
-          profile: normalizeProfile({
+          profile: appendActivityEntry(normalizeProfile({
             ...state.profile,
             watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
               ? state.profile.watchlistMatchIds
@@ -148,6 +168,10 @@ export const useUserStore = create<UserStore>()(
               ...state.profile.watchVenues,
               [matchId]: venueSlug
             }
+          }), {
+            kind: "watch_venue_set",
+            label: venueSlug ? `Picked a venue for match ${matchId}.` : `Updated venue plan for match ${matchId}.`,
+            href: "/me"
           })
         })),
       clearWatchVenue: (matchId) =>
@@ -163,13 +187,7 @@ export const useUserStore = create<UserStore>()(
         }),
       appendActivity: (entry) =>
         set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            activity: [
-              { ...entry, at: entry.at ?? Date.now() },
-              ...state.profile.activity
-            ].sort((a, b) => b.at - a.at).slice(0, 25)
-          })
+          profile: appendActivityEntry(state.profile, entry)
         })),
       clearActivity: () =>
         set((state) => ({

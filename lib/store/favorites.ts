@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { useMembership } from "@/lib/store/membership";
+import { useUserStore } from "@/lib/store/user";
 
 type FavoritesState = {
   favorites: string[];
@@ -31,10 +32,20 @@ export const useFavoritesStore = create<FavoritesState>()(
           saveBlocked: false,
           favorites: state.favorites.includes(slug) ? state.favorites : [...state.favorites, slug]
         }));
+        useUserStore.getState().appendActivity({
+          kind: "venue_saved",
+          label: `Saved venue ${slug}.`,
+          href: "/me"
+        });
       },
       toggleFavorite: (slug) =>
         set((state) => {
           if (state.favorites.includes(slug)) {
+            useUserStore.getState().appendActivity({
+              kind: "venue_unsaved",
+              label: `Removed venue ${slug} from saved spots.`,
+              href: "/me"
+            });
             return {
               saveBlocked: false,
               favorites: state.favorites.filter((item) => item !== slug)
@@ -45,6 +56,12 @@ export const useFavoritesStore = create<FavoritesState>()(
           if (!canSaveVenue(get().favorites.length)) {
             return { saveBlocked: true, favorites: state.favorites };
           }
+
+          useUserStore.getState().appendActivity({
+            kind: "venue_saved",
+            label: `Saved venue ${slug}.`,
+            href: "/me"
+          });
 
           return {
             saveBlocked: false,

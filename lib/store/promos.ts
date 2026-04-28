@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { SavedPromo } from "@/lib/data/promos";
+import { useUserStore } from "@/lib/store/user";
 
 interface PromosState {
   savedPromos: SavedPromo[];
@@ -29,21 +30,31 @@ export const usePromosStore = create<PromosState>()(
     (set) => ({
       ...buildDerivedState([]),
       savePromo: (promo) =>
-        set((state) =>
-          buildDerivedState(
+        set((state) => {
+          useUserStore.getState().appendActivity({
+            kind: "promo_saved",
+            label: `Saved promo ${promo.promoId}.`,
+            href: "/promos"
+          });
+          return buildDerivedState(
             state.savedPromos.some((entry) => entry.promoId === promo.promoId)
               ? state.savedPromos.map((entry) => (entry.promoId === promo.promoId ? promo : entry))
               : [promo, ...state.savedPromos]
-          )
-        ),
+          );
+        }),
       markRedeemed: (promoId, redeemedAt = new Date().toISOString()) =>
-        set((state) =>
-          buildDerivedState(
+        set((state) => {
+          useUserStore.getState().appendActivity({
+            kind: "promo_redeemed",
+            label: `Redeemed promo ${promoId}.`,
+            href: "/me"
+          });
+          return buildDerivedState(
             state.savedPromos.map((entry) =>
               entry.promoId === promoId ? { ...entry, redeemedAt } : entry
             )
-          )
-        ),
+          );
+        }),
       removePromo: (promoId) =>
         set((state) => buildDerivedState(state.savedPromos.filter((entry) => entry.promoId !== promoId))),
       clearExpiredPromos: (now = new Date().toISOString()) =>

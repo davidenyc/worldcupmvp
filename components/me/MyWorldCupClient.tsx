@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { MyActivity } from "@/components/me/MyActivity";
+import { MyActivityTimeline } from "@/components/me/MyActivityTimeline";
 import { MyFollowing } from "@/components/me/MyFollowing";
 import { MyHeroIdentity } from "@/components/me/MyHeroIdentity";
 import { MyQRCodes } from "@/components/me/MyQRCodes";
@@ -50,7 +50,7 @@ export function MyWorldCupClient({
       <MySavedVenues venues={savedVenueList} cityKey={user.favoriteCity} />
       <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
       <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
-      <MyActivity tier={tier} />
+      <MyActivityTimeline activity={user.activity} />
 
       <section className="surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
