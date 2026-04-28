@@ -2,6 +2,8 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { VenueCard } from "@/components/venue/venue-card";
 import { useMembership } from "@/lib/store/membership";
@@ -15,6 +17,7 @@ export function MySavedVenues({
   const { tier, getLimit } = useMembership();
   const saveLimit = getLimit("maxSaves");
   const isFreeCap = tier === "free" && venues.length >= saveLimit;
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   return (
     <section className="surface p-6">
@@ -34,9 +37,13 @@ export function MySavedVenues({
         <div className="mt-5 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-sm text-deep">
           <div className="font-semibold">Hit your save limit?</div>
           <div className="mt-1 text-mist">Fan Pass unlocks unlimited saves across all 17 host cities.</div>
-          <Link href="/membership?feature=unlimited_saves&return=%2Fme" className="mt-3 inline-flex min-h-10 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep">
+          <button
+            type="button"
+            onClick={() => setShowUpgrade(true)}
+            className="mt-3 inline-flex min-h-10 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
+          >
             Upgrade to Fan Pass →
-          </Link>
+          </button>
         </div>
       ) : null}
 
@@ -60,6 +67,10 @@ export function MySavedVenues({
           />
         )}
       </div>
+
+      {showUpgrade ? (
+        <UpgradePrompt feature="unlimited_saves" requiredTier="fan" onClose={() => setShowUpgrade(false)} />
+      ) : null}
     </section>
   );
 }

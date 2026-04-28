@@ -10,9 +10,11 @@ import { FEATURE_GATES, PremiumFeature, TIER_META, useMembership } from "@/lib/s
 const FEATURE_COPY: Record<PremiumFeature, string> = {
   unlimited_country_filters: "Unlimited country filters unlock all 48 nations at once.",
   unlimited_saves: "Save beyond the 5-venue Free limit and build your full watch list.",
+  unlimited_promo_redemptions: "Claim more matchday promo codes and keep a bigger QR wallet ready to show.",
   reservation_request: "Request reservations at supporter venues before match day gets crowded.",
   premium_venue_badges: "See Hot Spot and premium venue badges curated for serious fans.",
   match_alerts: "Get Elite reminders before your team kicks off.",
+  elite_activity_timeline: "See your personal matchday timeline with venue visits and redeemed perks.",
   venue_concierge: "Let our concierge build the right venue shortlist for your crew.",
   early_access: "See new venue drops before everyone else.",
   advanced_filters: "Unlock richer filters for capacity, vibe, and matchday fit.",

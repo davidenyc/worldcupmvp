@@ -8,7 +8,8 @@ import {
   getPromoLockCopy,
   getPromoRedemptionLabel
 } from "@/lib/data/promos";
-import { useMembership } from "@/lib/store/membership";
+import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
+import { FEATURE_GATES, useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
 import { useUser } from "@/lib/store/user";
 import { PromoRedemptionModal } from "@/components/promos/PromoRedemptionModal";
@@ -31,8 +32,17 @@ export function PromoCard({
   const savePromo = useSavedPromosStore((state) => state.savePromo);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const redeemable = canRedeemPromo(tier, promo);
   const savedPromo = savedPromos.find((entry) => entry.promoId === promo.id) ?? null;
+  const recentPromoClaims = savedPromos.filter(
+    (entry) => Date.now() - Date.parse(entry.claimedAt) <= 7 * 24 * 60 * 60 * 1000
+  );
+  const freeClaimLimitReached =
+    tier === "free" &&
+    !FEATURE_GATES.unlimited_promo_redemptions.includes(tier) &&
+    recentPromoClaims.length >= 1 &&
+    !savedPromo;
 
   async function handlePrimaryAction() {
     if (savedPromo) {
@@ -41,7 +51,12 @@ export function PromoCard({
     }
 
     if (!redeemable) {
-      setOpen(true);
+      setShowUpgrade(true);
+      return;
+    }
+
+    if (freeClaimLimitReached) {
+      setShowUpgrade(true);
       return;
     }
 
@@ -121,6 +136,13 @@ export function PromoCard({
           venueName={venueName}
           reservationUrl={reservationUrl}
           onClose={() => setOpen(false)}
+        />
+      ) : null}
+      {showUpgrade ? (
+        <UpgradePrompt
+          feature={promo.tier_required === "free" ? "unlimited_promo_redemptions" : promo.tier_required === "fan" ? "reservation_request" : "elite_activity_timeline"}
+          requiredTier={promo.tier_required === "elite" ? "elite" : "fan"}
+          onClose={() => setShowUpgrade(false)}
         />
       ) : null}
     </>

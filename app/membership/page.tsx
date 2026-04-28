@@ -12,9 +12,11 @@ import { FEATURE_GATES, TIER_META, type PremiumFeature, useMembership } from "@/
 const featureNames: Record<PremiumFeature, string> = {
   unlimited_country_filters: "Unlimited country filters",
   unlimited_saves: "Unlimited saves",
+  unlimited_promo_redemptions: "Unlimited promo redemptions",
   reservation_request: "Reservation requests",
   premium_venue_badges: "Hot Spot badges",
   match_alerts: "Match day alerts",
+  elite_activity_timeline: "Elite activity timeline",
   venue_concierge: "Venue Concierge",
   early_access: "Early access",
   advanced_filters: "Advanced filters",

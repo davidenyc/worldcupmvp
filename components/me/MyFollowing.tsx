@@ -4,6 +4,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { X } from "lucide-react";
+import { useState } from "react";
+import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useMembership } from "@/lib/store/membership";
 import { useUpdateUser } from "@/lib/store/user";
@@ -19,6 +21,7 @@ export function MyFollowing({
   const updateUser = useUpdateUser();
   const followLimit = getLimit("maxCountryFilters");
   const isAtCap = tier === "free" && followedCountries.length >= followLimit;
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const sortedCountries = useMemo(
     () => [...followedCountries].sort((a, b) => a.localeCompare(b)),
     [followedCountries]
@@ -60,9 +63,13 @@ export function MyFollowing({
           <div className="mt-1 text-mist">
             You&apos;re following {followedCountries.length} of {followLimit} free countries. Fan Pass unlocks all 48.
           </div>
-          <Link href="/membership?feature=unlimited_country_filters&return=%2Fme" className="mt-3 inline-flex min-h-10 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep">
+          <button
+            type="button"
+            onClick={() => setShowUpgrade(true)}
+            className="mt-3 inline-flex min-h-10 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
+          >
             Upgrade to Fan Pass →
-          </Link>
+          </button>
         </div>
       ) : null}
 
@@ -94,6 +101,14 @@ export function MyFollowing({
           />
         )}
       </div>
+
+      {showUpgrade ? (
+        <UpgradePrompt
+          feature="unlimited_country_filters"
+          requiredTier="fan"
+          onClose={() => setShowUpgrade(false)}
+        />
+      ) : null}
     </section>
   );
 }
