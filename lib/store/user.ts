@@ -10,6 +10,7 @@ export interface UserProfile {
   email: string;
   favoriteCity: string;
   favoriteCountries: string[];
+  followedCountries: string[];
   language: string;
   prefersDarkMode: boolean;
   notifyMatchAlerts: boolean;
@@ -42,6 +43,7 @@ function createDefaultProfile(): UserProfile {
     email: "",
     favoriteCity: "nyc",
     favoriteCountries: [],
+    followedCountries: [],
     language: "en",
     prefersDarkMode: false,
     notifyMatchAlerts: false,
@@ -53,26 +55,38 @@ function createDefaultProfile(): UserProfile {
   };
 }
 
+function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
+  const favoriteCountries = profile.favoriteCountries ?? profile.followedCountries ?? [];
+  const followedCountries = profile.followedCountries ?? profile.favoriteCountries ?? [];
+
+  return {
+    ...createDefaultProfile(),
+    ...profile,
+    favoriteCountries,
+    followedCountries
+  };
+}
+
 const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
       profile: createDefaultProfile(),
       updateUser: (updates) =>
         set((state) => ({
-          profile: {
+          profile: normalizeProfile({
             ...state.profile,
             ...updates
-          }
+          })
         })),
       ensureUser: () => {
         const { profile } = get();
         if (profile.id) return;
         set({
-          profile: {
+          profile: normalizeProfile({
             ...createDefaultProfile(),
             ...profile,
             ...createIdentity()
-          }
+          })
         });
       },
       resetUser: () =>
@@ -81,7 +95,17 @@ const useUserStore = create<UserStore>()(
         })
     }),
     {
-      name: "gameday-user"
+      name: "gameday-user",
+      merge: (persistedState, currentState) => {
+        const persistedProfile = (persistedState as Partial<UserStore> | undefined)?.profile;
+        if (!persistedProfile) return currentState;
+
+        return {
+          ...currentState,
+          ...(persistedState as object),
+          profile: normalizeProfile(persistedProfile)
+        } satisfies UserStore;
+      }
     }
   )
 );
