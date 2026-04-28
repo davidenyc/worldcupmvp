@@ -24,8 +24,9 @@ export function MyHeroIdentity({
   user: UserProfile;
   tier: MembershipTier;
 }) {
-  const monogram = user.displayName.trim().slice(0, 1).toUpperCase() || "F";
-  const firstName = user.displayName?.trim() ? user.displayName.trim().split(/\s+/)[0] : "Fan";
+  const monogram = (user.firstName ?? user.displayName).trim().slice(0, 1).toUpperCase() || "F";
+  const firstName = user.firstName?.trim() || (user.displayName?.trim() ? user.displayName.trim().split(/\s+/)[0] : "Fan");
+  const cityLabel = user.homeCity ? user.homeCity.replace(/\b\w/g, (char) => char.toUpperCase()) : user.favoriteCity === "nyc" ? "New York" : user.favoriteCity;
 
   return (
     <section className="overflow-hidden rounded-[2rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.18),transparent_38%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-6 sm:p-7">
@@ -53,7 +54,7 @@ export function MyHeroIdentity({
                 </span>
               )}
               <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
-                Watching from {user.favoriteCity === "nyc" ? "New York" : user.favoriteCity} · change
+                Watching from {cityLabel} · change
               </span>
             </div>
             <p className="mt-3 text-sm text-mist">
