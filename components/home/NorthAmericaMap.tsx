@@ -1,10 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
-import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
 import type { HostCity } from "@/lib/data/hostCities";
 
 const GEO_URL = "/maps/countries-110m.json";
@@ -33,35 +31,11 @@ const DOT_FILL: Record<HostCity["country"], string> = {
   mexico: "#22c55e"
 };
 
-type LabelDir =
-  | "right"
-  | "left"
-  | "top"
-  | "bottom"
-  | "top-right"
-  | "bottom-right"
-  | "top-left"
-  | "bottom-left";
-
-const LABEL_DIR: Record<string, LabelDir> = {
-  vancouver: "left",
-  seattle: "left",
-  toronto: "top",
-  boston: "right",
-  nyc: "right",
-  philadelphia: "bottom-right",
-  "kansas-city": "top",
-  "san-francisco": "left",
-  "las-vegas": "top-left",
-  "los-angeles": "bottom-left",
-  dallas: "bottom",
-  houston: "right",
-  atlanta: "right",
-  miami: "right",
-  monterrey: "right",
-  guadalajara: "left",
-  "mexico-city": "bottom"
-};
+const COUNTRY_BADGE = {
+  usa: "USA",
+  canada: "CAN",
+  mexico: "MEX"
+} as const;
 
 interface NorthAmericaMapProps {
   cityCards: Array<HostCity & { venueCount: number; matchCount: number }>;
@@ -69,43 +43,33 @@ interface NorthAmericaMapProps {
 
 export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
   const router = useRouter();
-  const [hovered, setHovered] = useState<string | null>(null);
 
-  const sortedCities = [...cityCards].sort((a, b) => (a.venueCount ?? 0) - (b.venueCount ?? 0));
-
-  const goTo = (key: string) => router.push(`/${key}/map`);
+  const sortedCityCards = [...cityCards].sort((a, b) => {
+    if (a.key === "nyc") return -1;
+    if (b.key === "nyc") return 1;
+    return (b.matchCount ?? 0) - (a.matchCount ?? 0) || (b.venueCount ?? 0) - (a.venueCount ?? 0);
+  });
 
   return (
-    <div className="rounded-3xl border border-line bg-surface-2 p-3 shadow-card sm:p-4">
-      <header className="mb-3 flex items-center justify-between gap-3">
+    <section className="rounded-3xl border border-line bg-surface-2 p-4 shadow-card sm:p-5">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-[0.22em] text-mist">North America host map</div>
-          <h3 className="mt-1 text-base font-semibold text-deep sm:text-lg">Tap a city</h3>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-mist">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.usa }} />
-              USA 11
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.canada }} />
-              Canada 2
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.mexico }} />
-              Mexico 3
-            </span>
-          </div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-mist">North America host map</div>
+          <h2 className="mt-2 text-2xl font-bold text-deep sm:text-3xl">Pick your host city</h2>
+          <p className="mt-2 max-w-2xl text-sm text-mist sm:text-base">
+            Start with the city you&apos;ll actually be in, then jump straight into the best watch spots.
+          </p>
         </div>
-        <span className="shrink-0 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-deep">
-          17 cities
+        <span className="shrink-0 rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-deep">
+          {cityCards.length} cities
         </span>
-      </header>
+      </div>
 
-      <div className="relative w-full overflow-hidden rounded-2xl bg-[#eef4ff]">
-        <div className="aspect-[16/9] sm:aspect-[2/1]">
+      <div className="relative mt-5 overflow-hidden rounded-[2rem] border border-line bg-[#eef4ff]">
+        <div className="pointer-events-none mx-auto h-28 w-full max-w-4xl opacity-25 sm:h-32 lg:h-40">
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: 820, center: [-95, 36] }}
+            projectionConfig={{ scale: 560, center: [-96, 35] }}
             style={{ width: "100%", height: "100%" }}
           >
             <Geographies geography={GEO_URL}>
@@ -125,7 +89,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
                         key={geo.rsmKey}
                         geography={geo}
                         style={{
-                          default: { fill: COUNTRY_FILL[country], stroke: "#9fc5e4", strokeWidth: 0.6, outline: "none" },
+                          default: { fill: COUNTRY_FILL[country], stroke: "#9fc5e4", strokeWidth: 0.55, outline: "none" },
                           hover: { fill: COUNTRY_FILL[country], outline: "none" },
                           pressed: { fill: COUNTRY_FILL[country], outline: "none" }
                         }}
@@ -135,135 +99,54 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
               }
             </Geographies>
 
-            {sortedCities.map((city) => {
-              const isHovered = hovered === city.key;
-              const dotR = 8 + Math.min((city.venueCount ?? 0) / 60, 6);
-              const labelText = isHovered
-                ? `${city.label} · ${city.venueCount.toLocaleString()}`
-                : city.shortLabel;
-              const labelW = labelText.length * 6.6 + 18;
-              const dir = LABEL_DIR[city.key] ?? "right";
-              const labelOffset = computeLabelOffset(dir, dotR, labelW);
-
-              return (
-                <Marker key={city.key} coordinates={[city.lng, city.lat]}>
-                  <g
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${city.label} — ${city.venueCount} venues, ${city.matchCount} matches`}
-                    onMouseEnter={() => setHovered(city.key)}
-                    onMouseLeave={() => setHovered(null)}
-                    onFocus={() => setHovered(city.key)}
-                    onBlur={() => setHovered(null)}
-                    onClick={() => goTo(city.key)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        goTo(city.key);
-                      }
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <circle r={32} fill="transparent" />
-
-                    {isHovered ? (
-                      <circle r={dotR + 7} fill={DOT_FILL[city.country]} opacity={0.2} />
-                    ) : null}
-
-                    <circle
-                      r={dotR}
-                      fill={DOT_FILL[city.country]}
-                      stroke="white"
-                      strokeWidth={2.2}
-                    />
-
-                    <g transform={`translate(${labelOffset.x}, ${labelOffset.y})`} style={{ pointerEvents: "none" }}>
-                      <rect
-                        width={labelW}
-                        height={20}
-                        rx={10}
-                        fill="white"
-                        stroke="rgba(10,22,40,0.14)"
-                        strokeWidth={1}
-                      />
-                      <text
-                        x={labelW / 2}
-                        y={13}
-                        textAnchor="middle"
-                        style={{ fontSize: 11, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
-                      >
-                        {labelText}
-                      </text>
-                    </g>
-                  </g>
-                </Marker>
-              );
-            })}
+            {cityCards.map((city) => (
+              <Marker key={city.key} coordinates={[city.lng, city.lat]}>
+                <circle r={city.key === "nyc" ? 4.5 : 3.5} fill={DOT_FILL[city.country]} stroke="white" strokeWidth={1.4} />
+              </Marker>
+            ))}
           </ComposableMap>
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <CollapsibleGrid initialCount={6} noun="city" nounPlural="cities">
-          {[...cityCards]
-            .sort((a, b) => (b.venueCount ?? 0) - (a.venueCount ?? 0))
-            .map((city) => (
-              <button
-                key={city.key}
-                type="button"
-                onClick={() => goTo(city.key)}
-                onMouseEnter={() => setHovered(city.key)}
-                onMouseLeave={() => setHovered(null)}
-                className={[
-                  "flex h-14 items-center gap-3 rounded-2xl border px-3 text-left transition",
-                  hovered === city.key
-                    ? "border-gold bg-gold/10"
-                    : "border-line bg-surface hover:bg-surface-2"
-                ].join(" ")}
-                aria-label={`${city.label} — ${city.venueCount.toLocaleString()} venues`}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <span
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ backgroundColor: DOT_FILL[city.country] }}
-                  >
-                    {city.shortLabel}
-                  </span>
-                  <span className="truncate text-sm font-semibold text-deep md:hidden">
-                    {city.shortLabel}
-                  </span>
-                  <span className="hidden min-w-0 truncate text-sm font-semibold text-deep md:inline">
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        {sortedCityCards.map((city) => {
+          const isNYC = city.key === "nyc";
+
+          return (
+            <button
+              key={city.key}
+              type="button"
+              onClick={() => router.push(`/${city.key}/map`)}
+              className={[
+                "group min-h-[100px] rounded-[1.75rem] border bg-surface p-4 text-left transition hover:bg-surface-2",
+                "w-full md:min-h-[120px]",
+                isNYC ? "border-gold shadow-[0_0_0_1px_rgba(244,185,66,0.12)]" : "border-line"
+              ].join(" ")}
+              aria-label={`${city.label}, ${city.matchCount} matches`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className={isNYC ? "text-xl font-extrabold text-deep" : "text-lg font-extrabold text-deep"}>
                     {city.label}
-                  </span>
+                  </div>
+                  <div className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-mist">
+                    {city.matchCount} matches
+                  </div>
+                  <div className="mt-1 text-xs text-mist">
+                    {city.stadiumName}
+                  </div>
+                </div>
+                <span
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface-2 px-2 text-[11px] font-bold text-deep"
+                  aria-hidden
+                >
+                  {COUNTRY_BADGE[city.country]}
                 </span>
-                <span className="ml-auto shrink-0 text-xs font-semibold text-mist tabular-nums">
-                  {city.venueCount.toLocaleString()}
-                </span>
-              </button>
-            ))}
-        </CollapsibleGrid>
+              </div>
+            </button>
+          );
+        })}
       </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-mist">
-        <span className="hidden sm:inline">Tap any city to open its venue list</span>
-        <span className="sm:ml-auto">Top cities by venue count</span>
-      </div>
-    </div>
+    </section>
   );
-}
-
-function computeLabelOffset(dir: LabelDir, dotR: number, labelW: number) {
-  const pad = 4;
-  const labelH = 20;
-  const offsets: Record<LabelDir, { x: number; y: number }> = {
-    right: { x: dotR + pad, y: -labelH / 2 },
-    left: { x: -dotR - pad - labelW, y: -labelH / 2 },
-    top: { x: -labelW / 2, y: -dotR - pad - labelH },
-    bottom: { x: -labelW / 2, y: dotR + pad },
-    "top-right": { x: dotR + pad, y: -dotR - pad - labelH },
-    "bottom-right": { x: dotR + pad, y: dotR + pad },
-    "top-left": { x: -dotR - pad - labelW, y: -dotR - pad - labelH },
-    "bottom-left": { x: -dotR - pad - labelW, y: dotR + pad }
-  };
-  return offsets[dir];
 }
