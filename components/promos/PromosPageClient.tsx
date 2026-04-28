@@ -124,7 +124,7 @@ export function PromosPageClient({
       </section>
 
       {featuredPromos.length ? (
-        <section className="space-y-4">
+        <section id="promo-board" className="space-y-4">
           <div>
             <div className="text-sm uppercase tracking-[0.18em] text-mist">Featured</div>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">Paid placements and marquee perks</h2>
@@ -142,7 +142,7 @@ export function PromosPageClient({
         </section>
       ) : null}
 
-      <section className="space-y-4">
+      <section id={featuredPromos.length ? undefined : "promo-board"} className="space-y-4">
         <div>
           <div className="text-sm uppercase tracking-[0.18em] text-mist">Live now / today</div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">Deals you can claim right now</h2>
