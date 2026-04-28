@@ -15,8 +15,6 @@ import {
 } from "lucide-react";
 
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
-import { getMatchHostCityKey } from "@/lib/data/matchLocations";
-import { worldCup2026Matches } from "@/lib/data/matches";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useMembership } from "@/lib/store/membership";
 import { useTheme } from "@/lib/store/theme";
@@ -29,10 +27,6 @@ function getActiveCityFromPath(pathname: string | null) {
   return segment ? getHostCity(segment)?.key ?? null : null;
 }
 
-function getMatchCountForCity(cityKey: string) {
-  return worldCup2026Matches.filter((match) => getMatchHostCityKey(match) === cityKey).length;
-}
-
 function primaryNavClass(active: boolean) {
   return active
     ? "inline-flex h-11 items-center border-b-2 border-gold px-3 text-sm font-semibold text-[color:var(--fg-primary)]"
@@ -43,10 +37,17 @@ function actionButtonClass() {
   return "inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]";
 }
 
+const PRIMARY_NAV_ITEMS = [
+  { href: "/", label: "Home", matches: (path: string, _cityMapHref: string) => path === "/" },
+  { href: "MAP", label: "Map", matches: (path: string) => path.includes("/map") },
+  { href: "/promos", label: "Promos", matches: (path: string) => path.startsWith("/promos") },
+  { href: "/me", label: "My Cup", matches: (path: string) => path.startsWith("/me") }
+] as const;
+
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userCity, suggestedCity, hasChosenCity, setUserCity } = useUserCity();
+  const { userCity, suggestedCity, setUserCity } = useUserCity();
   const { isDark, setTheme } = useTheme();
   const { tier } = useMembership();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -62,12 +63,16 @@ export function SiteHeader() {
   }, [pathname, suggestedCity, userCity]);
 
   const activeCityData = CITY_LOOKUP.get(activeCity) ?? HOST_CITIES[0];
-  const nearestCity = suggestedCity ?? null;
   const currentPath = pathname ?? "/";
   const mapHref = `/${activeCity}/map`;
   const promosHref = "/promos";
   const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
+  const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
+    href: item.href === "MAP" ? mapHref : item.href,
+    label: item.label,
+    active: item.matches(currentPath, mapHref)
+  }));
 
   useEffect(() => {
     setAccountMenuOpen(false);
@@ -181,10 +186,11 @@ export function SiteHeader() {
 
           <div className="hidden min-w-0 flex-1 justify-center lg:flex">
             <nav className="flex items-center gap-6">
-              <Link href="/" className={primaryNavClass(currentPath === "/")}>Home</Link>
-              <Link href={mapHref} className={primaryNavClass(currentPath.includes("/map"))}>Map</Link>
-              <Link href={promosHref} className={primaryNavClass(currentPath.startsWith("/promos"))}>Promos</Link>
-              <Link href={myHref} className={primaryNavClass(currentPath.startsWith("/me"))}>My Cup</Link>
+              {primaryNavItems.map((item) => (
+                <Link key={item.label} href={item.href} className={primaryNavClass(item.active)}>
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
 
