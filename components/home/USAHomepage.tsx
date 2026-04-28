@@ -7,6 +7,7 @@ import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
 import { HomeCountryPicker } from "./HomeCountryPicker";
 import { HomeHeroIntro } from "./HomeHeroIntro";
+import { HomeKpiCards } from "./HomeKpiCards";
 import { HomeMatchesStrip } from "./HomeMatchesStrip";
 import { InstallAppBanner } from "./InstallAppBanner";
 import { NorthAmericaMap } from "./NorthAmericaMap";
@@ -70,21 +71,7 @@ export async function USAHomepage() {
         <div className="container-shell py-8 lg:py-12">
           <HomeHeroIntro />
           <HomeMatchesStrip label={featuredMatchDay.label} matches={featuredMatchDay.matches} countries={allCountries} />
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="surface p-4">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Host cities</div>
-              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{cityCards.length}</div>
-            </div>
-            <div className="surface p-4">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Venues</div>
-              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{totalVenues.toLocaleString()}</div>
-            </div>
-            <div className="surface p-4">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Reservations</div>
-              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{reservableVenues.toLocaleString()}</div>
-            </div>
-          </div>
+          <HomeKpiCards hostCityCount={cityCards.length} totalVenues={totalVenues} reservableVenues={reservableVenues} />
         </div>
       </section>
 
