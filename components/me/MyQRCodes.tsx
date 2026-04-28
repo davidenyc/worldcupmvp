@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { QRCodeModal } from "@/components/me/QRCodeModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { QRCodeImage } from "@/components/ui/QRCodeImage";
+import { MockQRCode } from "@/components/ui/MockQRCode";
 import type { Promo, SavedPromo } from "@/lib/data/promos";
 import type { RankedVenue } from "@/lib/types";
 
@@ -65,12 +65,7 @@ export function MyQRCodes({
                       </span>
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                      <QRCodeImage
-                        code={promo.code}
-                        template={promoMeta.qrTemplate}
-                        alt={`${promoMeta.title} QR code`}
-                        className="h-24 w-24 shrink-0"
-                      />
+                      <MockQRCode code={promo.code} className="h-24 w-24 shrink-0" />
                       <div className="min-w-0">
                         <div className="text-xs uppercase tracking-[0.18em] text-mist">Code</div>
                         <div className="mt-1 text-sm font-semibold tracking-[0.22em] text-deep">{promo.code}</div>
