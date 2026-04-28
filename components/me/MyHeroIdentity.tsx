@@ -7,8 +7,14 @@ import type { UserProfile } from "@/lib/store/user";
 
 const TIER_LABELS: Record<MembershipTier, string> = {
   free: "Free",
-  fan: "⭐ Fan Pass",
-  elite: "👑 Elite"
+  fan: "Fan Pass",
+  elite: "Elite"
+};
+
+const TIER_STYLES: Record<MembershipTier, string> = {
+  free: "border-line bg-surface text-deep",
+  fan: "border-gold/50 bg-gold/12 text-deep",
+  elite: "border-fuchsia-400/40 bg-fuchsia-500/12 text-deep dark:text-white"
 };
 
 export function MyHeroIdentity({
@@ -19,38 +25,49 @@ export function MyHeroIdentity({
   tier: MembershipTier;
 }) {
   const monogram = user.displayName.trim().slice(0, 1).toUpperCase() || "F";
+  const firstName = user.displayName?.trim() ? user.displayName.trim().split(/\s+/)[0] : "Fan";
 
   return (
-    <section className="surface p-6 sm:p-7">
+    <section className="overflow-hidden rounded-[2rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.18),transparent_38%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-6 sm:p-7">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-gold/40 bg-gold/12 text-2xl font-black text-deep">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-gold/40 bg-[#12233f] text-3xl font-black text-gold">
             {monogram}
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup</div>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-deep">
-              {user.displayName?.trim() ? user.displayName : `Fan #${user.id.slice(0, 4)}`}
+              Welcome back, {firstName}.
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface-2 px-4 text-sm font-semibold text-deep">
+              <span className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold ${TIER_STYLES[tier]}`}>
                 {TIER_LABELS[tier]}
               </span>
               <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
                 Watching from {user.favoriteCity === "nyc" ? "New York" : user.favoriteCity} · change
               </span>
             </div>
+            <p className="mt-3 text-sm text-mist">
+              Your saved spots, watchlist, and promos all stay together here.
+            </p>
           </div>
         </div>
-
-        {tier === "free" ? (
+        <div className="flex flex-col items-start gap-3 sm:items-end">
           <Link
-            href="/membership?feature=unlimited_saves&return=%2Fme"
-            className="inline-flex min-h-11 max-w-xl items-center rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm font-semibold text-deep"
+            href="/account"
+            className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
           >
-            Upgrade to Fan Pass — $4.99/mo · Save unlimited venues, follow every nation, unlimited promo redemptions →
+            Edit profile →
           </Link>
-        ) : null}
+          {tier === "free" ? (
+            <Link
+              href="/membership?feature=unlimited_saves&return=%2Fme"
+              className="inline-flex min-h-11 max-w-xl items-center rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm font-semibold text-deep"
+            >
+              Upgrade to Fan Pass — save unlimited venues and promos →
+            </Link>
+          ) : null}
+        </div>
       </div>
     </section>
   );
