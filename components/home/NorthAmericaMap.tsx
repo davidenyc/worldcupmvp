@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
-import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
 import type { HostCity } from "@/lib/data/hostCities";
 import { useUser } from "@/lib/store/user";
 
 const GEO_URL = "/maps/countries-110m.json";
 
 const COUNTRY_FILL: Record<HostCity["country"], string> = {
-  usa: "#dbe7ff",
-  canada: "#fbe2e0",
-  mexico: "#dff2dc"
+  usa: "#c7dafc",
+  canada: "#fcc9c4",
+  mexico: "#bfe7ba"
 };
 
 const NAME_TO_COUNTRY: Record<string, HostCity["country"]> = {
@@ -73,10 +72,21 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
   const router = useRouter();
   const user = useUser();
   const [hovered, setHovered] = useState<string | null>(null);
+  const [compactLabels, setCompactLabels] = useState(false);
 
   const sortedCities = [...cityCards].sort((a, b) => (a.venueCount ?? 0) - (b.venueCount ?? 0));
 
   const goTo = (key: string) => router.push(`/${key}/map`);
+
+  useEffect(() => {
+    const updateLabelMode = () => {
+      setCompactLabels(window.innerWidth < 640);
+    };
+
+    updateLabelMode();
+    window.addEventListener("resize", updateLabelMode);
+    return () => window.removeEventListener("resize", updateLabelMode);
+  }, []);
 
   return (
     <div className="rounded-3xl border border-line bg-surface-2 p-3 shadow-card sm:p-4">
@@ -112,44 +122,53 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
         </div>
       </header>
 
-      <div className="relative w-full overflow-hidden rounded-2xl bg-[#eef4ff]">
-        <div className="aspect-[16/9] sm:aspect-[2/1]">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f6f9ff]">
+        <div className="aspect-[16/10] sm:aspect-[2.2/1]">
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: 820, center: [-95, 36] }}
+            projectionConfig={{ scale: 720, center: [-96, 39] }}
             style={{ width: "100%", height: "100%" }}
           >
             <Geographies geography={GEO_URL}>
-              {({ geographies }) =>
-                geographies
-                  .filter((geo) => {
-                    const name = String(geo.properties.name ?? "");
-                    const id = String((geo as { id?: string | number }).id ?? "");
-                    return Boolean(NAME_TO_COUNTRY[name] || ID_TO_COUNTRY[id]);
-                  })
-                  .map((geo) => {
-                    const name = String(geo.properties.name ?? "");
-                    const id = String((geo as { id?: string | number }).id ?? "");
-                    const country = NAME_TO_COUNTRY[name] ?? ID_TO_COUNTRY[id];
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        style={{
-                          default: { fill: COUNTRY_FILL[country], stroke: "#9fc5e4", strokeWidth: 0.6, outline: "none" },
-                          hover: { fill: COUNTRY_FILL[country], outline: "none" },
-                          pressed: { fill: COUNTRY_FILL[country], outline: "none" }
-                        }}
-                      />
-                    );
-                  })
-              }
+              {({ geographies }) => {
+                const matchedGeographies = geographies.filter((geo) => {
+                  const name = String(geo.properties.name ?? "");
+                  const id = String((geo as { id?: string | number }).id ?? "");
+                  return Boolean(NAME_TO_COUNTRY[name] || ID_TO_COUNTRY[id]);
+                });
+
+                if (process.env.NODE_ENV === "development" && matchedGeographies.length === 0 && geographies[0]) {
+                  console.warn("[NorthAmericaMap] No host-country matches found in geography file", {
+                    id: (geographies[0] as { id?: string | number }).id,
+                    properties: geographies[0].properties
+                  });
+                }
+
+                return matchedGeographies.map((geo) => {
+                  const name = String(geo.properties.name ?? "");
+                  const id = String((geo as { id?: string | number }).id ?? "");
+                  const country = NAME_TO_COUNTRY[name] ?? ID_TO_COUNTRY[id];
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      style={{
+                        default: { fill: COUNTRY_FILL[country], stroke: "#9fc5e4", strokeWidth: 0.6, outline: "none" },
+                        hover: { fill: COUNTRY_FILL[country], outline: "none" },
+                        pressed: { fill: COUNTRY_FILL[country], outline: "none" }
+                      }}
+                    />
+                  );
+                });
+              }}
             </Geographies>
 
             {sortedCities.map((city) => {
               const isHovered = hovered === city.key;
               const dotR = 8 + Math.min((city.venueCount ?? 0) / 60, 6);
-              const labelText = isHovered
+              const labelText = compactLabels
+                ? city.shortLabel
+                : isHovered
                 ? `${city.label} · ${city.venueCount.toLocaleString()}`
                 : city.shortLabel;
               const labelW = labelText.length * 6.6 + 18;
@@ -188,7 +207,12 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
                       strokeWidth={2.2}
                     />
 
-                    <g transform={`translate(${labelOffset.x}, ${labelOffset.y})`} style={{ pointerEvents: "none" }}>
+                    <g
+                      transform={`translate(${labelOffset.x}, ${labelOffset.y})`}
+                      style={{
+                        pointerEvents: "none"
+                      }}
+                    >
                       <rect
                         width={labelW}
                         height={20}
@@ -201,7 +225,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
                         x={labelW / 2}
                         y={13}
                         textAnchor="middle"
-                        style={{ fontSize: 11, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
+                        style={{ fontSize: compactLabels ? 9 : 11, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
                       >
                         {labelText}
                       </text>
@@ -214,50 +238,9 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <CollapsibleGrid initialCount={6} noun="city" nounPlural="cities">
-          {[...cityCards]
-            .sort((a, b) => (b.venueCount ?? 0) - (a.venueCount ?? 0))
-            .map((city) => (
-              <button
-                key={city.key}
-                type="button"
-                onClick={() => goTo(city.key)}
-                onMouseEnter={() => setHovered(city.key)}
-                onMouseLeave={() => setHovered(null)}
-                className={[
-                  "flex h-14 items-center gap-3 rounded-2xl border px-3 text-left transition",
-                  hovered === city.key
-                    ? "border-gold bg-gold/10"
-                    : "border-line bg-surface hover:bg-surface-2"
-                ].join(" ")}
-                aria-label={`${city.label} — ${city.venueCount.toLocaleString()} venues`}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <span
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ backgroundColor: DOT_FILL[city.country] }}
-                  >
-                    {city.shortLabel}
-                  </span>
-                  <span className="truncate text-sm font-semibold text-deep md:hidden">
-                    {city.shortLabel}
-                  </span>
-                  <span className="hidden min-w-0 truncate text-sm font-semibold text-deep md:inline">
-                    {city.label}
-                  </span>
-                </span>
-                <span className="ml-auto shrink-0 text-xs font-semibold text-mist tabular-nums">
-                  {city.venueCount.toLocaleString()}
-                </span>
-              </button>
-            ))}
-        </CollapsibleGrid>
-      </div>
-
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-mist">
-        <span className="hidden sm:inline">Tap any city to open its venue list</span>
-        <span className="sm:ml-auto">Top cities by venue count</span>
+        <span>Tap any city to open its venue list</span>
+        <span className="sm:ml-auto">All 17 host cities fit inside the map view</span>
       </div>
     </div>
   );
