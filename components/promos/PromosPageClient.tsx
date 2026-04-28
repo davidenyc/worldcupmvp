@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PromoCard } from "@/components/promos/PromoCard";
 import { PromoCarousel } from "@/components/promos/PromoCarousel";
 import { PromoCityGrid } from "@/components/promos/PromoCityGrid";
@@ -146,17 +147,34 @@ export function PromosPageClient({
           <div className="text-sm uppercase tracking-[0.18em] text-mist">Live now / today</div>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">Deals you can claim right now</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {livePromos.map((promo) => (
-            <PromoCard
-              key={promo.id}
-              promo={promo}
-              venueName={venueLookup[promo.venue_id]?.name ?? "Partner venue"}
-              reservationUrl={venueLookup[promo.venue_id]?.reservationUrl}
-              compact
-            />
-          ))}
-        </div>
+        {livePromos.length ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {livePromos.map((promo) => (
+              <PromoCard
+                key={promo.id}
+                promo={promo}
+                venueName={venueLookup[promo.venue_id]?.name ?? "Partner venue"}
+                reservationUrl={venueLookup[promo.venue_id]?.reservationUrl}
+                compact
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            emoji="🏷️"
+            title="No promos match this filter yet"
+            subtitle="Try another city or clear the country and match filters to see the full deal board."
+            action={
+              <button
+                type="button"
+                onClick={() => router.replace("/promos", { scroll: false })}
+                className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep"
+              >
+                Clear filters →
+              </button>
+            }
+          />
+        )}
       </section>
 
       {carousels.map((group) => (
