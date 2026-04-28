@@ -14,7 +14,7 @@ import { useGroups } from "@/lib/store/groups";
 import { TIER_META, useMembership } from "@/lib/store/membership";
 import { useReviews } from "@/lib/store/reviews";
 import { useTheme } from "@/lib/store/theme";
-import { useResetUser, useUpdateUser, useUser } from "@/lib/store/user";
+import { useOnboardingActions, useResetUser, useUpdateUser, useUser } from "@/lib/store/user";
 import { toast } from "@/lib/toast";
 
 const AVATAR_EMOJIS = ["⚽", "🏆", "🥇", "🎯", "🍺", "🎉", "🔥", "❤️", "🦁", "🦅", "🌟", "👑", "🎪", "🏟️", "🌍", "🌎", "🌏", "🎸", "🥁", "🎺"] as const;
@@ -98,6 +98,7 @@ export default function AccountPage() {
   const user = useUser();
   const updateUser = useUpdateUser();
   const resetUser = useResetUser();
+  const { resetOnboarding } = useOnboardingActions();
   const { setUserCity } = useUserCity();
   const { theme, setTheme } = useTheme();
   const { tier, reset: resetMembership } = useMembership();
@@ -115,6 +116,7 @@ export default function AccountPage() {
   const [showSavedFlash, setShowSavedFlash] = useState(false);
   const [confirmClearSaved, setConfirmClearSaved] = useState(false);
   const [confirmResetAll, setConfirmResetAll] = useState(false);
+  const [confirmReplayOnboarding, setConfirmReplayOnboarding] = useState(false);
   const [showInstallRow, setShowInstallRow] = useState(false);
 
   useEffect(() => {
@@ -198,6 +200,13 @@ export default function AccountPage() {
     window.localStorage.clear();
     toast("All data cleared");
     router.push("/");
+  }
+
+  function handleReplayOnboarding() {
+    resetOnboarding();
+    resetMembership();
+    toast.success("Demo mode reset. Starting onboarding again.");
+    router.push("/welcome");
   }
 
   return (
@@ -555,6 +564,49 @@ export default function AccountPage() {
                   </button>
                   <button type="button" onClick={handleResetAll} className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white">
                     Reset Everything
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Demo & Reset">
+          <div className="space-y-4 text-sm">
+            <div>
+              <div className="font-semibold text-[#0a1628]">Replay onboarding (demo mode)</div>
+              <div className="mt-1 text-[#0a1628]/60">
+                Reset your personalization and walk through the welcome flow again.
+              </div>
+            </div>
+
+            {!confirmReplayOnboarding ? (
+              <button
+                type="button"
+                onClick={() => setConfirmReplayOnboarding(true)}
+                className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+              >
+                Reset & Replay
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-4">
+                <div className="text-sm text-[#0a1628]/70">
+                  This clears your name, country picks, filters, and plan choice. Saved venues are kept. Continue?
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReplayOnboarding(false)}
+                    className="rounded-full border border-[#d8e3f5] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReplayOnboarding}
+                    className="rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+                  >
+                    Reset & Replay
                   </button>
                 </div>
               </div>
