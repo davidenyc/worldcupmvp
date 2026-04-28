@@ -15,15 +15,18 @@ import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
 import { useUser } from "@/lib/store/user";
 import { useWatchlistStore } from "@/lib/store/watchlist";
+import type { Promo } from "@/lib/data/promos";
 import type { WorldCupMatch } from "@/lib/data/matches";
 import type { RankedVenue } from "@/lib/types";
 
 export function MyWorldCupClient({
   venues,
-  matches
+  matches,
+  promos
 }: {
   venues: RankedVenue[];
   matches: WorldCupMatch[];
+  promos: Promo[];
 }) {
   const user = useUser();
   const tier = useMembership((state) => state.tier);
@@ -42,7 +45,7 @@ export function MyWorldCupClient({
       <MyFollowing followedCountries={user.followedCountries} favoriteCity={user.favoriteCity} />
       <MySavedVenues venues={savedVenueList} />
       <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
-      <MyQRCodes savedPromos={savedPromos} />
+      <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
       <MyActivity tier={tier} />
 
       <section className="surface p-6">

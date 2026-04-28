@@ -2,14 +2,31 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { QRCodeModal } from "@/components/me/QRCodeModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { SavedPromo } from "@/lib/data/promos";
+import { QRCodeImage } from "@/components/ui/QRCodeImage";
+import type { Promo, SavedPromo } from "@/lib/data/promos";
+import type { RankedVenue } from "@/lib/types";
 
 export function MyQRCodes({
-  savedPromos
+  savedPromos,
+  promos,
+  venues
 }: {
   savedPromos: SavedPromo[];
+  promos: Promo[];
+  venues: RankedVenue[];
 }) {
+  const [selectedPromoId, setSelectedPromoId] = useState<string | null>(null);
+  const promoLookup = useMemo(() => new Map(promos.map((promo) => [promo.id, promo] as const)), [promos]);
+  const venueLookup = useMemo(() => new Map(venues.map((venue) => [venue.slug, venue] as const)), [venues]);
+  const selectedSavedPromo = selectedPromoId
+    ? savedPromos.find((promo) => promo.promoId === selectedPromoId) ?? null
+    : null;
+  const selectedPromo = selectedSavedPromo ? promoLookup.get(selectedSavedPromo.promoId) ?? null : null;
+  const selectedVenue = selectedPromo ? venueLookup.get(selectedPromo.venueSlug) ?? null : null;
+
   return (
     <section className="surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -26,10 +43,51 @@ export function MyQRCodes({
         {savedPromos.length ? (
           <div className="grid gap-3 md:grid-cols-2">
             {savedPromos.map((promo) => (
-              <div key={promo.promoId} className="rounded-2xl border border-line bg-surface-2 p-4">
-                <div className="text-base font-semibold text-deep">{promo.code}</div>
-                <div className="mt-1 text-sm text-mist">Valid until {new Date(promo.expiresAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
-              </div>
+              (() => {
+                const promoMeta = promoLookup.get(promo.promoId);
+                const venue = promoMeta ? venueLookup.get(promoMeta.venueSlug) ?? null : null;
+                if (!promoMeta) return null;
+
+                return (
+                  <button
+                    key={promo.promoId}
+                    type="button"
+                    onClick={() => setSelectedPromoId(promo.promoId)}
+                    className="rounded-2xl border border-line bg-surface-2 p-4 text-left transition hover:border-line-strong"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-base font-semibold text-deep">{promoMeta.title}</div>
+                        <div className="mt-1 text-sm text-mist">{venue?.name ?? promoMeta.venueSlug}</div>
+                      </div>
+                      <span className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-deep">
+                        Show QR
+                      </span>
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                      <QRCodeImage
+                        code={promo.code}
+                        template={promoMeta.qrTemplate}
+                        alt={`${promoMeta.title} QR code`}
+                        className="h-24 w-24 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs uppercase tracking-[0.18em] text-mist">Code</div>
+                        <div className="mt-1 text-sm font-semibold tracking-[0.22em] text-deep">{promo.code}</div>
+                        <div className="mt-3 text-sm text-mist">
+                          Valid until{" "}
+                          {new Date(promo.expiresAt).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit"
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })()
             ))}
           </div>
         ) : (
@@ -45,6 +103,15 @@ export function MyQRCodes({
           />
         )}
       </div>
+
+      {selectedSavedPromo && selectedPromo ? (
+        <QRCodeModal
+          savedPromo={selectedSavedPromo}
+          promo={selectedPromo}
+          venue={selectedVenue}
+          onClose={() => setSelectedPromoId(null)}
+        />
+      ) : null}
     </section>
   );
 }

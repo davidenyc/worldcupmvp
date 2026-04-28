@@ -1,6 +1,7 @@
 import { MyWorldCupClient } from "@/components/me/MyWorldCupClient";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { worldCup2026Matches } from "@/lib/data/matches";
+import { getAllPromos } from "@/lib/data/promos";
 import { getMapPageData } from "@/lib/data/repository";
 
 export default async function MyWorldCupPage() {
@@ -12,7 +13,7 @@ export default async function MyWorldCupPage() {
 
   return (
     <main className="container-shell py-6 sm:py-10">
-      <MyWorldCupClient venues={rankedVenues} matches={worldCup2026Matches} />
+      <MyWorldCupClient venues={rankedVenues} matches={worldCup2026Matches} promos={getAllPromos()} />
     </main>
   );
 }
