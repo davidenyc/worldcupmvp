@@ -21,7 +21,7 @@ export function PromoDetailClient({
   venueName: string;
   reservationUrl?: string;
 }) {
-  const { tier } = useMembership();
+  const { tier, hasFeature } = useMembership();
   const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
@@ -31,15 +31,11 @@ export function PromoDetailClient({
     () => savedPromos.find((entry) => entry.promoId === promo.id) ?? null,
     [promo.id, savedPromos]
   );
-  const requiredTier = promo.tier === "elite" ? "elite" : promo.tier === "fan" ? "fan" : null;
+  const requiredFeature = promo.tier === "elite" ? "match_alerts" : promo.tier === "fan" ? "reservation_request" : null;
+  const hasAccess = requiredFeature ? hasFeature(requiredFeature) : true;
 
   async function handleRedeem() {
-    if (requiredTier === "elite" && tier !== "elite") {
-      setShowUpgrade(true);
-      return;
-    }
-
-    if (requiredTier === "fan" && tier === "free") {
+    if (!hasAccess) {
       setShowUpgrade(true);
       return;
     }
@@ -86,9 +82,9 @@ export function PromoDetailClient({
           <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
             Valid until {new Date(promo.validTo ?? promo.endsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
           </span>
-          {requiredTier ? (
+          {requiredFeature ? (
             <span className="inline-flex min-h-10 items-center rounded-full border border-gold/50 bg-gold/12 px-4 text-sm font-semibold text-deep">
-              {requiredTier === "elite" ? "Elite-only" : "Fan Pass"}
+              {promo.tier === "elite" ? "Elite-only" : "Fan Pass"}
             </span>
           ) : null}
         </div>
@@ -131,10 +127,10 @@ export function PromoDetailClient({
           ) : (
             <>
               <div className="mt-2 text-xl font-semibold text-deep">
-                {requiredTier === "elite" ? "Elite-only redemption" : "Save this deal to My Cup"}
+                {promo.tier === "elite" ? "Elite-only redemption" : "Save this deal to My Cup"}
               </div>
               <p className="mt-3 text-sm leading-7 text-mist">
-                {requiredTier === "elite"
+                {promo.tier === "elite"
                   ? "This perk is reserved for Elite members. Upgrade to unlock the QR and save it to your wallet."
                   : "Claim the code now and it will show up in your My Cup QR wallet for match day."}
               </p>
@@ -143,7 +139,7 @@ export function PromoDetailClient({
                 onClick={handleRedeem}
                 className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
               >
-                {saving ? "Saving…" : requiredTier === "elite" && tier !== "elite" ? "Upgrade to Elite →" : "Redeem →"}
+                {saving ? "Saving…" : !hasAccess ? promo.tier === "elite" ? "Upgrade to Elite →" : "Unlock with Fan Pass →" : "Redeem →"}
               </button>
             </>
           )}
@@ -152,8 +148,8 @@ export function PromoDetailClient({
 
       {showUpgrade ? (
         <UpgradePrompt
-          feature={requiredTier === "elite" ? "match_alerts" : "reservation_request"}
-          requiredTier={requiredTier === "elite" ? "elite" : "fan"}
+          feature={requiredFeature ?? "unlimited_promo_redemptions"}
+          requiredTier={promo.tier === "elite" ? "elite" : "fan"}
           onClose={() => setShowUpgrade(false)}
         />
       ) : null}

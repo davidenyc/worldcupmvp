@@ -40,9 +40,18 @@ export function MyHeroIdentity({
               Welcome back, {firstName}.
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold ${TIER_STYLES[tier]}`}>
-                {TIER_LABELS[tier]}
-              </span>
+              {tier === "free" ? (
+                <Link
+                  href="/membership?feature=unlimited_saves&return=%2Fme"
+                  className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold ${TIER_STYLES[tier]}`}
+                >
+                  {TIER_LABELS[tier]}
+                </Link>
+              ) : (
+                <span className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold ${TIER_STYLES[tier]}`}>
+                  {TIER_LABELS[tier]}
+                </span>
+              )}
               <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
                 Watching from {user.favoriteCity === "nyc" ? "New York" : user.favoriteCity} · change
               </span>

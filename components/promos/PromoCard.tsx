@@ -9,7 +9,7 @@ import {
   getPromoRedemptionLabel
 } from "@/lib/data/promos";
 import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
-import { FEATURE_GATES, useMembership } from "@/lib/store/membership";
+import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
 import { useUser } from "@/lib/store/user";
 import { PromoRedemptionModal } from "@/components/promos/PromoRedemptionModal";
@@ -26,7 +26,7 @@ export function PromoCard({
   reservationUrl?: string;
   compact?: boolean;
 }) {
-  const { tier } = useMembership();
+  const { tier, hasFeature } = useMembership();
   const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
@@ -38,11 +38,7 @@ export function PromoCard({
   const recentPromoClaims = savedPromos.filter(
     (entry) => Date.now() - Date.parse(entry.claimedAt) <= 7 * 24 * 60 * 60 * 1000
   );
-  const freeClaimLimitReached =
-    tier === "free" &&
-    !FEATURE_GATES.unlimited_promo_redemptions.includes(tier) &&
-    recentPromoClaims.length >= 1 &&
-    !savedPromo;
+  const freeClaimLimitReached = !hasFeature("unlimited_promo_redemptions") && recentPromoClaims.length >= 1 && !savedPromo;
 
   async function handlePrimaryAction() {
     if (savedPromo) {
