@@ -13,7 +13,7 @@ function getTimeLeft() {
   return { days, hours, minutes };
 }
 
-export function KickoffCountdown() {
+export function KickoffCountdown({ compact = false }: { compact?: boolean }) {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft);
 
   useEffect(() => {
@@ -23,6 +23,19 @@ export function KickoffCountdown() {
 
     return () => window.clearInterval(interval);
   }, []);
+
+  if (compact) {
+    return (
+      <div className="inline-flex max-w-max items-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 py-1.5 text-xs font-semibold text-[color:var(--fg-secondary)]">
+        <span className="text-gold">{String(timeLeft.days).padStart(2, "0")}d</span>
+        <span className="mx-1 text-[color:var(--fg-muted)]">·</span>
+        <span className="text-gold">{String(timeLeft.hours).padStart(2, "0")}h</span>
+        <span className="mx-1 text-[color:var(--fg-muted)]">·</span>
+        <span className="text-gold">{String(timeLeft.minutes).padStart(2, "0")}m</span>
+        <span className="ml-2">until kickoff</span>
+      </div>
+    );
+  }
 
   return (
     <div className="inline-flex max-w-max items-center rounded-full bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white shadow-lg">

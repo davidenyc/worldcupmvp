@@ -6,9 +6,8 @@ import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
-import { HomeCityPrompt } from "./HomeCityPrompt";
 import { HomeCountryPicker } from "./HomeCountryPicker";
-import { HomeHeroActions } from "./HomeHeroActions";
+import { HomeHeroIntro } from "./HomeHeroIntro";
 import { InstallAppBanner } from "./InstallAppBanner";
 import { KickoffCountdown } from "./KickoffCountdown";
 import { NorthAmericaMap } from "./NorthAmericaMap";
@@ -80,56 +79,19 @@ export async function USAHomepage() {
     <main className="bg-bg text-deep">
       <section className="bg-bg">
         <div className="container-shell py-8 lg:py-12">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_22rem] lg:items-start">
-            <div className="space-y-6">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">
-                World Cup 2026 watch parties
-              </div>
-              <HomeCityPrompt />
-              <div className="max-w-3xl">
-                <h1 className="text-display text-[color:var(--fg-primary)] max-sm:text-5xl">
-                  Find the right room before kickoff.
-                </h1>
-                <p className="mt-4 max-w-2xl text-body text-[color:var(--fg-secondary)]">
-                  Matchday is the headline here: what city you&apos;re in, what&apos;s playing next, and which bar or restaurant is worth your crew.
-                </p>
-              </div>
+          <HomeHeroIntro />
 
-              <HomeHeroActions />
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="surface p-4">
-                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Host cities</div>
-                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{cityCards.length}</div>
-                </div>
-                <div className="surface p-4">
-                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Venues</div>
-                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{totalVenues.toLocaleString()}</div>
-                </div>
-                <div className="surface p-4">
-                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">Reservations</div>
-                  <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{reservableVenues.toLocaleString()}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-strong p-5">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Opening match countdown</div>
-              <div className="mt-3 text-h2 text-[color:var(--fg-primary)]">Tournament starts at Estadio Azteca.</div>
-              <div className="mt-4">
-                <KickoffCountdown />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-5 shadow-card">
+          <div className="mt-6 rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4 shadow-card sm:p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <div className="text-small uppercase tracking-[0.18em] text-ink-55">{featuredMatchDay.label}</div>
-                <div className="mt-1 text-h2 text-[color:var(--fg-primary)]">
-                  {featuredMatchDay.matches.length ? "Start with today's slate, then jump straight into the right city map." : "Next match in a few days."}
+                <div className="mt-1 text-xl font-semibold text-[color:var(--fg-primary)] sm:text-2xl">
+                  {featuredMatchDay.matches.length
+                    ? "Start with today's slate, then jump straight into the right city map."
+                    : "Next match in a few days."}
                 </div>
               </div>
+              {featuredMatchDay.label !== "Today's matches" ? <KickoffCountdown compact /> : null}
             </div>
 
             {featuredMatchDay.matches.length ? (
@@ -167,11 +129,29 @@ export async function USAHomepage() {
               <div className="empty-state mt-4">
                 <div className="empty-state-emoji">⚽</div>
                 <h2 className="mt-4 text-h2 text-[color:var(--fg-primary)]">The next slate is on deck</h2>
+                <div className="mt-3">
+                  <KickoffCountdown compact />
+                </div>
                 <p className="mt-2 max-w-md text-sm text-[color:var(--fg-secondary)]">
                   We&apos;ll surface the upcoming match cards here as soon as the next fixture day begins.
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="surface p-4">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Host cities</div>
+              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{cityCards.length}</div>
+            </div>
+            <div className="surface p-4">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Venues</div>
+              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{totalVenues.toLocaleString()}</div>
+            </div>
+            <div className="surface p-4">
+              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Reservations</div>
+              <div className="mt-2 text-3xl font-semibold text-[color:var(--fg-primary)]">{reservableVenues.toLocaleString()}</div>
+            </div>
           </div>
         </div>
       </section>
