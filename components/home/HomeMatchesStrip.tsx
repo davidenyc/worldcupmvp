@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { WatchToggleButton } from "@/components/matches/WatchToggleButton";
 import { getHostCity } from "@/lib/data/hostCities";
 import type { WorldCupMatch } from "@/lib/data/matches";
 import type { CountrySummary } from "@/lib/types";
@@ -54,26 +55,30 @@ export function HomeMatchesStrip({
             const away = countryLookup.get(match.awayCountry);
 
             return (
-              <Link
+              <div
                 key={match.id}
-                href={`/${activeCity?.key ?? "nyc"}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}&match=${match.id}`}
                 className="surface flex h-full flex-col justify-between p-4 transition hover:-translate-y-0.5"
               >
-                <div>
-                  <div className="text-small uppercase tracking-[0.18em] text-ink-55">{formatMatchPreviewTime(match.startsAt)}</div>
-                  <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
-                    <CountryFlag country={home} size="sm" />
-                    <span>{home?.fifaCode ?? match.homeCountry.toUpperCase()}</span>
-                    <span className="text-ink-55">vs</span>
-                    <CountryFlag country={away} size="sm" />
-                    <span>{away?.fifaCode ?? match.awayCountry.toUpperCase()}</span>
+                <Link href={`/${activeCity?.key ?? "nyc"}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}&match=${match.id}`}>
+                  <div>
+                    <div className="text-small uppercase tracking-[0.18em] text-ink-55">{formatMatchPreviewTime(match.startsAt)}</div>
+                    <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
+                      <CountryFlag country={home} size="sm" />
+                      <span>{home?.fifaCode ?? match.homeCountry.toUpperCase()}</span>
+                      <span className="text-ink-55">vs</span>
+                      <CountryFlag country={away} size="sm" />
+                      <span>{away?.fifaCode ?? match.awayCountry.toUpperCase()}</span>
+                    </div>
+                    <div className="mt-2 text-sm text-[color:var(--fg-secondary)]">{match.stageLabel} · {match.competition}</div>
                   </div>
-                  <div className="mt-2 text-sm text-[color:var(--fg-secondary)]">{match.stageLabel} · {match.competition}</div>
+                  <div className="mt-4 text-sm font-semibold text-[color:var(--fg-primary)]">
+                    Watch in {activeCity?.label ?? "New York"} →
+                  </div>
+                </Link>
+                <div className="mt-4">
+                  <WatchToggleButton matchId={match.id} className="w-full" />
                 </div>
-                <div className="mt-4 text-sm font-semibold text-[color:var(--fg-primary)]">
-                  Watch in {activeCity?.label ?? "New York"} →
-                </div>
-              </Link>
+              </div>
             );
           })}
         </div>

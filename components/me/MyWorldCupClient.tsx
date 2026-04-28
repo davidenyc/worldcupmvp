@@ -41,7 +41,7 @@ export function MyWorldCupClient({
       <MyHeroIdentity user={user} tier={tier} />
       <MyFollowing followedCountries={user.followedCountries} favoriteCity={user.favoriteCity} />
       <MySavedVenues venues={savedVenueList} />
-      <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} />
+      <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
       <MyQRCodes savedPromos={savedPromos} />
       <MyActivity tier={tier} />
 

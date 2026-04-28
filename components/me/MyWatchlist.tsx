@@ -7,10 +7,12 @@ import type { WorldCupMatch } from "@/lib/data/matches";
 
 export function MyWatchlist({
   matches,
-  watchVenues
+  watchVenues,
+  cityKey
 }: {
   matches: WorldCupMatch[];
   watchVenues: Record<string, string | null>;
+  cityKey: string;
 }) {
   function formatCountryLabel(country: string) {
     return country
@@ -45,6 +47,11 @@ export function MyWatchlist({
                 <div className="mt-2 text-sm text-mist">
                   {watchVenues[match.id] ? `Watching at ${watchVenues[match.id]}` : "No venue selected yet"}
                 </div>
+                {!watchVenues[match.id] ? (
+                  <Link href={`/${cityKey || "nyc"}/map?match=${match.id}`} className="mt-3 inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface">
+                    Find a watch spot →
+                  </Link>
+                ) : null}
               </div>
             ))}
           </div>

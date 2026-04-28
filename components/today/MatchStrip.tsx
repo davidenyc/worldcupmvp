@@ -1,6 +1,7 @@
 "use client";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { WatchToggleButton } from "@/components/matches/WatchToggleButton";
 import { formatMatchStageCompact } from "@/lib/data/today";
 import type { WorldCupMatch } from "@/lib/data/matches";
 import type { CountrySummary } from "@/lib/types";
@@ -57,40 +58,47 @@ export function MatchStrip({
           const active = match.id === activeMatchId;
 
           return (
-            <button
+            <div
               key={match.id}
-              type="button"
-              aria-label={`Filter venues for ${home?.name ?? match.homeCountry} versus ${away?.name ?? match.awayCountry}`}
-              onClick={() => onSelect(match.id)}
               className={`min-h-11 min-w-[18rem] rounded-[1.5rem] border bg-[var(--bg-surface)] p-4 text-left shadow-sm md:min-w-0 ${
                 active ? "border-gold border-2" : "border-line"
               }`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <span className="rounded-full bg-[var(--accent-soft-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-soft-fg)]">
-                  {badgeLabel}
-                </span>
-                <span className="text-sm text-mist">{formatKickoff(match.startsAt)}</span>
-              </div>
-              <div className="mt-4 flex items-center gap-3">
-                <CountryFlag country={home} size="md" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-deep">{home?.name ?? match.homeCountry}</div>
+              <button
+                type="button"
+                aria-label={`Filter venues for ${home?.name ?? match.homeCountry} versus ${away?.name ?? match.awayCountry}`}
+                onClick={() => onSelect(match.id)}
+                className="block w-full text-left"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-full bg-[var(--accent-soft-bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-soft-fg)]">
+                    {badgeLabel}
+                  </span>
+                  <span className="text-sm text-mist">{formatKickoff(match.startsAt)}</span>
                 </div>
-              </div>
-              <div className="my-3 text-xs font-semibold uppercase tracking-[0.18em] text-mist">vs</div>
-              <div className="flex items-center gap-3">
-                <CountryFlag country={away} size="md" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-deep">{away?.name ?? match.awayCountry}</div>
+                <div className="mt-4 flex items-center gap-3">
+                  <CountryFlag country={home} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-deep">{home?.name ?? match.homeCountry}</div>
+                  </div>
                 </div>
+                <div className="my-3 text-xs font-semibold uppercase tracking-[0.18em] text-mist">vs</div>
+                <div className="flex items-center gap-3">
+                  <CountryFlag country={away} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-deep">{away?.name ?? match.awayCountry}</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-[color:var(--fg-secondary)]">
+                  {formatMatchStageCompact(match)}
+                </div>
+                <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{match.stadiumName}</div>
+                <div className="mt-4 text-sm font-semibold text-gold">Tap to find watch spots →</div>
+              </button>
+              <div className="mt-4">
+                <WatchToggleButton matchId={match.id} className="w-full" />
               </div>
-              <div className="mt-4 text-sm text-[color:var(--fg-secondary)]">
-                {formatMatchStageCompact(match)}
-              </div>
-              <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{match.stadiumName}</div>
-              <div className="mt-4 text-sm font-semibold text-gold">Tap to find watch spots →</div>
-            </button>
+            </div>
           );
         })}
       </div>

@@ -2,6 +2,7 @@
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { Badge } from "@/components/ui/badge";
+import { WatchToggleButton } from "@/components/matches/WatchToggleButton";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { getMatchLocationLabel } from "@/lib/data/matchLocations";
 import { WorldCupMatch } from "@/lib/data/matches";
@@ -125,6 +126,10 @@ export function MatchCard({
         {isToday && <Badge className="bg-red-50 text-red-700 ring-1 ring-red-200">Today</Badge>}
         {isTomorrow && <Badge className="bg-amber-50 text-amber-700 ring-1 ring-amber-200">Tomorrow</Badge>}
         {isLocal && <Badge className="bg-[#eef4ff] text-[#0a1628] dark:bg-white/10 dark:text-white">Local</Badge>}
+      </div>
+
+      <div className="mt-4">
+        <WatchToggleButton matchId={match.id} className="w-full sm:w-auto" />
       </div>
     </article>
   );
