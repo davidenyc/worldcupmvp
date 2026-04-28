@@ -9,8 +9,22 @@ export interface UserProfile {
   displayName: string;
   email: string;
   favoriteCity: string;
+  firstName?: string;
+  homeCity?: string;
+  favoriteCountrySlug?: string;
+  followingCountrySlugs: string[];
   favoriteCountries: string[];
   followedCountries: string[];
+  defaultFilters: {
+    soundOn: boolean;
+    reservationsPossible: boolean;
+    outdoorSeating: boolean;
+  };
+  promoOptIns: {
+    email: boolean;
+    push: boolean;
+  };
+  welcomeSeenAt?: number;
   watchlistMatchIds: string[];
   watchVenues: Record<string, string | null>;
   activity: UserActivityEntry[];
@@ -42,6 +56,14 @@ export type UserStore = {
   clearWatchVenue: (matchId: string) => void;
   appendActivity: (entry: Omit<UserActivityEntry, "at"> & { at?: number }) => void;
   clearActivity: () => void;
+  setFirstName: (firstName?: string) => void;
+  setHomeCity: (homeCity?: string) => void;
+  setFavoriteCountry: (favoriteCountrySlug?: string) => void;
+  setFollowing: (followingCountrySlugs: string[]) => void;
+  setDefaultFilters: (filters: Partial<UserProfile["defaultFilters"]>) => void;
+  setPromoOptIns: (optIns: Partial<UserProfile["promoOptIns"]>) => void;
+  markWelcomeSeen: (at?: number) => void;
+  resetOnboarding: () => void;
 };
 
 function createIdentity() {
@@ -57,8 +79,22 @@ function createDefaultProfile(): UserProfile {
     displayName: "Fan",
     email: "",
     favoriteCity: "nyc",
+    firstName: undefined,
+    homeCity: undefined,
+    favoriteCountrySlug: undefined,
+    followingCountrySlugs: [],
     favoriteCountries: [],
     followedCountries: [],
+    defaultFilters: {
+      soundOn: false,
+      reservationsPossible: false,
+      outdoorSeating: false
+    },
+    promoOptIns: {
+      email: false,
+      push: false
+    },
+    welcomeSeenAt: undefined,
     watchlistMatchIds: [],
     watchVenues: {},
     activity: [],
@@ -75,13 +111,27 @@ function createDefaultProfile(): UserProfile {
 
 function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
   const favoriteCountries = profile.favoriteCountries ?? profile.followedCountries ?? [];
-  const followedCountries = profile.followedCountries ?? profile.favoriteCountries ?? [];
+  const followedCountries = profile.followedCountries ?? profile.followingCountrySlugs ?? profile.favoriteCountries ?? [];
+  const followingCountrySlugs = profile.followingCountrySlugs ?? followedCountries;
+  const favoriteCountrySlug = profile.favoriteCountrySlug ?? favoriteCountries[0];
 
   return {
     ...createDefaultProfile(),
     ...profile,
+    firstName: profile.firstName?.trim() || undefined,
+    homeCity: profile.homeCity ?? profile.favoriteCity ?? undefined,
+    favoriteCountrySlug,
+    followingCountrySlugs,
     favoriteCountries,
     followedCountries,
+    defaultFilters: {
+      ...createDefaultProfile().defaultFilters,
+      ...profile.defaultFilters
+    },
+    promoOptIns: {
+      ...createDefaultProfile().promoOptIns,
+      ...profile.promoOptIns
+    },
     watchlistMatchIds: profile.watchlistMatchIds ?? [],
     watchVenues: profile.watchVenues ?? {},
     activity: profile.activity ?? []
@@ -195,6 +245,92 @@ export const useUserStore = create<UserStore>()(
             ...state.profile,
             activity: []
           })
+        })),
+      setFirstName: (firstName) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            firstName: firstName?.trim() || undefined,
+            displayName: firstName?.trim() || state.profile.displayName
+          })
+        })),
+      setHomeCity: (homeCity) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            homeCity,
+            favoriteCity: homeCity ?? state.profile.favoriteCity
+          })
+        })),
+      setFavoriteCountry: (favoriteCountrySlug) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            favoriteCountrySlug,
+            favoriteCountries: favoriteCountrySlug ? [favoriteCountrySlug, ...state.profile.favoriteCountries.filter((entry) => entry !== favoriteCountrySlug)] : [],
+            followedCountries: favoriteCountrySlug
+              ? [favoriteCountrySlug, ...state.profile.followedCountries.filter((entry) => entry !== favoriteCountrySlug)]
+              : state.profile.followedCountries,
+            followingCountrySlugs: favoriteCountrySlug
+              ? [favoriteCountrySlug, ...state.profile.followingCountrySlugs.filter((entry) => entry !== favoriteCountrySlug)]
+              : state.profile.followingCountrySlugs
+          })
+        })),
+      setFollowing: (followingCountrySlugs) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            followingCountrySlugs,
+            followedCountries: followingCountrySlugs,
+            favoriteCountries: state.profile.favoriteCountrySlug
+              ? [state.profile.favoriteCountrySlug, ...followingCountrySlugs.filter((entry) => entry !== state.profile.favoriteCountrySlug)]
+              : followingCountrySlugs
+          })
+        })),
+      setDefaultFilters: (filters) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            defaultFilters: {
+              ...state.profile.defaultFilters,
+              ...filters
+            }
+          })
+        })),
+      setPromoOptIns: (optIns) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            promoOptIns: {
+              ...state.profile.promoOptIns,
+              ...optIns
+            }
+          })
+        })),
+      markWelcomeSeen: (at = Date.now()) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            welcomeSeenAt: at
+          })
+        })),
+      resetOnboarding: () =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            firstName: undefined,
+            homeCity: undefined,
+            favoriteCountrySlug: undefined,
+            followingCountrySlugs: [],
+            favoriteCountries: [],
+            followedCountries: [],
+            defaultFilters: createDefaultProfile().defaultFilters,
+            promoOptIns: createDefaultProfile().promoOptIns,
+            welcomeSeenAt: undefined,
+            activity: [],
+            watchlistMatchIds: [],
+            watchVenues: {}
+          })
         }))
     }),
     {
@@ -234,4 +370,17 @@ export function useResetUser() {
 
 export function useAppendActivity() {
   return useUserStore((state) => state.appendActivity);
+}
+
+export function useOnboardingActions() {
+  return useUserStore((state) => ({
+    setFirstName: state.setFirstName,
+    setHomeCity: state.setHomeCity,
+    setFavoriteCountry: state.setFavoriteCountry,
+    setFollowing: state.setFollowing,
+    setDefaultFilters: state.setDefaultFilters,
+    setPromoOptIns: state.setPromoOptIns,
+    markWelcomeSeen: state.markWelcomeSeen,
+    resetOnboarding: state.resetOnboarding
+  }));
 }
