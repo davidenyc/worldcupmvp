@@ -8,6 +8,7 @@ import { demoCountries } from "@/lib/data/demo";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useOnboardingActions, useUser } from "@/lib/store/user";
+import { useMembership } from "@/lib/store/membership";
 
 const STEPS = [
   {
@@ -46,7 +47,8 @@ export function WelcomeFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useUser();
-  const { setFirstName, setHomeCity, setFavoriteCountry, markWelcomeSeen } = useOnboardingActions();
+  const { tier } = useMembership();
+  const { setFirstName, setHomeCity, setFavoriteCountry, setFollowing, markWelcomeSeen } = useOnboardingActions();
   const { suggestedCity, setUserCity } = useUserCity();
   const [stepIndex, setStepIndex] = useState(0);
   const [firstNameDraft, setFirstNameDraft] = useState(user.firstName ?? "");
@@ -59,9 +61,11 @@ export function WelcomeFlow() {
   );
   const [favoriteCountryDraft, setFavoriteCountryDraft] = useState(user.favoriteCountrySlug ?? "");
   const [countrySearchDraft, setCountrySearchDraft] = useState("");
+  const [followingDraft, setFollowingDraft] = useState(user.followingCountrySlugs);
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
+  const followCap = tier === "free" ? 2 : 48;
   const citySuggestions = useMemo(() => {
     const query = homeCityDraft.trim().toLowerCase();
     if (!query) return HOST_CITIES.slice(0, 6);
@@ -120,6 +124,12 @@ export function WelcomeFlow() {
     if (stepIndex === 1) {
       if (!favoriteCountryDraft) return;
       setFavoriteCountry(favoriteCountryDraft);
+      setFollowingDraft((current) =>
+        current.includes(favoriteCountryDraft) ? current : [favoriteCountryDraft, ...current]
+      );
+    }
+    if (stepIndex === 2) {
+      setFollowing(followingDraft);
     }
     if (isLast) {
       markWelcomeSeen();
@@ -127,6 +137,18 @@ export function WelcomeFlow() {
       return;
     }
     setStepIndex((current) => Math.min(STEPS.length - 1, current + 1));
+  }
+
+  function toggleFollowingCountry(countrySlug: string) {
+    setFollowingDraft((current) => {
+      if (current.includes(countrySlug)) {
+        return current.filter((entry) => entry !== countrySlug);
+      }
+      if (tier === "free" && current.length >= followCap) {
+        return current;
+      }
+      return [...current, countrySlug];
+    });
   }
 
   return (
@@ -203,6 +225,37 @@ export function WelcomeFlow() {
                           ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
                           : "border-line bg-surface text-deep"
                       }`}
+                    >
+                      <span className="text-3xl leading-none">{country.flagEmoji}</span>
+                      <span>{country.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : stepIndex === 2 ? (
+            <div className="space-y-4">
+              {tier === "free" && followingDraft.length >= followCap ? (
+                <div className="rounded-2xl border border-gold/50 bg-gold/10 p-4 text-sm text-deep">
+                  <div className="font-semibold">Following more than 2 nations is a Fan Pass perk.</div>
+                  <div className="mt-1 text-mist">$4.99/mo in the full product. For now, you can skip and keep moving.</div>
+                </div>
+              ) : null}
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {countrySuggestions.map((country) => {
+                  const selected = followingDraft.includes(country.slug) || favoriteCountryDraft === country.slug;
+                  const locked = tier === "free" && !selected && followingDraft.length >= followCap;
+                  return (
+                    <button
+                      key={country.slug}
+                      type="button"
+                      onClick={() => toggleFollowingCountry(country.slug)}
+                      disabled={country.slug === favoriteCountryDraft || locked}
+                      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-xs font-semibold transition ${
+                        selected
+                          ? "border-gold bg-gold/10 text-deep ring-2 ring-gold/30"
+                          : "border-line bg-surface text-deep"
+                      } ${locked ? "opacity-50" : ""}`}
                     >
                       <span className="text-3xl leading-none">{country.flagEmoji}</span>
                       <span>{country.name}</span>
