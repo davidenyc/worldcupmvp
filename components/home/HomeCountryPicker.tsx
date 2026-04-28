@@ -7,6 +7,8 @@ import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { CountrySummary } from "@/lib/types";
 
+const POPULAR_COUNTRY_ORDER = ["argentina", "brazil", "france", "mexico", "portugal", "usa"] as const;
+
 export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }) {
   const router = useRouter();
   const { userCity, suggestedCity } = useUserCity();
@@ -19,7 +21,23 @@ export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }
     return countries.filter((country) => country.name.toLowerCase().includes(query));
   }, [countries, search]);
   const sortedCountries = useMemo(
-    () => [...visible].sort((left, right) => left.name.localeCompare(right.name)),
+    () =>
+      [...visible].sort((left, right) => {
+        const leftPopularIndex = POPULAR_COUNTRY_ORDER.indexOf(left.slug as (typeof POPULAR_COUNTRY_ORDER)[number]);
+        const rightPopularIndex = POPULAR_COUNTRY_ORDER.indexOf(right.slug as (typeof POPULAR_COUNTRY_ORDER)[number]);
+
+        if (leftPopularIndex !== -1 || rightPopularIndex !== -1) {
+          if (leftPopularIndex === -1) return 1;
+          if (rightPopularIndex === -1) return -1;
+          return leftPopularIndex - rightPopularIndex;
+        }
+
+        if (left.featured !== right.featured) {
+          return left.featured ? -1 : 1;
+        }
+
+        return left.name.localeCompare(right.name);
+      }),
     [visible]
   );
 
@@ -32,8 +50,8 @@ export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }
         placeholder="Search your country…"
         className="mt-4 h-12 w-full rounded-full border border-line bg-surface px-4 text-sm text-deep outline-none placeholder:text-mist"
       />
-      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-        <CollapsibleGrid initialCount={9} noun="nation" nounPlural="nations">
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-6">
+        <CollapsibleGrid initialCount={6} noun="nation" nounPlural="nations">
           {sortedCountries.map((country) => (
             <button
               key={country.slug}

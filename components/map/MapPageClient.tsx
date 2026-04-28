@@ -1370,6 +1370,16 @@ export function MapPageClient({
         }
       />
 
+      {!selectedVenue && !filterDrawerOpen && !mobileResultsOpen && !mobileGamesOpen && filteredVenues.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+10.5rem)] z-40 lg:hidden">
+          <div className="pointer-events-none flex items-center justify-center px-4">
+            <div className="pointer-events-auto rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white">
+              {filteredVenues.length} venues
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {canToggleShowAllMapVenues && !selectedVenue && !filterDrawerOpen && !mobileResultsOpen && !mobileGamesOpen ? (
         <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+10.5rem)] z-40 lg:hidden">
           <div className="pointer-events-none flex items-end justify-end px-4">

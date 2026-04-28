@@ -47,6 +47,7 @@ export function SiteHeader() {
   const { isDark, setTheme } = useTheme();
   const [cityOpen, setCityOpen] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
+  const [mobileNavVisible, setMobileNavVisible] = useState(true);
 
   const activeCity = useMemo(() => {
     const fromPath = getActiveCityFromPath(pathname);
@@ -57,7 +58,9 @@ export function SiteHeader() {
   const activeCityData = CITY_LOOKUP.get(activeCity) ?? HOST_CITIES[0];
   const nearestCity = suggestedCity ?? null;
   const currentPath = pathname ?? "/";
+  const todayHref = "/today";
   const mapHref = `/${activeCity}/map`;
+  const matchesHref = `/${activeCity}/matches`;
   const promosHref = "/promos";
   const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
@@ -71,6 +74,36 @@ export function SiteHeader() {
   useEffect(() => {
     setDesktopMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const updateNav = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+
+      if (currentY < 24) {
+        setMobileNavVisible(true);
+      } else if (delta > 6) {
+        setMobileNavVisible(false);
+      } else if (delta < -6) {
+        setMobileNavVisible(true);
+      }
+
+      lastY = currentY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateNav);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function navigateToCity(nextCity: string) {
     setUserCity(nextCity);
@@ -108,7 +141,7 @@ export function SiteHeader() {
             <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
-                style={{ backgroundColor: "#f4b942", color: "#0a1628" }}
+                style={{ backgroundColor: "#f4b942", color: "#ffffff" }}
               >
                 GM
               </div>
@@ -124,7 +157,9 @@ export function SiteHeader() {
 
             <nav className="hidden items-center gap-1 lg:flex">
               <Link href="/" className={primaryNavClass(currentPath === "/")}>Home</Link>
+              <Link href={todayHref} className={primaryNavClass(currentPath.startsWith("/today") || currentPath.startsWith("/tonight"))}>Today</Link>
               <Link href={mapHref} className={primaryNavClass(currentPath.includes("/map"))}>Map</Link>
+              <Link href={matchesHref} className={primaryNavClass(currentPath.includes("/matches"))}>Matches</Link>
               <Link href={promosHref} className={primaryNavClass(currentPath.startsWith("/promos"))}>Promos</Link>
               <Link href={myHref} className={primaryNavClass(currentPath.startsWith("/me"))}>My</Link>
             </nav>
@@ -268,20 +303,28 @@ export function SiteHeader() {
         </>
       ) : null}
 
-      <div className="mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] min-[600px]:hidden">
+      <div
+        className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
+          mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
+        }`}
+      >
         <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
-          <nav className="grid grid-cols-5 items-center gap-1">
+          <nav className="grid grid-cols-6 items-center gap-1">
             <Link href="/" className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>🏠</span>
               <span>Home</span>
+            </Link>
+            <Link href={todayHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/today") || currentPath.startsWith("/tonight") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>⚽</span>
+              <span>Today</span>
             </Link>
             <Link href={mapHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>🗺️</span>
               <span>Map</span>
             </Link>
-            <Link href={promosHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/promos") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>🏷️</span>
-              <span>Promos</span>
+            <Link href={matchesHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/matches") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>📅</span>
+              <span>Matches</span>
             </Link>
             <Link href={myHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>⭐</span>

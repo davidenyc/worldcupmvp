@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
-import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
@@ -91,6 +90,16 @@ export async function USAHomepage() {
 
       <section className="bg-bg px-4 pb-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-10">
+          <NorthAmericaMap cityCards={cityCards} />
+
+          <section>
+            <h2 className="text-xs uppercase tracking-[0.22em] text-mist">Browse by country</h2>
+            <h3 className="mt-1 text-2xl font-bold text-deep">Tap the nation you&apos;re backing.</h3>
+            <div className="mt-6">
+              <HomeCountryPicker countries={allCountries} />
+            </div>
+          </section>
+
           <section className="grid gap-4 md:grid-cols-3">
             {[
               { title: "Pick your city", body: "Start with the host city where you'll actually be watching." },
@@ -105,53 +114,6 @@ export async function USAHomepage() {
                 <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{step.body}</p>
               </div>
             ))}
-          </section>
-
-          <NorthAmericaMap cityCards={cityCards} />
-
-          <section>
-            <h2 className="text-xs uppercase tracking-[0.22em] text-mist">Browse by country</h2>
-            <h3 className="mt-1 text-2xl font-bold text-deep">Tap the nation you&apos;re backing.</h3>
-            <div className="mt-6">
-              <HomeCountryPicker countries={allCountries} />
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xs uppercase tracking-[0.22em] text-mist">Browse by host city</h2>
-            <h3 className="mt-1 text-2xl font-bold text-deep">Pick where you&apos;re watching.</h3>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              <CollapsibleGrid initialCount={6} noun="city" nounPlural="cities">
-                {cityCards.map((city) => (
-                  <Link
-                    key={city.key}
-                    href={`/${city.key}/map`}
-                    className="surface flex h-full flex-col gap-4 p-4 transition hover:-translate-y-0.5"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-lg font-semibold text-[color:var(--fg-primary)]">{city.label}</div>
-                        <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{city.stadiumName}</div>
-                      </div>
-                      <div className="rounded-full bg-[var(--bg-surface-elevated)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--fg-muted)]">
-                        {city.shortLabel}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <div className="text-small uppercase tracking-[0.16em] text-ink-55">Matches</div>
-                        <div className="mt-1 font-semibold text-[color:var(--fg-primary)]">{city.matchCount}</div>
-                      </div>
-                      <div>
-                        <div className="text-small uppercase tracking-[0.16em] text-ink-55">Venues</div>
-                        <div className="mt-1 font-semibold text-[color:var(--fg-primary)]">{city.venueCount}</div>
-                      </div>
-                    </div>
-                    <div className="mt-auto text-sm font-semibold text-[color:var(--fg-primary)]">Open city →</div>
-                  </Link>
-                ))}
-              </CollapsibleGrid>
-            </div>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">

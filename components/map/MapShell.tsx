@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarDays, MapPin, SlidersHorizontal } from "lucide-react";
 import { ReactNode, TouchEvent, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
@@ -142,43 +143,44 @@ export function MapShell({
       ) : null}
 
       {!isDesktop && !hideMobileResultsButton ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-          <div className="pb-safe border-t border-[#d8e3f5] bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
-            <div className="grid min-h-[64px] grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={onOpenGames}
-                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
-                  mobileGamesOpen
-                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
-                }`}
-              >
-                🏟 Games
-              </button>
-              <button
-                type="button"
-                onClick={onOpenFilters}
-                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
-                  mobileFilterOpen
-                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
-                }`}
-              >
-                ⚙ Filters
-              </button>
-              <button
-                type="button"
-                onClick={onOpenResults}
-                className={`inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
-                  mobileResultsOpen
-                    ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628]"
-                }`}
-              >
-                📍 {resultsCountLabel ?? "Venues"}
-              </button>
-            </div>
+        <div className="fixed left-3 top-[calc(env(safe-area-inset-top,0px)+5.5rem)] z-40 lg:hidden">
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={onOpenGames}
+              aria-label="Open games"
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
+                mobileGamesOpen
+                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
+              }`}
+            >
+              <CalendarDays className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenFilters}
+              aria-label="Open filters"
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
+                mobileFilterOpen
+                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
+              }`}
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenResults}
+              aria-label={`Open venues list${resultsCountLabel ? `, ${resultsCountLabel}` : ""}`}
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
+                mobileResultsOpen
+                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
+                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
+              }`}
+            >
+              <MapPin className="h-5 w-5" />
+            </button>
           </div>
         </div>
       ) : null}
