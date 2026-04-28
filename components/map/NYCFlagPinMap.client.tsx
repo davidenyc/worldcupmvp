@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 
 import { VenuePreviewCard } from "@/components/map/VenuePreviewCard";
 import { createClusterIcon } from "@/lib/maps/markerFactory";
@@ -325,7 +325,6 @@ export function NYCFlagPinMapClient({
             onMapReady?.(map);
           }}
         />
-        <ZoomControl position="bottomright" />
         <ThemeTileLayer isDark={isDark} />
         <MapEvents
           onMove={(center, zoom) => {

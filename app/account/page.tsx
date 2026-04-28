@@ -246,12 +246,20 @@ export default function AccountPage() {
                     className="rounded-full border border-[#f4b942] bg-white px-4 py-2 text-xl font-semibold text-[#0a1628] outline-none"
                   />
                 ) : (
-                  <button type="button" onClick={() => setEditingName(true)} className="text-left text-3xl font-bold">
-                    {user.displayName}
-                  </button>
+                  <div className="flex w-full items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingName(true)}
+                      className="min-w-0 flex-1 text-left text-[2.1rem] font-bold leading-none sm:text-3xl"
+                    >
+                      {user.displayName}
+                    </button>
+                    <div className="shrink-0">
+                      <TierBadge tier={tier} size="sm" />
+                    </div>
+                  </div>
                 )}
                 {showSavedFlash ? <div className="text-xs font-semibold text-[#f4b942]">✓ Saved</div> : null}
-                <TierBadge tier={tier} size="md" />
                 <div className="text-sm text-white/65">Member since {joinedLabel}</div>
                 <div className="text-xs text-white/50">Supporter profile</div>
               </div>
@@ -269,21 +277,21 @@ export default function AccountPage() {
           <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
             <div className="space-y-3">
               {currentTierFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/82">
+                <div key={feature} className="flex items-start gap-2 text-sm text-[color:var(--fg-primary)]">
                   <span className="mt-0.5 text-emerald-600">✓</span>
                   <span>{feature}</span>
                 </div>
               ))}
               {lockedFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 text-sm text-[#0a1628]/45">
+                <div key={feature} className="flex items-start gap-2 text-sm text-[color:var(--fg-muted)]">
                   <span className="mt-0.5">🔒</span>
                   <span>{feature}</span>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-[1.5rem] bg-[#f8fbff] p-4">
-              <div className="grid gap-3 text-sm text-[#0a1628]/72">
+            <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+              <div className="grid gap-3 text-sm text-[color:var(--fg-secondary)]">
                 <div>🏟 {favorites.length} venues saved</div>
                 <div>🌍 {user.favoriteCountries.length} countries filtered</div>
                 <div>📅 Member since {joinedLabel}</div>

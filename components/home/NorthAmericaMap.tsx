@@ -1,221 +1,269 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
-import { useUserCity } from "@/lib/hooks/useUserCity";
+import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
+import type { HostCity } from "@/lib/data/hostCities";
 
-const geoUrl = "/maps/countries-110m.json";
+const GEO_URL = "/maps/countries-110m.json";
 
-const COUNTRY_COLORS: Record<"usa" | "canada" | "mexico", string> = {
+const COUNTRY_FILL: Record<HostCity["country"], string> = {
+  usa: "#dbe7ff",
+  canada: "#fbe2e0",
+  mexico: "#dff2dc"
+};
+
+const NAME_TO_COUNTRY: Record<string, HostCity["country"]> = {
+  "United States of America": "usa",
+  Canada: "canada",
+  Mexico: "mexico"
+};
+
+const ID_TO_COUNTRY: Record<string, HostCity["country"]> = {
+  "840": "usa",
+  "124": "canada",
+  "484": "mexico"
+};
+
+const DOT_FILL: Record<HostCity["country"], string> = {
   usa: "#f4b942",
-  canada: "#e63946",
+  canada: "#ef4444",
   mexico: "#22c55e"
 };
 
-const COUNTRY_FILLS: Record<"840" | "124" | "484", string> = {
-  "840": "#d7e6ff",
-  "124": "#ffe1e7",
-  "484": "#daf4e2"
+type LabelDir =
+  | "right"
+  | "left"
+  | "top"
+  | "bottom"
+  | "top-right"
+  | "bottom-right"
+  | "top-left"
+  | "bottom-left";
+
+const LABEL_DIR: Record<string, LabelDir> = {
+  vancouver: "left",
+  seattle: "left",
+  toronto: "top",
+  boston: "right",
+  nyc: "right",
+  philadelphia: "bottom-right",
+  "kansas-city": "top",
+  "san-francisco": "left",
+  "las-vegas": "top-left",
+  "los-angeles": "bottom-left",
+  dallas: "bottom",
+  houston: "right",
+  atlanta: "right",
+  miami: "right",
+  monterrey: "right",
+  guadalajara: "left",
+  "mexico-city": "bottom"
 };
 
-const COUNTRY_STROKES: Record<"840" | "124" | "484", string> = {
-  "840": "#9ebce8",
-  "124": "#e7a8b5",
-  "484": "#8fc7a0"
-};
+interface NorthAmericaMapProps {
+  cityCards: Array<HostCity & { venueCount: number; matchCount: number }>;
+}
 
-const LABEL_OFFSETS: Record<string, { x: number; y: number; anchor: "start" | "middle" | "end" }> = {
-  nyc: { x: -24, y: -16, anchor: "end" },
-  boston: { x: 10, y: -10, anchor: "start" },
-  philadelphia: { x: 25, y: 27, anchor: "start" },
-  toronto: { x: 10, y: -10, anchor: "start" },
-  vancouver: { x: -10, y: -10, anchor: "end" },
-  "san-francisco": { x: -10, y: -10, anchor: "end" },
-  "los-angeles": { x: -10, y: 18, anchor: "end" },
-  seattle: { x: -10, y: -10, anchor: "end" },
-  "mexico-city": { x: 0, y: 22, anchor: "middle" },
-  guadalajara: { x: -10, y: -10, anchor: "end" },
-  monterrey: { x: 10, y: -10, anchor: "start" }
-};
+export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
+  const router = useRouter();
+  const [hovered, setHovered] = useState<string | null>(null);
 
-export type HomeCityCard = {
-  key: string;
-  label: string;
-  shortLabel: string;
-  lat: number;
-  lng: number;
-  stadiumName: string;
-  country: "usa" | "canada" | "mexico";
-  matchCount: number;
-  venueCount: number;
-};
+  const sortedCities = [...cityCards].sort((a, b) => (a.venueCount ?? 0) - (b.venueCount ?? 0));
 
-export function NorthAmericaMap({ cityCards }: { cityCards: HomeCityCard[] }) {
-  const { userCity, suggestedCity } = useUserCity();
-  const activeCityKey = userCity ?? suggestedCity ?? null;
+  const goTo = (key: string) => router.push(`/${key}/map`);
 
   return (
-    <div className="min-w-0 overflow-hidden border-y border-[#cfe0ff] bg-[#eef4ff] shadow-2xl shadow-[0_20px_60px_rgba(10,22,40,0.1)] dark:border-white/10 dark:bg-[#161b22] dark:shadow-none sm:rounded-[2rem] sm:border sm:p-4">
-      <div className="min-w-0 bg-white dark:bg-[#1c2330] sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:p-4 sm:dark:border-white/10">
-        <div className="mb-4 flex flex-col items-start gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:pt-0">
-          <div className="min-w-0">
-            <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">North America host map</div>
-            <div className="mt-1 text-xl font-semibold text-[#0a1628] dark:text-white sm:text-base">Tap a city to jump straight to its watch spots</div>
-          </div>
-          <div className="shrink-0 rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628]/75 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/75">
-            17 host cities
+    <div className="rounded-3xl border border-line bg-surface-2 p-3 shadow-card sm:p-4">
+      <header className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs uppercase tracking-[0.22em] text-mist">North America host map</div>
+          <h3 className="mt-1 text-base font-semibold text-deep sm:text-lg">Tap a city</h3>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-mist">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.usa }} />
+              USA 11
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.canada }} />
+              Canada 2
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: DOT_FILL.mexico }} />
+              Mexico 3
+            </span>
           </div>
         </div>
+        <span className="shrink-0 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-deep">
+          17 cities
+        </span>
+      </header>
 
-        <div className="overflow-hidden border-y border-[#cfe0ff] bg-[radial-gradient(circle_at_top,#ffffff_0%,#f3f8ff_42%,#e8f0ff_100%)] sm:hidden">
-          <div style={{ overflow: "hidden", width: "100%", maxWidth: "100%" }}>
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{ scale: 520, center: [-98, 35.5] }}
-              style={{ width: "100%", height: "100%" }}
-              className="h-[320px] w-full"
-            >
-              <Geographies geography={geoUrl}>
-                {({ geographies }) =>
-                  geographies.map((geo) => {
+      <div className="relative w-full overflow-hidden rounded-2xl bg-[#eef4ff]">
+        <div className="aspect-[16/9] sm:aspect-[2/1]">
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{ scale: 820, center: [-95, 36] }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <Geographies geography={GEO_URL}>
+              {({ geographies }) =>
+                geographies
+                  .filter((geo) => {
+                    const name = String(geo.properties.name ?? "");
                     const id = String((geo as { id?: string | number }).id ?? "");
-                    const isTarget = id === "840" || id === "124" || id === "484";
-                    const fill = isTarget ? COUNTRY_FILLS[id as keyof typeof COUNTRY_FILLS] : "#f7faff";
-                    const stroke = isTarget ? COUNTRY_STROKES[id as keyof typeof COUNTRY_STROKES] : "#d7e3f7";
-
+                    return Boolean(NAME_TO_COUNTRY[name] || ID_TO_COUNTRY[id]);
+                  })
+                  .map((geo) => {
+                    const name = String(geo.properties.name ?? "");
+                    const id = String((geo as { id?: string | number }).id ?? "");
+                    const country = NAME_TO_COUNTRY[name] ?? ID_TO_COUNTRY[id];
                     return (
                       <Geography
                         key={geo.rsmKey}
                         geography={geo}
                         style={{
-                          default: { fill, stroke, strokeWidth: isTarget ? 1 : 0.45, outline: "none" },
-                          hover: { fill, stroke, strokeWidth: isTarget ? 1 : 0.45, outline: "none" },
-                          pressed: { fill, stroke, strokeWidth: isTarget ? 1 : 0.45, outline: "none" }
+                          default: { fill: COUNTRY_FILL[country], stroke: "#9fc5e4", strokeWidth: 0.6, outline: "none" },
+                          hover: { fill: COUNTRY_FILL[country], outline: "none" },
+                          pressed: { fill: COUNTRY_FILL[country], outline: "none" }
                         }}
                       />
                     );
                   })
-                }
-              </Geographies>
+              }
+            </Geographies>
 
-              {cityCards.map((card) => {
-                const labelOffset = LABEL_OFFSETS[card.key] ?? { x: 0, y: 22, anchor: "middle" as const };
-                return (
-                  <Marker key={card.key} coordinates={[card.lng, card.lat]}>
-                    <Link
-                      href={`/${card.key}/map`}
-                      aria-label={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
-                      title={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
-                    >
-                      <circle
-                        r={activeCityKey === card.key ? 12 : 9}
-                        fill={COUNTRY_COLORS[card.country]}
-                        stroke="white"
-                        strokeWidth={2.5}
-                        style={{ cursor: "pointer" }}
+            {sortedCities.map((city) => {
+              const isHovered = hovered === city.key;
+              const dotR = 8 + Math.min((city.venueCount ?? 0) / 60, 6);
+              const labelText = isHovered
+                ? `${city.label} · ${city.venueCount.toLocaleString()}`
+                : city.shortLabel;
+              const labelW = labelText.length * 6.6 + 18;
+              const dir = LABEL_DIR[city.key] ?? "right";
+              const labelOffset = computeLabelOffset(dir, dotR, labelW);
+
+              return (
+                <Marker key={city.key} coordinates={[city.lng, city.lat]}>
+                  <g
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${city.label} — ${city.venueCount} venues, ${city.matchCount} matches`}
+                    onMouseEnter={() => setHovered(city.key)}
+                    onMouseLeave={() => setHovered(null)}
+                    onFocus={() => setHovered(city.key)}
+                    onBlur={() => setHovered(null)}
+                    onClick={() => goTo(city.key)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        goTo(city.key);
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <circle r={32} fill="transparent" />
+
+                    {isHovered ? (
+                      <circle r={dotR + 7} fill={DOT_FILL[city.country]} opacity={0.2} />
+                    ) : null}
+
+                    <circle
+                      r={dotR}
+                      fill={DOT_FILL[city.country]}
+                      stroke="white"
+                      strokeWidth={2.2}
+                    />
+
+                    <g transform={`translate(${labelOffset.x}, ${labelOffset.y})`} style={{ pointerEvents: "none" }}>
+                      <rect
+                        width={labelW}
+                        height={20}
+                        rx={10}
+                        fill="white"
+                        stroke="rgba(10,22,40,0.14)"
+                        strokeWidth={1}
                       />
                       <text
-                        textAnchor={labelOffset.anchor}
-                        x={labelOffset.x}
-                        y={labelOffset.y}
-                        fontSize={10}
-                        fill="#0a1628"
-                        fontWeight="700"
-                        style={{ pointerEvents: "none" }}
+                        x={labelW / 2}
+                        y={13}
+                        textAnchor="middle"
+                        style={{ fontSize: 11, fontWeight: 700, fill: "#0a1628", letterSpacing: "0.02em" }}
                       >
-                        {card.shortLabel}
+                        {labelText}
                       </text>
-                    </Link>
-                  </Marker>
-                );
-              })}
-            </ComposableMap>
-          </div>
-        </div>
-
-        <div className="sm:hidden flex min-w-0 gap-2 overflow-x-auto pb-3 px-4 pt-3">
-          {cityCards.map((card) => (
-            <Link
-              key={card.key}
-              href={`/${card.key}/map`}
-              className="shrink-0 whitespace-nowrap rounded-full border border-[#d8e3f5] bg-white px-3 py-2 text-xs font-semibold text-[#0a1628]"
-            >
-              {card.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="hidden min-w-0 overflow-hidden bg-[radial-gradient(circle_at_top,#ffffff_0%,#f4f8ff_40%,#e7eefc_100%)] dark:bg-[#111827] sm:block sm:rounded-[1.5rem] sm:border sm:border-[#cfe0ff] sm:dark:border-white/10">
-          <div style={{ overflow: "hidden", width: "100%", maxWidth: "100%" }}>
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{ scale: 760, center: [-98, 36.5] }}
-              style={{ width: "100%", height: "100%" }}
-              className="h-[360px] w-full sm:h-[420px] md:h-[500px] lg:h-[560px]"
-            >
-              <Geographies geography={geoUrl}>
-                {({ geographies }) =>
-                  geographies.map((geo) => {
-                    const id = String((geo as { id?: string | number }).id ?? "");
-                    const isTarget = id === "840" || id === "124" || id === "484";
-                    const fill = isTarget ? COUNTRY_FILLS[id as keyof typeof COUNTRY_FILLS] : "#f7faff";
-                    const stroke = isTarget ? COUNTRY_STROKES[id as keyof typeof COUNTRY_STROKES] : "#d7e3f7";
-
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        style={{
-                          default: { fill, stroke, strokeWidth: isTarget ? 1.05 : 0.5, outline: "none" },
-                          hover: { fill, stroke, strokeWidth: isTarget ? 1.05 : 0.5, outline: "none" },
-                          pressed: { fill, stroke, strokeWidth: isTarget ? 1.05 : 0.5, outline: "none" }
-                        }}
-                      />
-                    );
-                  })
-                }
-              </Geographies>
-
-              {cityCards.map((card) => (
-                <Marker key={card.key} coordinates={[card.lng, card.lat]}>
-                  <Link
-                    href={`/${card.key}/map`}
-                    aria-label={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
-                    title={`${card.label} · ${card.stadiumName} · ${card.matchCount} matches`}
-                  >
-                    {(() => {
-                      const labelOffset = LABEL_OFFSETS[card.key] ?? { x: 0, y: 20, anchor: "middle" as const };
-                      return (
-                        <>
-                          <circle
-                            r={activeCityKey === card.key ? 10 : 7}
-                            fill={COUNTRY_COLORS[card.country]}
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ cursor: "pointer" }}
-                          />
-                          <text
-                            textAnchor={labelOffset.anchor}
-                            x={labelOffset.x}
-                            y={labelOffset.y}
-                            fontSize={9}
-                            fill="#0a1628"
-                            fontWeight="600"
-                            style={{ pointerEvents: "none" }}
-                          >
-                            {card.shortLabel}
-                          </text>
-                        </>
-                      );
-                    })()}
-                  </Link>
+                    </g>
+                  </g>
                 </Marker>
-              ))}
-            </ComposableMap>
-          </div>
+              );
+            })}
+          </ComposableMap>
         </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <CollapsibleGrid initialCount={6} noun="city" nounPlural="cities">
+          {[...cityCards]
+            .sort((a, b) => (b.venueCount ?? 0) - (a.venueCount ?? 0))
+            .map((city) => (
+              <button
+                key={city.key}
+                type="button"
+                onClick={() => goTo(city.key)}
+                onMouseEnter={() => setHovered(city.key)}
+                onMouseLeave={() => setHovered(null)}
+                className={[
+                  "flex h-14 items-center gap-3 rounded-2xl border px-3 text-left transition",
+                  hovered === city.key
+                    ? "border-gold bg-gold/10"
+                    : "border-line bg-surface hover:bg-surface-2"
+                ].join(" ")}
+                aria-label={`${city.label} — ${city.venueCount.toLocaleString()} venues`}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ backgroundColor: DOT_FILL[city.country] }}
+                  >
+                    {city.shortLabel}
+                  </span>
+                  <span className="truncate text-sm font-semibold text-deep md:hidden">
+                    {city.shortLabel}
+                  </span>
+                  <span className="hidden min-w-0 truncate text-sm font-semibold text-deep md:inline">
+                    {city.label}
+                  </span>
+                </span>
+                <span className="ml-auto shrink-0 text-xs font-semibold text-mist tabular-nums">
+                  {city.venueCount.toLocaleString()}
+                </span>
+              </button>
+            ))}
+        </CollapsibleGrid>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-mist">
+        <span className="hidden sm:inline">Tap any city to open its venue list</span>
+        <span className="sm:ml-auto">Top cities by venue count</span>
       </div>
     </div>
   );
+}
+
+function computeLabelOffset(dir: LabelDir, dotR: number, labelW: number) {
+  const pad = 4;
+  const labelH = 20;
+  const offsets: Record<LabelDir, { x: number; y: number }> = {
+    right: { x: dotR + pad, y: -labelH / 2 },
+    left: { x: -dotR - pad - labelW, y: -labelH / 2 },
+    top: { x: -labelW / 2, y: -dotR - pad - labelH },
+    bottom: { x: -labelW / 2, y: dotR + pad },
+    "top-right": { x: dotR + pad, y: -dotR - pad - labelH },
+    "bottom-right": { x: dotR + pad, y: dotR + pad },
+    "top-left": { x: -dotR - pad - labelW, y: -dotR - pad - labelH },
+    "bottom-left": { x: -dotR - pad - labelW, y: dotR + pad }
+  };
+  return offsets[dir];
 }

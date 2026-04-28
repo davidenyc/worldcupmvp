@@ -5,34 +5,24 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { demoCountries } from "@/lib/data/demo";
 import { submissionSchema } from "@/lib/validation/submission";
 
 type FormValues = {
   name: string;
   address: string;
-  borough: "Manhattan" | "Brooklyn" | "Queens" | "Bronx" | "Staten Island";
-  neighborhood?: string;
-  website?: string;
-  instagram?: string;
   countryAssociation: string;
-  showsSoccer: boolean;
-  acceptsReservations: boolean;
-  approximateCapacity?: number;
-  description: string;
+  notes: string;
+  email: string;
 };
+
+const COUNTRY_OPTIONS = demoCountries
+  .map((country) => country.name)
+  .sort((left, right) => left.localeCompare(right));
 
 export function SubmitForm() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const { register, handleSubmit, setValue, watch, reset } = useForm<FormValues>({
-    defaultValues: {
-      borough: "Manhattan",
-      showsSoccer: true,
-      acceptsReservations: false
-    }
-  });
-  const showsSoccer = watch("showsSoccer");
-  const acceptsReservations = watch("acceptsReservations");
+  const { register, handleSubmit, reset } = useForm<FormValues>();
 
   function onSubmit(values: FormValues) {
     const parsed = submissionSchema.safeParse(values);
@@ -47,48 +37,50 @@ export function SubmitForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="surface-strong p-6">
       <div className="grid gap-4 md:grid-cols-2">
-        <Input placeholder="Venue name" {...register("name")} />
-        <Input placeholder="Address" {...register("address")} />
-        <Select {...register("borough")}>
-          <option value="Manhattan">Manhattan</option>
-          <option value="Brooklyn">Brooklyn</option>
-          <option value="Queens">Queens</option>
-          <option value="Bronx">Bronx</option>
-          <option value="Staten Island">Staten Island</option>
-        </Select>
-        <Input placeholder="Neighborhood" {...register("neighborhood")} />
-        <Input placeholder="Website" {...register("website")} />
-        <Input placeholder="Instagram URL" {...register("instagram")} />
-        <Input placeholder="Country association" {...register("countryAssociation")} />
-        <Input placeholder="Approximate capacity" type="number" {...register("approximateCapacity", { valueAsNumber: true })} />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-6 text-sm text-navy/72">
-        <label className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={showsSoccer}
-            onChange={(e) => setValue("showsSoccer", e.target.checked)}
-            className="h-4 w-4 rounded border-line"
+        <Input
+          placeholder="Venue name"
+          aria-label="Venue name"
+          className="placeholder:text-ink/45 dark:placeholder:text-white/40"
+          {...register("name")}
+        />
+        <Input
+          placeholder="Address"
+          aria-label="Address"
+          className="placeholder:text-ink/45 dark:placeholder:text-white/40"
+          {...register("address")}
+        />
+        <div className="md:col-span-2">
+          <Input
+            list="submit-country-associations"
+            placeholder="Country association"
+            aria-label="Country association"
+            className="placeholder:text-ink/45 dark:placeholder:text-white/40"
+            {...register("countryAssociation")}
           />
-          Shows soccer matches
-        </label>
-        <label className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={acceptsReservations}
-            onChange={(e) => setValue("acceptsReservations", e.target.checked)}
-            className="h-4 w-4 rounded border-line"
+          <datalist id="submit-country-associations">
+            {COUNTRY_OPTIONS.map((country) => (
+              <option key={country} value={country} />
+            ))}
+          </datalist>
+        </div>
+        <div className="md:col-span-2">
+          <textarea
+            className="min-h-[160px] w-full rounded-3xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-ink/45 focus:border-accent focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/40"
+            placeholder="Notes on the crowd, TVs, energy, or why this place matters on match day."
+            aria-label="Notes"
+            {...register("notes")}
           />
-          Accepts reservations
-        </label>
+        </div>
+        <div className="md:col-span-2">
+          <Input
+            placeholder="Email"
+            type="email"
+            aria-label="Email"
+            className="placeholder:text-ink/45 dark:placeholder:text-white/40"
+            {...register("email")}
+          />
+        </div>
       </div>
-
-      <textarea
-        className="mt-4 min-h-[160px] w-full rounded-3xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-mist focus:border-accent focus:outline-none"
-        placeholder="Describe the venue, likely fan base, and why it matters on match day."
-        {...register("description")}
-      />
 
       {status === "success" ? (
         <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -103,10 +95,10 @@ export function SubmitForm() {
       ) : null}
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-navy/62">
-          Suggestions go into the moderation queue next.
-        </p>
-        <Button type="submit" className="w-full sm:w-auto">Submit venue</Button>
+        <p className="text-sm text-navy/62">We&apos;ll review within 48 hours.</p>
+        <Button type="submit" className="w-full sm:w-auto">
+          Submit venue
+        </Button>
       </div>
     </form>
   );

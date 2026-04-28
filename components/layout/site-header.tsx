@@ -4,12 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ChevronDown,
   Heart,
   MapPin,
   MoonStar,
   Search,
-  Star,
   SunMedium,
   User2
 } from "lucide-react";
@@ -18,7 +16,6 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { useUserCity } from "@/lib/hooks/useUserCity";
-import { useMembership } from "@/lib/store/membership";
 import { useTheme } from "@/lib/store/theme";
 
 const CITY_LOOKUP = new Map(HOST_CITIES.map((city) => [city.key, city] as const));
@@ -48,9 +45,9 @@ export function SiteHeader() {
   const router = useRouter();
   const { userCity, suggestedCity, hasChosenCity, setUserCity } = useUserCity();
   const { isDark, setTheme } = useTheme();
-  const tier = useMembership((state) => state.tier);
   const [cityOpen, setCityOpen] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
+  const [mobileNavVisible, setMobileNavVisible] = useState(true);
 
   const activeCity = useMemo(() => {
     const fromPath = getActiveCityFromPath(pathname);
@@ -61,16 +58,12 @@ export function SiteHeader() {
   const activeCityData = CITY_LOOKUP.get(activeCity) ?? HOST_CITIES[0];
   const nearestCity = suggestedCity ?? null;
   const currentPath = pathname ?? "/";
+  const todayHref = "/today";
   const mapHref = `/${activeCity}/map`;
   const matchesHref = `/${activeCity}/matches`;
-  const todayHref = "/today";
+  const promosHref = "/promos";
+  const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
-  const membershipHref = tier === "free" ? `/membership?return=${encodeURIComponent(currentPath)}` : "/membership";
-  const hasMatchesToday = useMemo(() => {
-    const today = new Date();
-    const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    return worldCup2026Matches.some((match) => match.startsAt.slice(0, 10) === dateKey);
-  }, []);
 
   useEffect(() => {
     const handleOpenCitySwitcher = () => setCityOpen(true);
@@ -81,6 +74,36 @@ export function SiteHeader() {
   useEffect(() => {
     setDesktopMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const updateNav = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+
+      if (currentY < 24) {
+        setMobileNavVisible(true);
+      } else if (delta > 6) {
+        setMobileNavVisible(false);
+      } else if (delta < -6) {
+        setMobileNavVisible(true);
+      }
+
+      lastY = currentY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateNav);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function navigateToCity(nextCity: string) {
     setUserCity(nextCity);
@@ -115,18 +138,18 @@ export function SiteHeader() {
       >
         <div className="container-shell flex min-h-[64px] items-center justify-between gap-3 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold text-base font-black text-white shadow-card">
+            <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
+                style={{ backgroundColor: "#f4b942", color: "#ffffff" }}
+              >
                 GM
               </div>
-              <div className="min-w-0">
-                <div
-                  className="truncate text-sm font-semibold tracking-tight text-[color:var(--fg-primary)] sm:text-base"
-                  style={{ textShadow: "0 0 14px rgba(255, 255, 255, 0.75), 0 0 24px rgba(255, 255, 255, 0.45)" }}
-                >
+              <div className="hidden min-w-0 md:block">
+                <div className="truncate text-base font-semibold text-deep">
                   GameDay Map
                 </div>
-                <div className="hidden text-small text-[color:var(--fg-muted)] lg:block">
+                <div className="hidden truncate text-xs text-mist lg:block">
                   World Cup 2026 watch parties
                 </div>
               </div>
@@ -134,9 +157,11 @@ export function SiteHeader() {
 
             <nav className="hidden items-center gap-1 lg:flex">
               <Link href="/" className={primaryNavClass(currentPath === "/")}>Home</Link>
-              <Link href={todayHref} className={primaryNavClass(currentPath === "/today")}>Today</Link>
+              <Link href={todayHref} className={primaryNavClass(currentPath.startsWith("/today") || currentPath.startsWith("/tonight"))}>Today</Link>
               <Link href={mapHref} className={primaryNavClass(currentPath.includes("/map"))}>Map</Link>
               <Link href={matchesHref} className={primaryNavClass(currentPath.includes("/matches"))}>Matches</Link>
+              <Link href={promosHref} className={primaryNavClass(currentPath.startsWith("/promos"))}>Promos</Link>
+              <Link href={myHref} className={primaryNavClass(currentPath.startsWith("/me"))}>My</Link>
             </nav>
           </div>
 
@@ -144,23 +169,16 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setCityOpen((current) => !current)}
-              className="inline-flex h-10 min-w-0 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm font-semibold text-deep transition hover:bg-surface-2"
+              aria-label={`Switch city — currently ${activeCityData.label}`}
             >
-              <span className="truncate md:hidden">{activeCityData.shortLabel}</span>
-              <span className="hidden truncate md:inline">{activeCityData.label}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--fg-muted)]" />
+              <span className="md:hidden">{activeCityData.shortLabel}</span>
+              <span className="hidden md:inline">{activeCityData.label}</span>
+              <span className="text-xs text-mist">▾</span>
             </button>
 
             <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} lg:h-11 lg:w-11`}>
               <Search className="h-4 w-4" />
-            </Link>
-
-            <Link
-              href={membershipHref}
-              aria-label={tier === "free" ? "Go Pro" : tier === "fan" ? "Fan Pass" : "Supporter Elite"}
-              className={`${actionButtonClass()} border-gold text-gold lg:h-11 lg:w-11`}
-            >
-              <Star className={`h-4 w-4 ${tier === "free" ? "" : "fill-current"}`} />
             </Link>
 
             <button
@@ -285,15 +303,19 @@ export function SiteHeader() {
         </>
       ) : null}
 
-      <div className="mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] min-[600px]:hidden">
+      <div
+        className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
+          mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
+        }`}
+      >
         <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
-          <nav className="grid grid-cols-5 items-center gap-1">
+          <nav className="grid grid-cols-6 items-center gap-1">
             <Link href="/" className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>🏠</span>
               <span>Home</span>
             </Link>
-            <Link href={todayHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/today" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span className={hasMatchesToday ? "mobile-tonight-pulse" : ""}>⚽</span>
+            <Link href={todayHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/today") || currentPath.startsWith("/tonight") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>⚽</span>
               <span>Today</span>
             </Link>
             <Link href={mapHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
@@ -303,6 +325,10 @@ export function SiteHeader() {
             <Link href={matchesHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/matches") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
               <span>📅</span>
               <span>Matches</span>
+            </Link>
+            <Link href={myHref} className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+              <span>⭐</span>
+              <span>My</span>
             </Link>
             <Link
               href="/account"

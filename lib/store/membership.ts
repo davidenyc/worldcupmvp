@@ -8,9 +8,11 @@ export type MembershipTier = "free" | "fan" | "elite";
 export type PremiumFeature =
   | "unlimited_country_filters"
   | "unlimited_saves"
+  | "unlimited_promo_redemptions"
   | "reservation_request"
   | "premium_venue_badges"
   | "match_alerts"
+  | "elite_activity_timeline"
   | "venue_concierge"
   | "early_access"
   | "advanced_filters"
@@ -21,9 +23,11 @@ export type PremiumFeature =
 export const FEATURE_GATES: Record<PremiumFeature, MembershipTier[]> = {
   unlimited_country_filters: ["fan", "elite"],
   unlimited_saves: ["fan", "elite"],
+  unlimited_promo_redemptions: ["fan", "elite"],
   reservation_request: ["fan", "elite"],
   premium_venue_badges: ["fan", "elite"],
   match_alerts: ["elite"],
+  elite_activity_timeline: ["elite"],
   venue_concierge: ["elite"],
   early_access: ["elite"],
   advanced_filters: ["elite"],
