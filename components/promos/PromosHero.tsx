@@ -8,7 +8,7 @@ export function PromosHero({
 }) {
   return (
     <section className="max-w-4xl">
-      <div className="text-sm uppercase tracking-[0.2em] text-mist">Matchday deals</div>
+      <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Matchday deals</div>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">
         Get to the bar early. Get rewarded.
       </h1>
