@@ -1,11 +1,10 @@
 "use client";
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { useUserStore } from "@/lib/store/user";
 
 type WatchPlanMap = Record<string, string | null>;
 
-interface WatchlistState {
+export interface WatchlistState {
   watchedMatches: string[];
   watchVenues: WatchPlanMap;
   toggleWatchedMatch: (matchId: string) => void;
@@ -14,48 +13,21 @@ interface WatchlistState {
   resetWatchlist: () => void;
 }
 
-export const useWatchlistStore = create<WatchlistState>()(
-  persist(
-    (set, get) => ({
-      watchedMatches: [],
-      watchVenues: {},
-      toggleWatchedMatch: (matchId) =>
-        set((state) => {
-          const alreadyWatching = state.watchedMatches.includes(matchId);
-          if (alreadyWatching) {
-            const nextWatchVenues = { ...state.watchVenues };
-            delete nextWatchVenues[matchId];
-            return {
-              watchedMatches: state.watchedMatches.filter((entry) => entry !== matchId),
-              watchVenues: nextWatchVenues
-            };
-          }
+function toWatchlistState(state: ReturnType<typeof useUserStore.getState>): WatchlistState {
+  return {
+    watchedMatches: state.profile.watchlistMatchIds,
+    watchVenues: state.profile.watchVenues,
+    toggleWatchedMatch: state.toggleWatchlistMatch,
+    setWatchVenue: state.setWatchVenue,
+    clearWatchVenue: state.clearWatchVenue,
+    resetWatchlist: () =>
+      state.updateUser({
+        watchlistMatchIds: [],
+        watchVenues: {}
+      })
+  };
+}
 
-          return {
-            watchedMatches: [...state.watchedMatches, matchId],
-            watchVenues: state.watchVenues
-          };
-        }),
-      setWatchVenue: (matchId, venueSlug) =>
-        set((state) => ({
-          watchedMatches: state.watchedMatches.includes(matchId)
-            ? state.watchedMatches
-            : [...state.watchedMatches, matchId],
-          watchVenues: {
-            ...state.watchVenues,
-            [matchId]: venueSlug
-          }
-        })),
-      clearWatchVenue: (matchId) =>
-        set((state) => {
-          const nextWatchVenues = { ...state.watchVenues };
-          delete nextWatchVenues[matchId];
-          return { watchVenues: nextWatchVenues };
-        }),
-      resetWatchlist: () => set({ watchedMatches: [], watchVenues: {} })
-    }),
-    {
-      name: "gameday-watchlist"
-    }
-  )
-);
+export function useWatchlistStore<T>(selector: (state: WatchlistState) => T) {
+  return useUserStore((state) => selector(toWatchlistState(state)));
+}

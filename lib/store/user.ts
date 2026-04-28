@@ -11,6 +11,9 @@ export interface UserProfile {
   favoriteCity: string;
   favoriteCountries: string[];
   followedCountries: string[];
+  watchlistMatchIds: string[];
+  watchVenues: Record<string, string | null>;
+  activity: UserActivityEntry[];
   language: string;
   prefersDarkMode: boolean;
   notifyMatchAlerts: boolean;
@@ -22,11 +25,23 @@ export interface UserProfile {
   emailSubscribed: boolean;
 }
 
-type UserStore = {
+export interface UserActivityEntry {
+  at: number;
+  kind: string;
+  label: string;
+  href?: string;
+}
+
+export type UserStore = {
   profile: UserProfile;
   updateUser: (updates: Partial<UserProfile>) => void;
   ensureUser: () => void;
   resetUser: () => void;
+  toggleWatchlistMatch: (matchId: string) => void;
+  setWatchVenue: (matchId: string, venueSlug: string | null) => void;
+  clearWatchVenue: (matchId: string) => void;
+  appendActivity: (entry: Omit<UserActivityEntry, "at"> & { at?: number }) => void;
+  clearActivity: () => void;
 };
 
 function createIdentity() {
@@ -44,6 +59,9 @@ function createDefaultProfile(): UserProfile {
     favoriteCity: "nyc",
     favoriteCountries: [],
     followedCountries: [],
+    watchlistMatchIds: [],
+    watchVenues: {},
+    activity: [],
     language: "en",
     prefersDarkMode: false,
     notifyMatchAlerts: false,
@@ -63,11 +81,14 @@ function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
     ...createDefaultProfile(),
     ...profile,
     favoriteCountries,
-    followedCountries
+    followedCountries,
+    watchlistMatchIds: profile.watchlistMatchIds ?? [],
+    watchVenues: profile.watchVenues ?? {},
+    activity: profile.activity ?? []
   };
 }
 
-const useUserStore = create<UserStore>()(
+export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
       profile: createDefaultProfile(),
@@ -92,7 +113,71 @@ const useUserStore = create<UserStore>()(
       resetUser: () =>
         set({
           profile: createDefaultProfile()
-        })
+        }),
+      toggleWatchlistMatch: (matchId) =>
+        set((state) => {
+          const alreadyWatching = state.profile.watchlistMatchIds.includes(matchId);
+          if (alreadyWatching) {
+            const nextWatchVenues = { ...state.profile.watchVenues };
+            delete nextWatchVenues[matchId];
+
+            return {
+              profile: normalizeProfile({
+                ...state.profile,
+                watchlistMatchIds: state.profile.watchlistMatchIds.filter((entry) => entry !== matchId),
+                watchVenues: nextWatchVenues
+              })
+            };
+          }
+
+          return {
+            profile: normalizeProfile({
+              ...state.profile,
+              watchlistMatchIds: [...state.profile.watchlistMatchIds, matchId]
+            })
+          };
+        }),
+      setWatchVenue: (matchId, venueSlug) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
+              ? state.profile.watchlistMatchIds
+              : [...state.profile.watchlistMatchIds, matchId],
+            watchVenues: {
+              ...state.profile.watchVenues,
+              [matchId]: venueSlug
+            }
+          })
+        })),
+      clearWatchVenue: (matchId) =>
+        set((state) => {
+          const nextWatchVenues = { ...state.profile.watchVenues };
+          delete nextWatchVenues[matchId];
+          return {
+            profile: normalizeProfile({
+              ...state.profile,
+              watchVenues: nextWatchVenues
+            })
+          };
+        }),
+      appendActivity: (entry) =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            activity: [
+              { ...entry, at: entry.at ?? Date.now() },
+              ...state.profile.activity
+            ].sort((a, b) => b.at - a.at).slice(0, 25)
+          })
+        })),
+      clearActivity: () =>
+        set((state) => ({
+          profile: normalizeProfile({
+            ...state.profile,
+            activity: []
+          })
+        }))
     }),
     {
       name: "gameday-user",
@@ -127,4 +212,8 @@ export function useUpdateUser() {
 
 export function useResetUser() {
   return useUserStore((state) => state.resetUser);
+}
+
+export function useAppendActivity() {
+  return useUserStore((state) => state.appendActivity);
 }
