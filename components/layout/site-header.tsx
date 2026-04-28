@@ -7,10 +7,14 @@ import { createPortal } from "react-dom";
 import {
   Crown,
   Heart,
+  Home,
+  Map as MapIcon,
   MapPin,
   MoonStar,
   Search,
   SunMedium,
+  Tag,
+  Trophy,
   User2
 } from "lucide-react";
 
@@ -282,20 +286,20 @@ export function SiteHeader() {
         >
           <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
             <nav className="flex items-stretch justify-between gap-1">
-              <Link href="/" className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-                <span>🏠</span>
+              <Link href="/" className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <Home className="h-5 w-5" />
                 <span>Home</span>
               </Link>
-              <Link href={mapHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-                <span>🗺️</span>
+              <Link href={mapHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <MapIcon className="h-5 w-5" />
                 <span>Map</span>
               </Link>
-              <Link href={promosHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/promos") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-                <span>🏷️</span>
+              <Link href={promosHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/promos") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <Tag className="h-5 w-5" />
                 <span>Promos</span>
               </Link>
-              <Link href={myHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-                <span>⭐</span>
+              <Link href={myHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <Trophy className="h-5 w-5" />
                 <span>My Cup</span>
               </Link>
             </nav>
