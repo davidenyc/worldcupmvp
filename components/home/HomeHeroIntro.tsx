@@ -2,6 +2,7 @@
 
 import { getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
+import { HomeHeroActions } from "./HomeHeroActions";
 import { HomeCityPrompt } from "./HomeCityPrompt";
 
 export function HomeHeroIntro() {
@@ -17,6 +18,9 @@ export function HomeHeroIntro() {
       <p className="mt-3 text-base text-mist sm:text-lg">Matches today. Bars tonight.</p>
       <div className="mt-2">
         <HomeCityPrompt />
+      </div>
+      <div className="mt-5">
+        <HomeHeroActions />
       </div>
     </div>
   );

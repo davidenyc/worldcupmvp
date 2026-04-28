@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
 import { CollapsibleGrid } from "@/components/ui/CollapsibleGrid";
 import type { HostCity } from "@/lib/data/hostCities";
+import { useUser } from "@/lib/store/user";
 
 const GEO_URL = "/maps/countries-110m.json";
 
@@ -69,6 +71,7 @@ interface NorthAmericaMapProps {
 
 export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
   const router = useRouter();
+  const user = useUser();
   const [hovered, setHovered] = useState<string | null>(null);
 
   const sortedCities = [...cityCards].sort((a, b) => (a.venueCount ?? 0) - (b.venueCount ?? 0));
@@ -96,9 +99,17 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
             </span>
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-deep">
-          17 cities
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="shrink-0 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-deep">
+            17 cities
+          </span>
+          <Link
+            href={user.favoriteCountrySlug ? "/me" : "/welcome"}
+            className="inline-flex h-9 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
+          >
+            {user.favoriteCountrySlug ? "Open my Cup →" : "Personalize my Cup →"}
+          </Link>
+        </div>
       </header>
 
       <div className="relative w-full overflow-hidden rounded-2xl bg-[#eef4ff]">
