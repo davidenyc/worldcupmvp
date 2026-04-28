@@ -42,6 +42,7 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "terms",
   "today",
   "tonight",
+  "welcome",
   "venue"
 ]);
 
