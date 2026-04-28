@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarDays, MapPin, SlidersHorizontal } from "lucide-react";
 import { ReactNode, TouchEvent, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
@@ -24,6 +23,7 @@ function useSwipeDown(onSwipeDown?: () => void) {
 export function MapShell({
   banner,
   map,
+  mobileControls,
   results,
   resultsCountLabel,
   hideMobileResultsButton = false,
@@ -42,6 +42,7 @@ export function MapShell({
 }: {
   banner?: ReactNode;
   map: ReactNode;
+  mobileControls?: ReactNode;
   results: ReactNode;
   resultsCountLabel?: string;
   hideMobileResultsButton?: boolean;
@@ -80,6 +81,7 @@ export function MapShell({
       <div className="absolute inset-0">{map}</div>
 
       {banner ? <div className="absolute inset-x-4 top-4 z-40">{banner}</div> : null}
+      {mobileControls ? <div className="lg:hidden">{mobileControls}</div> : null}
 
       {isDesktop && !hideDesktopResults && !desktopResultsCollapsed ? (
         <div
@@ -140,49 +142,6 @@ export function MapShell({
         >
           ▸ {resultsCountLabel ?? "Results"}
         </button>
-      ) : null}
-
-      {!isDesktop && !hideMobileResultsButton ? (
-        <div className="fixed left-3 top-[calc(env(safe-area-inset-top,0px)+5.5rem)] z-40 lg:hidden">
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={onOpenGames}
-              aria-label="Open games"
-              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
-                mobileGamesOpen
-                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
-              }`}
-            >
-              <CalendarDays className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenFilters}
-              aria-label="Open filters"
-              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
-                mobileFilterOpen
-                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
-              }`}
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenResults}
-              aria-label={`Open venues list${resultsCountLabel ? `, ${resultsCountLabel}` : ""}`}
-              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition ${
-                mobileResultsOpen
-                  ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                  : "border-[#d8e3f5] bg-white/95 text-[#0a1628]"
-              }`}
-            >
-              <MapPin className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
       ) : null}
 
       {!isDesktop ? (

@@ -578,7 +578,14 @@ export function MapPageClient({
     Boolean(deferredQuery),
     sortKey !== "matchday"
   ].filter(Boolean).length;
-
+  const mobileChipClass =
+    "inline-flex min-h-9 snap-start items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white";
+  const mobileChipActiveClass =
+    "border-[#f4b942] bg-[#fff5da] text-[#0a1628] dark:border-[#f4b942] dark:bg-[#3a2b00] dark:text-[#ffe2a0]";
+  const selectedCountryFlags = selectedCountrySlugs
+    .map((slug) => countryLookup.get(slug)?.flagEmoji)
+    .filter(Boolean)
+    .join(" ");
   const filterVenues = (venues: RankedVenue[]) => {
     const filtered = venues.filter((venue) => {
       if (selectedCountrySlugs.length && !venue.associatedCountries.some((slug) => selectedCountrySlugs.includes(slug))) return false;
@@ -1033,6 +1040,96 @@ export function MapPageClient({
     setSelectedCountrySlugs([]);
   };
 
+  const mobileControlStrip = !selectedVenue && !mobileResultsOpen && !mobileGamesOpen ? (
+    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top,0px)+3.6rem)] z-40 px-3">
+      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max min-w-full snap-x snap-mandatory items-center gap-2 pb-1">
+          <button
+            type="button"
+            onClick={() => setCitySelectorOpen(true)}
+            className={mobileChipClass}
+            aria-label={`Switch city from ${selectedCityConfig.label}`}
+          >
+            📍 {selectedCityConfig.shortLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDrawerOpen(false);
+              setMobileResultsOpen(false);
+              setMobileGamesOpen((current) => !current);
+            }}
+            className={`${mobileChipClass} ${mobileGamesOpen ? mobileChipActiveClass : ""}`}
+            aria-label="Browse games"
+          >
+            🏟 Games
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileGamesOpen(false);
+              setFilterDrawerOpen(true);
+            }}
+            className={`${mobileChipClass} ${filterDrawerOpen ? mobileChipActiveClass : ""}`}
+            aria-label={`Open filters${hasActiveFilters ? `, ${activeFilterCount} active` : ""}`}
+          >
+            ⚙ Filters{hasActiveFilters ? ` · ${activeFilterCount}` : ""}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileResultsOpen(true)}
+            className={mobileChipClass}
+            aria-label={`Open venues list, ${filteredVenues.length} venues`}
+          >
+            📍 Venues
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcceptsReservations((current) => !current)}
+            className={`${mobileChipClass} ${acceptsReservations ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle reservations filter"
+          >
+            Reservations
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpenNowOnly((current) => !current)}
+            className={`${mobileChipClass} ${openNowOnly ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle open now filter"
+          >
+            Open now
+          </button>
+          <button
+            type="button"
+            onClick={() => setHighAtmosphereOnly((current) => !current)}
+            className={`${mobileChipClass} ${highAtmosphereOnly ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle high atmosphere filter"
+          >
+            High atmosphere
+          </button>
+          <button
+            type="button"
+            onClick={toggleSoccerBars}
+            className={`${mobileChipClass} ${soccerBarsMode ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle sports bar filter"
+          >
+            Sports bars
+          </button>
+          {selectedCountryFlags ? (
+            <button
+              type="button"
+              onClick={clearCountryFilters}
+              className={`${mobileChipClass} ${mobileChipActiveClass}`}
+              aria-label="Clear country filters"
+            >
+              {selectedCountryFlags} Clear nations
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const handleApplyMatch = (match: WorldCupMatch) => {
     const nextCountries = [match.homeCountry, match.awayCountry];
     const isSameMatchSelection =
@@ -1140,6 +1237,7 @@ export function MapPageClient({
             />
           </div>
         }
+        mobileControls={mobileControlStrip}
         results={resultsPanel}
         resultsCountLabel={`${filteredVenues.length} venues`}
         hasActiveFilters={hasActiveFilters}
