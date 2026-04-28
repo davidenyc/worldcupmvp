@@ -68,6 +68,7 @@ export function SiteHeader() {
   const promosHref = "/promos";
   const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
+  const hideMobileNav = currentPath === "/welcome";
   const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
     href: item.href === "MAP" ? mapHref : item.href,
     label: item.label,
@@ -273,32 +274,34 @@ export function SiteHeader() {
           )
         : null}
 
-      <div
-        className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
-          mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
-        }`}
-      >
-        <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
-          <nav className="flex items-stretch justify-between gap-1">
-            <Link href="/" className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>🏠</span>
-              <span>Home</span>
-            </Link>
-            <Link href={mapHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>🗺️</span>
-              <span>Map</span>
-            </Link>
-            <Link href={promosHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/promos") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>🏷️</span>
-              <span>Promos</span>
-            </Link>
-            <Link href={myHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
-              <span>⭐</span>
-              <span>My Cup</span>
-            </Link>
-          </nav>
+      {hideMobileNav ? null : (
+        <div
+          className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
+            mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
+          }`}
+        >
+          <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
+            <nav className="flex items-stretch justify-between gap-1">
+              <Link href="/" className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath === "/" ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+                <span>🏠</span>
+                <span>Home</span>
+              </Link>
+              <Link href={mapHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.includes("/map") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+                <span>🗺️</span>
+                <span>Map</span>
+              </Link>
+              <Link href={promosHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/promos") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+                <span>🏷️</span>
+                <span>Promos</span>
+              </Link>
+              <Link href={myHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[10px] font-semibold ${currentPath.startsWith("/me") ? "text-[color:var(--fg-primary)]" : "text-[color:var(--fg-muted)]"}`}>
+                <span>⭐</span>
+                <span>My Cup</span>
+              </Link>
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

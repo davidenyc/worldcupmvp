@@ -124,6 +124,10 @@ body {
   }
 }
 
+body[data-route="welcome"] {
+  padding-bottom: 0 !important;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }

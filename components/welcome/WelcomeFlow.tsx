@@ -1,7 +1,7 @@
 // Six-step onboarding shell for /welcome with progress dots and a sticky footer navigator.
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { demoCountries } from "@/lib/data/demo";
@@ -68,6 +68,14 @@ export function WelcomeFlow() {
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
   const followCap = tier === "free" ? 2 : 48;
+
+  useEffect(() => {
+    document.body.dataset.route = "welcome";
+    return () => {
+      delete document.body.dataset.route;
+    };
+  }, []);
+
   const citySuggestions = useMemo(() => {
     const query = homeCityDraft.trim().toLowerCase();
     if (!query) return HOST_CITIES.slice(0, 6);
@@ -174,7 +182,7 @@ export function WelcomeFlow() {
         ))}
       </div>
 
-      <section className="mt-6 rounded-[1.75rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.16),transparent_36%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:mt-8 sm:rounded-[2rem] sm:p-8 dark:shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
+      <section className="mt-6 rounded-[1.75rem] border border-line bg-[radial-gradient(circle_at_top_left,rgba(244,185,66,0.16),transparent_36%),linear-gradient(145deg,var(--bg-surface),var(--bg-surface-elevated))] p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:mt-8 sm:rounded-[2rem] sm:p-8 sm:pb-[calc(6rem+env(safe-area-inset-bottom))] dark:shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
         <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{step.eyebrow}</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-deep sm:text-4xl">{step.title}</h1>
         <p className="mt-3 text-sm leading-7 text-mist sm:max-w-[32rem] sm:text-base">{step.body}</p>
@@ -376,7 +384,7 @@ export function WelcomeFlow() {
         </div>
       </section>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[var(--bg-page)]/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 border-t border-line bg-[var(--bg-page)]/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="pointer-events-auto mx-auto flex w-full max-w-[35rem] items-center justify-between gap-2 sm:gap-3">
           <button
             type="button"
