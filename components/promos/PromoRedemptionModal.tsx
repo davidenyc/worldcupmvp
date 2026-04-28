@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import {
   PromoRecord,
+  SavedPromo,
   canRedeemPromo,
   getPromoLockCopy,
   getPromoRedemptionLabel,
@@ -24,11 +25,13 @@ function formatCountdown(totalSeconds: number) {
 
 export function PromoRedemptionModal({
   promo,
+  savedPromo,
   venueName,
   reservationUrl,
   onClose
 }: {
   promo: PromoRecord;
+  savedPromo?: SavedPromo | null;
   venueName: string;
   reservationUrl?: string;
   onClose: () => void;
@@ -39,7 +42,8 @@ export function PromoRedemptionModal({
   const [redeemed, setRedeemed] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(promo.redemption === "walk_in" ? 60 * 60 : 15 * 60);
 
-  const qrData = useMemo(() => `${promo.qr_payload}:${user.id}:${promo.code}`, [promo.code, promo.qr_payload, user.id]);
+  const liveCode = savedPromo?.code ?? promo.code;
+  const qrData = useMemo(() => `${promo.qr_payload}:${user.id}:${liveCode}`, [liveCode, promo.qr_payload, user.id]);
   const qrUrl = useMemo(
     () => `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(qrData)}`,
     [qrData]
@@ -55,6 +59,11 @@ export function PromoRedemptionModal({
   }, [redeemable, redeemed]);
 
   async function markRedeemed() {
+    if (savedPromo) {
+      toast.success("QR ready for the venue.");
+      return;
+    }
+
     if (!redeemable) {
       setShowUpgrade(true);
       return;
@@ -136,7 +145,7 @@ export function PromoRedemptionModal({
                 <div className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
                   Backup code
                 </div>
-                <div className="mt-1 text-lg font-semibold tracking-[0.28em]">{promo.code}</div>
+                <div className="mt-1 text-lg font-semibold tracking-[0.28em]">{liveCode}</div>
               </div>
             ) : null}
 
@@ -145,7 +154,7 @@ export function PromoRedemptionModal({
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
                   Mention this code
                 </div>
-                <div className="mt-2 text-3xl font-semibold tracking-[0.22em]">{promo.code}</div>
+                <div className="mt-2 text-3xl font-semibold tracking-[0.22em]">{liveCode}</div>
                 <button
                   type="button"
                   onClick={copyCode}
@@ -180,7 +189,7 @@ export function PromoRedemptionModal({
               disabled={redeemed}
               className="inline-flex w-full items-center justify-center rounded-full bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {redeemed ? "Redeemed" : "Tap to mark redeemed"}
+              {savedPromo ? "Saved to My World Cup" : redeemed ? "Redeemed" : "Tap to mark redeemed"}
             </button>
           </div>
         )}

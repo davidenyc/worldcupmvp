@@ -9,7 +9,10 @@ import {
   getPromoRedemptionLabel
 } from "@/lib/data/promos";
 import { useMembership } from "@/lib/store/membership";
+import { useSavedPromosStore } from "@/lib/store/savedPromos";
+import { useUser } from "@/lib/store/user";
 import { PromoRedemptionModal } from "@/components/promos/PromoRedemptionModal";
+import { toast } from "@/lib/toast";
 
 export function PromoCard({
   promo,
@@ -23,14 +26,54 @@ export function PromoCard({
   compact?: boolean;
 }) {
   const { tier } = useMembership();
+  const user = useUser();
+  const savedPromos = useSavedPromosStore((state) => state.savedPromos);
+  const savePromo = useSavedPromosStore((state) => state.savePromo);
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const redeemable = canRedeemPromo(tier, promo);
+  const savedPromo = savedPromos.find((entry) => entry.promoId === promo.id) ?? null;
+
+  async function handlePrimaryAction() {
+    if (savedPromo) {
+      setOpen(true);
+      return;
+    }
+
+    if (!redeemable) {
+      setOpen(true);
+      return;
+    }
+
+    setSaving(true);
+    const response = await fetch("/api/promos/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        promoId: promo.id,
+        userId: user.id,
+        tier
+      })
+    });
+
+    const payload = (await response.json()) as { savedPromo?: import("@/lib/data/promos").SavedPromo; error?: string };
+    setSaving(false);
+
+    if (!response.ok || !payload.savedPromo) {
+      toast.error(payload.error ?? "Could not save this QR right now.");
+      return;
+    }
+
+    savePromo(payload.savedPromo);
+    toast.success("Saved to My World Cup");
+    setOpen(true);
+  }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handlePrimaryAction}
         className={`w-full rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] ${
           compact ? "min-h-[180px]" : "min-h-[220px]"
         }`}
@@ -62,12 +105,19 @@ export function PromoCard({
           })}
         </div>
         <div className="mt-4 inline-flex rounded-full bg-[#f4b942] px-3 py-2 text-sm font-semibold text-[#0a1628]">
-          {redeemable ? "Tap to redeem →" : `${getPromoLockCopy(promo)} →`}
+          {saving
+            ? "Saving…"
+            : savedPromo
+              ? "Show QR ↗"
+              : redeemable
+                ? "Save QR →"
+                : `${getPromoLockCopy(promo)} →`}
         </div>
       </button>
       {open ? (
         <PromoRedemptionModal
           promo={promo}
+          savedPromo={savedPromo}
           venueName={venueName}
           reservationUrl={reservationUrl}
           onClose={() => setOpen(false)}
