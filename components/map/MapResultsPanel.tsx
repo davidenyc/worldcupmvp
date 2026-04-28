@@ -1,25 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { Clock3, Star } from "lucide-react";
+import { ChevronRight, Clock3, ExternalLink, Heart, MapPin, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
-import { CountrySummary, RankedVenue } from "@/lib/types";
-import { getSoccerAtmosphereRating, getVenueTvLabel, toTitleCase } from "@/lib/utils";
+import type { CountrySummary, RankedVenue } from "@/lib/types";
+import { getVenueTvLabel } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
 
-function getCountryName(countries: CountrySummary[], slug: string | null) {
+function getCountryBySlug(countries: CountrySummary[], slug: string | null | undefined) {
   if (!slug) return null;
-  return countries.find((country) => country.slug === slug)?.name ?? null;
-}
-
-function isNeutralSportsBar(venue: RankedVenue) {
-  return (
-    venue.venueIntent === "sports_bar" ||
-    venue.venueIntent === "bar_with_tv" ||
-    (venue.venueTypes as string[]).includes("sports_bar")
-  ) && !venue.likelySupporterCountry;
+  return countries.find((country) => country.slug === slug) ?? null;
 }
 
 export function MapResultsPanel({
@@ -39,36 +30,25 @@ export function MapResultsPanel({
   onSelect: (venue: RankedVenue) => void;
   onClearAll: () => void;
 }) {
-  const countryLookup = useMemo(
-    () => new Map(countries.map((country) => [country.slug, country])),
-    [countries]
+  const uniqueVenues = venues.filter(
+    (venue, index, all) => all.findIndex((item) => (item.id || item.slug) === (venue.id || venue.slug)) === index
   );
-  const uniqueVenues = useMemo(() => {
-    const seen = new Set<string>();
-    return venues.filter((venue) => {
-      const key = venue.id || venue.slug;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [venues]);
-  const emptyFlagSlug = selectedCountrySlugs[0] ?? null;
-  const emptyCountry = emptyFlagSlug ? countryLookup.get(emptyFlagSlug) ?? null : null;
 
   if (!uniqueVenues.length) {
+    const emptyCountry = getCountryBySlug(countries, selectedCountrySlugs[0]);
     return (
       <div className="flex min-h-[42vh] flex-col items-center justify-center px-6 py-12 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f8fbff] text-5xl dark:bg-white/5">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--bg-surface-elevated)] text-5xl">
           <CountryFlag country={emptyCountry} size="lg" />
         </div>
-        <h3 className="mt-6 text-2xl font-semibold text-[#0a1628] dark:text-white">No spots found</h3>
-        <p className="mt-2 max-w-xs text-sm leading-6 text-[#0a1628]/55 dark:text-white/55">
+        <h3 className="mt-6 text-2xl font-semibold text-[color:var(--fg-primary)]">No spots found</h3>
+        <p className="mt-2 max-w-xs text-sm leading-6 text-[color:var(--fg-muted)]">
           Try a different city or clear a filter to see results.
         </p>
         <button
           type="button"
           onClick={onClearAll}
-          className="mt-5 rounded-full bg-[#f4b942] px-4 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:bg-[#f0c86b]"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-[color:var(--fg-on-accent)] transition hover:bg-gold/90"
         >
           Clear all
         </button>
@@ -77,147 +57,177 @@ export function MapResultsPanel({
   }
 
   return (
-    <div className={columns === 2 ? "grid gap-3 xl:grid-cols-2" : "space-y-3"}>
-      {uniqueVenues.map((venue) => {
-        const selected = venue.id === selectedVenueId;
-        const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) ?? null : null;
-        const countryName = getCountryName(countries, venue.likelySupporterCountry);
-        const neutralSportsBar = isNeutralSportsBar(venue);
-        const intent = getVenueIntentMeta(venue.venueIntent, countryName);
-        const reservationsLabel = venue.acceptsReservations ? "Reservations" : "Walk-in";
-        const reviewCountLabel = typeof venue.reviewCount === "number" ? venue.reviewCount.toLocaleString() : "0";
-        const primaryVenueType = venue.venueTypes[0];
-        const phoneNumber = venue.reservationPhone ?? venue.phone ?? null;
-        const soccerAtmosphere = getSoccerAtmosphereRating(venue);
-        const tvLabel = getVenueTvLabel(venue);
-        const secondaryAction = venue.acceptsReservations && (venue.reservationUrl || venue.reservationPhone)
-          ? {
-              href: venue.reservationUrl ?? `tel:${venue.reservationPhone!}`,
-              label: "Reserve",
-              highlight: true,
-              external: Boolean(venue.reservationUrl)
-            }
-          : venue.website
-            ? {
-                href: venue.website,
-                label: "Website",
-                highlight: false,
-                external: true
-              }
-            : phoneNumber
-              ? {
-                  href: `tel:${phoneNumber}`,
-                  label: "Call",
-                  highlight: false,
-                  external: false
-                }
-              : null;
-        return (
-          <button
-            key={venue.id}
-            type="button"
-            onClick={() => onSelect(venue)}
-            className={`group w-full rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-3 text-left shadow-sm transition sm:p-4 ${
-              selected
-                ? "border-[color:var(--accent)] bg-[var(--bg-surface-elevated)]"
-                : "hover:border-[color:var(--border-strong)] hover:bg-[var(--bg-surface-elevated)]"
-            }`}
-          >
-            <div className="flex items-start gap-3 transition">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--country-flag-bg)]">
-                {neutralSportsBar ? <span className="text-sm leading-none">📍</span> : <CountryFlag country={country} size="sm" />}
+    <section className="flex flex-col gap-4">
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs uppercase tracking-[0.2em] text-mist">Results</div>
+          <div className="mt-1 text-base font-semibold text-deep">
+            {uniqueVenues.length.toLocaleString()} {uniqueVenues.length === 1 ? "venue" : "venues"}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <ToolbarButton onClick={onClearAll}>Clear</ToolbarButton>
+        </div>
+      </header>
+
+      <div className={columns === 2 ? "grid grid-cols-1 gap-3 md:grid-cols-2" : "grid grid-cols-1 gap-3"}>
+        {uniqueVenues.map((venue) => {
+          const country = getCountryBySlug(countries, venue.likelySupporterCountry ?? venue.associatedCountries?.[0]);
+          const supporterLabel = country?.name ?? venue.associatedCountries?.[0] ?? "";
+          const intent = getVenueIntentMeta(venue.venueIntent, country?.name ?? null);
+          const hasTV = venue.numberOfScreens > 0;
+          const selected = venue.id === selectedVenueId;
+
+          return (
+            <article
+              key={venue.id}
+              className={[
+                "flex flex-col gap-3 rounded-2xl border bg-[var(--bg-surface)] p-4 shadow-sm transition",
+                selected
+                  ? "border-gold ring-2 ring-gold/30"
+                  : "border-[color:var(--border-subtle)] hover:border-[color:var(--border-strong)]"
+              ].join(" ")}
+            >
+              <header className="flex items-start gap-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--bg-surface-elevated)] text-lg"
+                  aria-hidden
+                >
+                  <CountryFlag country={country} size="sm" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-semibold text-deep">{venue.name}</h3>
+                  <p className="mt-0.5 truncate text-sm text-mist">
+                    {venue.neighborhood ?? venue.borough}
+                    {supporterLabel ? ` · ${supporterLabel}` : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Save venue"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-mist transition hover:text-red"
+                >
+                  <Heart className="h-4 w-4" />
+                </button>
+              </header>
+
+              <div>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${intent.className}`}>
+                  {intent.label}
+                </span>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="font-semibold text-[color:var(--fg-primary)]">{venue.name}</div>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${intent.className}`}>
-                    {intent.label}
-                  </span>
-                </div>
-                <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{venue.neighborhood}</div>
-                <div className="mt-1 text-xs text-[color:var(--fg-muted)]">
-                  {neutralSportsBar ? "Mixed crowd" : countryName ?? venue.borough}
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2.5 text-sm">
-                  <span className="inline-flex items-center gap-1 text-[color:var(--fg-secondary)]">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    {Number(venue.rating ?? 0).toFixed(1)}
-                    <span className="text-xs text-[color:var(--fg-muted)]">({reviewCountLabel})</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[color:var(--fg-secondary)]">
-                    <span className={`h-2.5 w-2.5 rounded-full ${venue.acceptsReservations ? "bg-emerald-500" : "bg-[color:var(--border-strong)]"}`} />
-                    {reservationsLabel}
-                  </span>
-                  {primaryVenueType ? (
-                    <span className="text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
-                      {toTitleCase(primaryVenueType.replace(/_/g, " "))}
-                    </span>
-                  ) : null}
-                  <span className={`inline-flex items-center gap-1 text-xs font-medium ${venue.openNow ? "text-emerald-600 dark:text-emerald-400" : "text-[color:var(--fg-muted)]"}`}>
-                    <Clock3 className="h-3.5 w-3.5" />
-                    {venue.openNow ? "Open now" : "Hours vary"}
-                  </span>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-                    soccerAtmosphere === "High"
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                      : soccerAtmosphere === "Medium"
-                        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                        : "bg-[var(--pill-bg)] text-[color:var(--pill-fg)]"
-                  }`}>
-                    {soccerAtmosphere} atmosphere
-                  </span>
-                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                    venue.numberOfScreens <= 0
-                      ? "bg-[var(--pill-bg)] text-[color:var(--pill-fg)]"
-                      : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                  }`}>
-                    {tvLabel}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Link
-                    href={`/venue/${venue.slug}`}
-                    onClick={(event) => event.stopPropagation()}
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98] sm:text-xs"
-                  >
-                    Details
-                  </Link>
-                  {secondaryAction ? (
-                    <a
-                      href={secondaryAction.href}
-                      target={secondaryAction.external ? "_blank" : undefined}
-                      rel={secondaryAction.external ? "noreferrer" : undefined}
-                      onClick={(event) => event.stopPropagation()}
-                      className={`inline-flex h-11 items-center justify-center rounded-full px-3 text-[11px] font-semibold transition sm:text-xs ${
-                        secondaryAction.highlight
-                          ? "bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]"
-                          : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)] hover:brightness-[0.98]"
-                      }`}
-                    >
-                      {secondaryAction.label}
-                    </a>
-                  ) : (
-                    <div className="inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-muted)] sm:text-xs">
-                      Venue info
-                    </div>
-                  )}
-                  {venue.address ? (
-                    <a
-                      href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(event) => event.stopPropagation()}
-                      className="col-span-2 inline-flex h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-[11px] font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98] sm:text-xs"
-                    >
-                      Directions
-                    </a>
-                  ) : null}
-                </div>
+
+              <div className="grid grid-cols-3 gap-2 text-xs text-mist">
+                <Metric
+                  icon={<Star className="h-3.5 w-3.5 text-gold" />}
+                  value={venue.rating?.toFixed(1) ?? "—"}
+                  sub={venue.reviewCount ? `(${venue.reviewCount.toLocaleString()})` : ""}
+                />
+                <Metric
+                  icon={<Clock3 className="h-3.5 w-3.5 text-emerald-500" />}
+                  value={venue.openNow ? "Open now" : "Closed"}
+                  sub={venue.acceptsReservations ? "Reservations" : "Walk-in"}
+                />
+                <Metric
+                  icon={<MapPin className="h-3.5 w-3.5 text-mist" />}
+                  value={hasTV ? "Has TV" : "No TVs"}
+                  sub={hasTV ? getVenueTvLabel(venue) : "book private"}
+                />
               </div>
-            </div>
-          </button>
-        );
-      })}
+
+              <footer className="grid grid-cols-3 gap-2">
+                <ActionButton primary onClick={() => onSelect(venue)}>
+                  Details <ChevronRight className="h-3.5 w-3.5" />
+                </ActionButton>
+                <ActionButton href={venue.website ?? undefined}>
+                  Website <ExternalLink className="h-3.5 w-3.5" />
+                </ActionButton>
+                <ActionButton href={venue.googleMapsUrl ?? `https://maps.google.com/?q=${venue.lat},${venue.lng}`}>
+                  Directions
+                </ActionButton>
+              </footer>
+
+              <Link
+                href={`/venue/${venue.slug}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-xs font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98]"
+              >
+                Open venue page
+              </Link>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ToolbarButton({
+  children,
+  onClick
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-9 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-deep transition hover:bg-surface-2"
+    >
+      {children}
+    </button>
+  );
+}
+
+function Metric({
+  icon,
+  value,
+  sub
+}: {
+  icon: React.ReactNode;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <div className="flex items-center gap-1 text-deep">
+        {icon}
+        <span className="text-sm font-semibold">{value}</span>
+      </div>
+      {sub ? <span className="truncate text-[11px] text-mist">{sub}</span> : null}
     </div>
+  );
+}
+
+function ActionButton({
+  children,
+  href,
+  onClick,
+  primary
+}: {
+  children: React.ReactNode;
+  href?: string;
+  onClick?: () => void;
+  primary?: boolean;
+}) {
+  const className = [
+    "inline-flex h-9 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition",
+    primary
+      ? "bg-gold text-deep hover:bg-gold/90"
+      : "border border-line bg-surface text-deep hover:bg-surface-2"
+  ].join(" ");
+
+  if (href) {
+    return (
+      <a className={className} href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={className}>
+      {children}
+    </button>
   );
 }

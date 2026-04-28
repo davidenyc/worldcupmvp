@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ChevronDown,
   Heart,
   MapPin,
   MoonStar,
@@ -115,15 +114,18 @@ export function SiteHeader() {
       >
         <div className="container-shell flex min-h-[64px] items-center justify-between gap-3 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold text-base font-black text-white shadow-card">
+            <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
+                style={{ backgroundColor: "#f4b942", color: "#0a1628" }}
+              >
                 GM
               </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold tracking-tight text-[color:var(--fg-primary)] sm:text-base">
+              <div className="hidden min-w-0 md:block">
+                <div className="truncate text-base font-semibold text-deep">
                   GameDay Map
                 </div>
-                <div className="hidden text-small text-[color:var(--fg-muted)] lg:block">
+                <div className="hidden truncate text-xs text-mist lg:block">
                   World Cup 2026 watch parties
                 </div>
               </div>
@@ -141,11 +143,12 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => setCityOpen((current) => !current)}
-              className="inline-flex h-10 min-w-0 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm font-semibold text-deep transition hover:bg-surface-2"
+              aria-label={`Switch city — currently ${activeCityData.label}`}
             >
-              <span className="truncate md:hidden">{activeCityData.shortLabel}</span>
-              <span className="hidden truncate md:inline">{activeCityData.label}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--fg-muted)]" />
+              <span className="md:hidden">{activeCityData.shortLabel}</span>
+              <span className="hidden md:inline">{activeCityData.label}</span>
+              <span className="text-xs text-mist">▾</span>
             </button>
 
             <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} lg:h-11 lg:w-11`}>
