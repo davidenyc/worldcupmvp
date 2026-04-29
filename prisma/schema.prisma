@@ -6,6 +6,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Country {
@@ -195,6 +196,81 @@ model User {
   submissions Submission[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+}
+
+/// Supabase auth.users is the source of truth for Profile.id.
+/// The auth.users → Profile bootstrap runs through a SQL trigger migration.
+model Profile {
+  id                  String                   @id @db.Uuid
+  displayName         String?
+  firstName           String?
+  avatarEmoji         String?
+  homeCity            String?
+  favoriteCity        String                   @default("nyc")
+  favoriteCountrySlug String?
+  language            String                   @default("en")
+  prefersDarkMode     Boolean                  @default(false)
+  defaultFilters      Json                     @default("{\"soundOn\":false,\"reservationsPossible\":false,\"outdoorSeating\":false}")
+  promoOptIns         Json                     @default("{\"email\":false,\"push\":false}")
+  welcomeSeenAt       DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  followedCountries   ProfileFollowedCountry[]
+  favoriteVenues      ProfileFavoriteVenue[]
+  watchedMatches      ProfileWatchedMatch[]
+  membership          ProfileMembership?
+  activity            ActivityEvent[]
+}
+
+model ProfileFollowedCountry {
+  profileId   String   @db.Uuid
+  countrySlug String
+  followedAt  DateTime @default(now())
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, countrySlug])
+}
+
+model ProfileFavoriteVenue {
+  profileId String   @db.Uuid
+  venueSlug String
+  savedAt   DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, venueSlug])
+}
+
+model ProfileWatchedMatch {
+  profileId      String   @db.Uuid
+  matchId        String
+  watchedAt      DateTime @default(now())
+  watchVenueSlug String?
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, matchId])
+}
+
+model ProfileMembership {
+  profileId            String    @id @db.Uuid
+  tier                 String    @default("free")
+  upgradedAt           DateTime?
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  profile              Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model ActivityEvent {
+  id        String   @id @default(cuid())
+  profileId String   @db.Uuid
+  kind      String
+  payload   Json
+  at        DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, at(sort: Desc)])
 }
 
 model Match {
