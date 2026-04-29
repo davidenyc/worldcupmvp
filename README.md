@@ -42,16 +42,16 @@ This is the easiest path for local preview and the recommended first deploy path
 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Copy envs
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-3. Confirm mock mode in `.env`
+3. Confirm mock mode in `.env.local`
 
 ```dotenv
 DATA_PROVIDER="mock"
@@ -60,7 +60,7 @@ DATA_PROVIDER="mock"
 4. Run the app
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 5. Open the app
@@ -69,56 +69,79 @@ npm run dev
 http://localhost:3000/
 ```
 
-### Local database mode
+### Local Supabase auth + database mode
 
-Use this only when you want Prisma migrations, seeds, and a real Postgres-backed workflow locally.
+Use this when you want real Supabase Auth, Prisma migrations, and a Postgres-backed profile/favorites/watchlist flow locally.
 
-1. Set a working `DATABASE_URL` in `.env`
-2. Generate the Prisma client and run migrations
+1. Fill these values in `.env.local`
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+DIRECT_URL=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+2. Generate Prisma client and run the current migrations
 
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init
+pnpm prisma:generate
+pnpm prisma:migrate
 ```
 
 3. Seed the database
 
 ```bash
-npm run seed
+pnpm seed
+```
+
+4. Start the app
+
+```bash
+pnpm dev
+```
+
+5. In Supabase Auth settings, allow these redirect URLs
+
+```text
+http://localhost:3000/auth/callback
+gameday://auth/callback
 ```
 
 ## Vercel deploy
 
-This app can be deployed without a database on day one.
+This app can be deployed without a database on day one, but the auth/database branch expects a real Supabase project before merge.
 
 Use these environment variables in Vercel:
 
 ```dotenv
 DATA_PROVIDER=mock
 NEXT_PUBLIC_APP_URL=https://your-vercel-domain.vercel.app
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+DIRECT_URL=
 NEXT_PUBLIC_MAP_PROVIDER=mapbox
 NEXT_PUBLIC_MAPBOX_TOKEN=
 GOOGLE_PLACES_API_KEY=
-YELP_API_KEY=
 GOOGLE_PLACES_TEXT_SEARCH_URL=https://places.googleapis.com/v1/places:searchText
-YELP_API_BASE_URL=https://api.yelp.com/v3
-CLERK_SECRET_KEY=
-NEXTAUTH_SECRET=
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/gameday_map?schema=public
+RESEND_API_KEY=
 ```
 
 Notes:
 
 - `postinstall` runs `prisma generate` automatically so the Prisma client is available during Vercel builds.
 - Keeping `DATA_PROVIDER=mock` means the public app does not need a live database for the first deploy.
-- `DATABASE_URL` can stay as a placeholder value while you are in mock mode because Prisma client generation still expects it to exist.
+- `DATABASE_URL` and `DIRECT_URL` come from Supabase Postgres.
 - After deploy, update `NEXT_PUBLIC_APP_URL` to the final production domain.
 
 ## Where real credentials go
 
 - `NEXT_PUBLIC_MAPBOX_TOKEN`: optional map imagery/token if you replace the demo 2D panel with Mapbox-backed rendering
 - `GOOGLE_PLACES_API_KEY`: future official Google Places provider
-- `YELP_API_KEY`: future Yelp Fusion provider
 - `DATA_PROVIDER`: choose active provider, default `mock`
 - `CSV_IMPORT_PATH`: local import path for CSV provider wiring
 
