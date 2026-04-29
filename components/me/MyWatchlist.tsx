@@ -6,12 +6,23 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { demoCountries } from "@/lib/data/demo";
 import type { WorldCupMatch } from "@/lib/data/matches";
 
+function formatVenueLabel(value?: string | null) {
+  if (!value) return null;
+
+  return value
+    .split("-")
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(" ");
+}
+
 export function MyWatchlist({
   matches,
+  watchStatuses,
   watchVenues,
   cityKey
 }: {
   matches: WorldCupMatch[];
+  watchStatuses: Record<string, "planned" | "watched">;
   watchVenues: Record<string, string | null>;
   cityKey: string;
 }) {
@@ -22,7 +33,7 @@ export function MyWatchlist({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Watching</div>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Upcoming match plans</h2>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Watch plans and check-ins</h2>
         </div>
         <Link href="/matches" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
           Browse the schedule →
@@ -34,6 +45,17 @@ export function MyWatchlist({
           <div className="grid gap-3">
             {matches.map((match) => (
               <div key={match.id} className="rounded-2xl border border-line bg-surface-2 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <span
+                    className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold ${
+                      watchStatuses[match.id] === "watched"
+                        ? "border-gold bg-gold/10 text-deep"
+                        : "border-[color:var(--accent-soft-fg)] bg-[var(--accent-soft-bg)] text-[color:var(--accent-soft-fg)]"
+                    }`}
+                  >
+                    {watchStatuses[match.id] === "watched" ? "✓ Watched" : "Planned"}
+                  </span>
+                </div>
                 <div className="flex flex-wrap items-center gap-2 text-base font-semibold text-deep">
                   <span>{countryLookup.get(match.homeCountry)?.flagEmoji ?? "🏳️"}</span>
                   <span>{countryLookup.get(match.homeCountry)?.name ?? match.homeCountry}</span>
@@ -47,10 +69,18 @@ export function MyWatchlist({
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">
-                    {watchVenues[match.id] ? `Venue locked: ${watchVenues[match.id]}` : "No venue picked yet"}
+                    {watchVenues[match.id]
+                      ? `Venue locked: ${formatVenueLabel(watchVenues[match.id])}`
+                      : watchStatuses[match.id] === "watched"
+                        ? "Checked in without a venue"
+                        : "No venue picked yet"}
                   </span>
                   <Link href={`/${cityKey || "nyc"}/map?match=${match.id}`} className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface">
-                    {watchVenues[match.id] ? "Change venue →" : "Pick a venue →"}
+                    {watchStatuses[match.id] === "watched"
+                      ? "Open city map →"
+                      : watchVenues[match.id]
+                        ? "Change venue →"
+                        : "Pick a venue →"}
                   </Link>
                 </div>
               </div>

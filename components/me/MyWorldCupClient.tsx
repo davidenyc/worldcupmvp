@@ -33,6 +33,7 @@ export function MyWorldCupClient({
   const favorites = useFavoritesStore((state) => state.favorites);
   const groups = useGroups((state) => state.groups);
   const watchedMatches = useWatchlistStore((state) => state.watchedMatches);
+  const watchStatuses = useWatchlistStore((state) => state.watchStatuses);
   const watchVenues = useWatchlistStore((state) => state.watchVenues);
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
 
@@ -65,7 +66,12 @@ export function MyWorldCupClient({
         favoriteCity={user.homeCity ?? user.favoriteCity}
       />
       <MySavedVenues venues={savedVenueList} cityKey={user.homeCity ?? user.favoriteCity} />
-      <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.homeCity ?? user.favoriteCity} />
+      <MyWatchlist
+        matches={watchedMatchList}
+        watchStatuses={watchStatuses}
+        watchVenues={watchVenues}
+        cityKey={user.homeCity ?? user.favoriteCity}
+      />
       <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
       <MyActivityTimeline activity={user.activity} />
 

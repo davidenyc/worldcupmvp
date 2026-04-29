@@ -16,7 +16,7 @@ export function MyActivityTimeline({
         <div>
           <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Activity</div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Your match-day timeline</h2>
-          <p className="mt-2 text-sm text-mist">Saved venues, followed countries, and redeemed promos show up here in real time.</p>
+          <p className="mt-2 text-sm text-mist">Saved venues, checked-in matches, followed countries, and redeemed promos show up here in real time.</p>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export function MyActivityTimeline({
           </div>
         ) : (
           <div className="rounded-2xl border border-line bg-surface-2 p-5 text-sm text-mist">
-            No activity yet. Save a venue, follow a country, or claim a promo and your timeline will start to fill in.
+            No activity yet. Save a venue, check into a match, follow a country, or claim a promo and your timeline will start to fill in.
           </div>
         )}
       </div>

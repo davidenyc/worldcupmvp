@@ -237,6 +237,15 @@ function withoutKey<T>(record: Record<string, T>, key: string) {
   return next;
 }
 
+function formatVenueSlugLabel(value: string | null | undefined) {
+  if (!value) return null;
+
+  return value
+    .split("-")
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(" ");
+}
+
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -334,28 +343,43 @@ export const useUserStore = create<UserStore>()(
         set((state) => {
           const nextVenueSlug = options?.venueSlug ?? state.profile.watchVenues[matchId] ?? null;
           const nextRating = options?.rating ?? state.profile.watchRatings[matchId] ?? null;
+          const venueLabel = formatVenueSlugLabel(nextVenueSlug);
 
           syncWatchedMatchToServer(matchId, nextVenueSlug);
 
           return {
-            profile: normalizeProfile({
-              ...state.profile,
-              watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
-                ? state.profile.watchlistMatchIds
-                : [...state.profile.watchlistMatchIds, matchId],
-              watchStatuses: {
-                ...state.profile.watchStatuses,
-                [matchId]: "watched"
-              },
-              watchVenues: {
-                ...state.profile.watchVenues,
-                [matchId]: nextVenueSlug
-              },
-              watchRatings: {
-                ...state.profile.watchRatings,
-                [matchId]: nextRating
+            profile: appendActivityEntry(
+              normalizeProfile({
+                ...state.profile,
+                watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
+                  ? state.profile.watchlistMatchIds
+                  : [...state.profile.watchlistMatchIds, matchId],
+                watchStatuses: {
+                  ...state.profile.watchStatuses,
+                  [matchId]: "watched"
+                },
+                watchVenues: {
+                  ...state.profile.watchVenues,
+                  [matchId]: nextVenueSlug
+                },
+                watchRatings: {
+                  ...state.profile.watchRatings,
+                  [matchId]: nextRating
+                }
+              }),
+              {
+                kind: "watched_match",
+                label: venueLabel
+                  ? `Checked into a watched match at ${venueLabel}.`
+                  : "Checked into a watched match.",
+                href: "/me",
+                payload: {
+                  matchId,
+                  watchVenueSlug: nextVenueSlug,
+                  rating: nextRating
+                }
               }
-            })
+            )
           };
         }),
       // SRC: hybrid — local optimistic cache, server-backed when authenticated.
