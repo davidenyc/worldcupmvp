@@ -23,7 +23,7 @@ export function HomeHeroActions() {
       </Link>
       <Link
         href={`/${activeCity?.key ?? "nyc"}/map`}
-        className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-6 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] sm:w-auto"
+        className="inline-flex h-12 w-full items-center justify-center rounded-full border border-line bg-transparent px-6 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] sm:w-auto"
       >
         Find a watch spot →
       </Link>

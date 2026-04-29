@@ -48,7 +48,7 @@ export function HomeCountryPicker({ countries }: { countries: CountrySummary[] }
         onChange={(event) => setSearch(event.target.value)}
         type="search"
         placeholder="Search your country…"
-        className="mt-4 h-12 w-full rounded-full border border-line bg-surface px-4 text-sm text-deep outline-none placeholder:text-mist"
+        className="mt-4 h-12 w-full rounded-full border border-line bg-transparent px-4 text-sm text-[color:var(--fg-primary)] outline-none placeholder:text-mist focus:border-gold"
       />
       <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-6">
         <CollapsibleGrid initialCount={6} noun="nation" nounPlural="nations">

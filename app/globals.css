@@ -136,6 +136,10 @@ body[data-route="welcome"] {
   padding-bottom: 0 !important;
 }
 
+section[aria-label="Notifications alt+T"] {
+  pointer-events: none;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }

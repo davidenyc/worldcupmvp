@@ -224,14 +224,14 @@ export function WelcomeFlow() {
           ) : stepIndex === 1 ? (
             <div className="space-y-4">
               <div className="max-h-[50vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
-                <div className="sticky top-0 z-10 -mx-1 bg-[var(--bg-surface)] px-1 py-2">
+                <div className="sticky top-0 z-10 -mx-1 rounded-2xl bg-[var(--bg-surface)] px-1 py-2 backdrop-blur">
                   <label className="block">
                     <span className="text-sm font-semibold text-deep">Search countries</span>
                     <input
                       value={countrySearchDraft}
                       onChange={(event) => setCountrySearchDraft(event.target.value)}
                       placeholder="Mexico, USA, Brazil…"
-                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
+                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-transparent px-4 text-sm text-[color:var(--fg-primary)] outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
                     />
                   </label>
                 </div>
@@ -266,14 +266,14 @@ export function WelcomeFlow() {
                 </div>
               ) : null}
               <div className="max-h-[50vh] overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible">
-                <div className="sticky top-0 z-10 -mx-1 bg-[var(--bg-surface)] px-1 py-2">
+                <div className="sticky top-0 z-10 -mx-1 rounded-2xl bg-[var(--bg-surface)] px-1 py-2 backdrop-blur">
                   <label className="block">
                     <span className="text-sm font-semibold text-deep">Search countries</span>
                     <input
                       value={countrySearchDraft}
                       onChange={(event) => setCountrySearchDraft(event.target.value)}
                       placeholder="Add more nations to follow…"
-                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
+                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-transparent px-4 text-sm text-[color:var(--fg-primary)] outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20"
                     />
                   </label>
                 </div>
