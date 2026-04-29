@@ -259,24 +259,37 @@ export function SiteHeader() {
               >
                 <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
                   {authUser ? (
-                    <>
-                      <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Signed in</div>
-                      <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
-                        <span>{localUser.avatarEmoji || "⚽"}</span>
-                        <span>{localUser.displayName || authUser.email || "Fan"}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft-bg)] text-xl text-[color:var(--accent-soft-fg)]">
+                        {localUser.avatarEmoji || "⚽"}
                       </div>
-                    </>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-[color:var(--fg-primary)]">
+                          {localUser.firstName || localUser.displayName || "Fan"}
+                        </div>
+                        <div className="truncate text-xs text-[color:var(--fg-secondary)]">
+                          {authUser.email}
+                        </div>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Account</div>
+                    <>
+                      <div className="text-sm font-semibold text-[color:var(--fg-primary)]">
+                        Sign in to sync
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-[color:var(--fg-secondary)]">
+                        Keep your saved venues, watched matches, and promos across devices.
+                      </div>
+                      <Link
+                        href="/auth/sign-in"
+                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]"
+                      >
+                        Sign in →
+                      </Link>
+                    </>
                   )}
                 </div>
                 <div className="grid gap-2 p-3">
-                  {!authUser ? (
-                    <Link href="/auth/sign-in" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
-                      <span>Sign in / Sign up</span>
-                      <span>→</span>
-                    </Link>
-                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -312,10 +325,15 @@ export function SiteHeader() {
                     <span>→</span>
                   </button>
                   {authUser ? (
-                    <Link href="/auth/sign-out" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
-                      <span>Sign out</span>
-                      <span>→</span>
-                    </Link>
+                    <form action="/auth/sign-out" method="post">
+                      <button
+                        type="submit"
+                        className="inline-flex h-11 w-full items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+                      >
+                        <span>Sign out</span>
+                        <span>→</span>
+                      </button>
+                    </form>
                   ) : null}
                 </div>
               </div>

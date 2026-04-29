@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+async function handleSignOut(request: NextRequest) {
   const response = NextResponse.redirect(new URL("/", request.url));
 
   const supabase = createServerClient(
@@ -25,4 +25,12 @@ export async function GET(request: NextRequest) {
   await supabase.auth.signOut();
 
   return response;
+}
+
+export async function GET(request: NextRequest) {
+  return handleSignOut(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleSignOut(request);
 }
