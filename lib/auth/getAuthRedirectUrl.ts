@@ -8,6 +8,10 @@ export function getAuthRedirectUrl() {
     return "gameday://auth/callback";
   }
 
+  if (typeof window !== "undefined" && window.location.origin) {
+    return `${window.location.origin.replace(/\/$/, "")}/auth/callback`;
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return `${baseUrl.replace(/\/$/, "")}/auth/callback`;
 }

@@ -81,6 +81,35 @@ export type UserStore = {
 
 let activeAuthUser: { id: string; email: string } | null = null;
 
+async function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function fetchJsonWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options?: { retries?: number; retryDelayMs?: number }
+) {
+  const retries = options?.retries ?? 5;
+  const retryDelayMs = options?.retryDelayMs ?? 400;
+
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const response = await fetch(input, init);
+
+    if (response.ok) {
+      return response.json();
+    }
+
+    if (response.status !== 401 || attempt === retries - 1) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    await wait(retryDelayMs);
+  }
+
+  throw new Error("Request failed");
+}
+
 function setActiveAuthUser(nextUser: { id: string; email: string } | null) {
   activeAuthUser = nextUser;
 }
@@ -597,13 +626,11 @@ export function useUserHydration() {
       email: user.email ?? ""
     });
 
-    void fetch("/api/me")
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Failed to hydrate user");
-        }
-
-        const data = await response.json();
+    void fetchJsonWithRetry("/api/me", undefined, {
+      retries: 6,
+      retryDelayMs: 500
+    })
+      .then((data) => {
         const favoriteCountrySlug = data.profile?.favoriteCountrySlug ?? undefined;
         const followedCountries = (data.followedCountries ?? []) as string[];
         const watchedMatches = (data.watchedMatches ?? []) as Array<{ matchId: string; watchVenueSlug?: string | null }>;

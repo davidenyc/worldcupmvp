@@ -26,6 +26,7 @@ const VALID_CITY_KEYS = new Set([
 const VALID_TOP_LEVEL_ROUTES = new Set([
   "about",
   "admin",
+  "app",
   "account",
   "auth",
   "country",

@@ -45,6 +45,8 @@ function actionButtonClass() {
 
 const PRIMARY_NAV_ITEMS = [
   { label: "Home", getHref: (_cityMapHref: string) => "/", matches: (path: string, _cityMapHref: string) => path === "/" },
+  { label: "Today", getHref: (_cityMapHref: string, todayHref: string) => todayHref, matches: (path: string) => path.startsWith("/today") },
+  { label: "Matches", getHref: (_cityMapHref: string, _todayHref: string, matchesHref: string) => matchesHref, matches: (path: string) => path.includes("/matches") },
   { label: "Map", getHref: (cityMapHref: string) => cityMapHref, matches: (path: string) => path.includes("/map") },
   { label: "Promos", getHref: (_cityMapHref: string) => "/promos", matches: (path: string) => path.startsWith("/promos") },
   { label: "My Cup", getHref: (_cityMapHref: string) => "/me", matches: (path: string) => path.startsWith("/me") }
@@ -74,12 +76,14 @@ export function SiteHeader() {
   const activeCityData = CITY_LOOKUP.get(activeCity) ?? HOST_CITIES[0];
   const currentPath = pathname ?? "/";
   const mapHref = `/${activeCity}/map`;
+  const todayHref = `/today?city=${activeCity}`;
+  const matchesHref = `/${activeCity}/matches`;
   const promosHref = "/promos";
   const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
   const hideMobileNav = currentPath === "/welcome";
   const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
-    href: item.getHref(mapHref),
+    href: item.getHref(mapHref, todayHref, matchesHref),
     label: item.label,
     active: item.matches(currentPath, mapHref)
   }));
@@ -221,6 +225,19 @@ export function SiteHeader() {
           </div>
 
           <div className="flex min-w-0 shrink-0 items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAccountMenuOpen(false);
+                setCityMenuOpen(true);
+              }}
+              aria-label={`Switch city from ${activeCityData.label}`}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
+            >
+              <MapPin className="h-4 w-4" />
+              <span className="max-w-[5.5rem] truncate sm:max-w-none">{activeCityData.shortLabel}</span>
+            </button>
+
             {tier === "free" ? (
               <Link
                 href="/membership"
@@ -386,16 +403,20 @@ export function SiteHeader() {
                 <Home className="h-5 w-5" />
                 <span>Home</span>
               </a>
+              <a href={todayHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/today") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <SunMedium className="h-5 w-5" />
+                <span>Today</span>
+              </a>
               <a href={mapHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <MapIcon className="h-5 w-5" />
                 <span>Map</span>
               </a>
-              <a href={promosHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/promos") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
-                <Tag className="h-5 w-5" />
-                <span>Promos</span>
+              <a href={matchesHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/matches") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+                <Trophy className="h-5 w-5" />
+                <span>Matches</span>
               </a>
               <a href={myHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
-                <Trophy className="h-5 w-5" />
+                <Heart className="h-5 w-5" />
                 <span>My Cup</span>
               </a>
             </nav>

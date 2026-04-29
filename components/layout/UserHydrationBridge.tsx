@@ -9,6 +9,55 @@ import { useMembership } from "@/lib/store/membership";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { useUser, useUserHydration, useUserStore } from "@/lib/store/user";
 
+async function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function fetchJsonWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options?: { retries?: number; retryDelayMs?: number }
+) {
+  const retries = options?.retries ?? 5;
+  const retryDelayMs = options?.retryDelayMs ?? 400;
+
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const response = await fetch(input, init);
+
+    if (response.ok) {
+      return response.json();
+    }
+
+    if (response.status !== 401 || attempt === retries - 1) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    await wait(retryDelayMs);
+  }
+
+  throw new Error("Request failed");
+}
+
+function readPersistedMigrationSnapshot() {
+  try {
+    const persistedUserRaw = window.localStorage.getItem("gameday-user");
+    const persistedFavoritesRaw = window.localStorage.getItem("gameday-favorites");
+
+    const persistedUser = persistedUserRaw ? JSON.parse(persistedUserRaw) : null;
+    const persistedFavorites = persistedFavoritesRaw ? JSON.parse(persistedFavoritesRaw) : null;
+
+    return {
+      profile: persistedUser?.state?.profile ?? null,
+      favorites: Array.isArray(persistedFavorites?.state?.favorites) ? persistedFavorites.state.favorites : []
+    };
+  } catch {
+    return {
+      profile: null,
+      favorites: []
+    };
+  }
+}
+
 // Global client bridge that hydrates the user store from Supabase after auth state resolves.
 export function UserHydrationBridge() {
   const { user: authUser, loading } = useSession();
@@ -28,51 +77,56 @@ export function UserHydrationBridge() {
     const migrationKey = `gameday-auth-migrated:${authUser.id}`;
     if (window.localStorage.getItem(migrationKey) === "true") return;
 
-    const watchedMatches = localUser.watchlistMatchIds.map((matchId) => ({
+    const persistedSnapshot = readPersistedMigrationSnapshot();
+    const sourceProfile = persistedSnapshot.profile ?? localUser;
+    const sourceFavorites = persistedSnapshot.favorites.length ? persistedSnapshot.favorites : favorites;
+    const watchedMatches = (sourceProfile.watchlistMatchIds ?? []).map((matchId: string) => ({
       matchId,
-      watchVenueSlug: localUser.watchVenues[matchId] ?? null
+      watchVenueSlug: sourceProfile.watchVenues?.[matchId] ?? null
     }));
 
     const hasLocalState =
-      favorites.length > 0 ||
+      sourceFavorites.length > 0 ||
       watchedMatches.length > 0 ||
-      localUser.followingCountrySlugs.length > 0 ||
-      Boolean(localUser.firstName) ||
-      Boolean(localUser.favoriteCountrySlug);
+      (sourceProfile.followingCountrySlugs?.length ?? 0) > 0 ||
+      Boolean(sourceProfile.firstName) ||
+      Boolean(sourceProfile.favoriteCountrySlug);
 
     if (!hasLocalState) {
       window.localStorage.setItem(migrationKey, "true");
       return;
     }
 
-    void fetch("/api/me/migrate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile: {
-          displayName: localUser.displayName,
-          firstName: localUser.firstName,
-          avatarEmoji: localUser.avatarEmoji,
-          homeCity: localUser.homeCity,
-          favoriteCity: localUser.favoriteCity,
-          favoriteCountrySlug: localUser.favoriteCountrySlug,
-          language: localUser.language,
-          prefersDarkMode: localUser.prefersDarkMode,
-          defaultFilters: localUser.defaultFilters,
-          promoOptIns: localUser.promoOptIns,
-          welcomeSeenAt: localUser.welcomeSeenAt ? new Date(localUser.welcomeSeenAt).toISOString() : null
-        },
-        followedCountries: localUser.followingCountrySlugs,
-        favoriteVenues: favorites,
-        watchedMatches
-      })
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Migration failed");
-        }
-
-        const data = await response.json();
+    void fetchJsonWithRetry(
+      "/api/me/migrate",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profile: {
+            displayName: sourceProfile.displayName,
+            firstName: sourceProfile.firstName,
+            avatarEmoji: sourceProfile.avatarEmoji,
+            homeCity: sourceProfile.homeCity,
+            favoriteCity: sourceProfile.favoriteCity,
+            favoriteCountrySlug: sourceProfile.favoriteCountrySlug,
+            language: sourceProfile.language,
+            prefersDarkMode: sourceProfile.prefersDarkMode,
+            defaultFilters: sourceProfile.defaultFilters,
+            promoOptIns: sourceProfile.promoOptIns,
+            welcomeSeenAt: sourceProfile.welcomeSeenAt ? new Date(sourceProfile.welcomeSeenAt).toISOString() : null
+          },
+          followedCountries: sourceProfile.followingCountrySlugs ?? [],
+          favoriteVenues: sourceFavorites,
+          watchedMatches
+        })
+      },
+      {
+        retries: 6,
+        retryDelayMs: 500
+      }
+    )
+      .then((data) => {
         const favoriteCountrySlug = data.profile?.favoriteCountrySlug ?? undefined;
         const followedCountries = (data.followedCountries ?? []) as string[];
         const nextWatchedMatches = (data.watchedMatches ?? []) as Array<{ matchId: string; watchVenueSlug?: string | null }>;

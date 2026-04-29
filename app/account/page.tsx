@@ -321,7 +321,11 @@ export default function AccountPage() {
                     Upgrade to Elite — $12.99/mo
                   </Link>
                 ) : (
-                  <button type="button" disabled className="inline-flex w-full justify-center rounded-full bg-gray-100 px-5 py-3 text-sm font-bold text-gray-500">
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex w-full justify-center rounded-full border border-line bg-[var(--bg-surface-elevated)] px-5 py-3 text-sm font-bold text-[color:var(--fg-secondary)]"
+                  >
                     👑 Maximum access — you&apos;re all set
                   </button>
                 )}

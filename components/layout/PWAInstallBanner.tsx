@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const STORAGE_KEY = "gameday-pwa-dismissed";
+const SHOW_DELAY_MS = 3000;
 
 type InstallChoice = {
   outcome: "accepted" | "dismissed";
@@ -15,6 +16,12 @@ type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<InstallChoice>;
 };
+
+declare global {
+  interface Window {
+    __gamedayDeferredInstallPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
 
 function isIosDevice() {
   if (typeof window === "undefined") return false;
@@ -40,23 +47,31 @@ export function PWAInstallBanner() {
   const [isMobile, setIsMobile] = useState(false);
   const [bodyRouteActive, setBodyRouteActive] = useState(false);
   const [showIosModal, setShowIosModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [delayElapsed, setDelayElapsed] = useState(false);
 
   useEffect(() => {
+    const readDeferredPrompt = () => window.__gamedayDeferredInstallPrompt ?? null;
+
     const syncState = () => {
       setDismissed(window.localStorage.getItem(STORAGE_KEY) === "1");
       setInstalled(isStandaloneDisplay());
       setIsIos(isIosDevice());
       setIsMobile(window.innerWidth < 1024);
       setBodyRouteActive(Boolean(document.body?.dataset.route));
+      setDeferredPrompt(readDeferredPrompt());
     };
 
     syncState();
 
     const onResize = () => setIsMobile(window.innerWidth < 1024);
-    const onInstalled = () => setInstalled(true);
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
+    const delayTimer = window.setTimeout(() => setDelayElapsed(true), SHOW_DELAY_MS);
+    const onInstalled = () => {
+      setInstalled(true);
+      setDeferredPrompt(null);
+    };
+    const onInstallPromptReady = () => {
+      setDeferredPrompt(readDeferredPrompt());
     };
     const observer = new MutationObserver(() => {
       setBodyRouteActive(Boolean(document.body?.dataset.route));
@@ -65,13 +80,16 @@ export function PWAInstallBanner() {
     observer.observe(document.body, { attributes: true, attributeFilter: ["data-route"] });
     window.addEventListener("resize", onResize);
     window.addEventListener("appinstalled", onInstalled);
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("gameday:install-prompt-ready", onInstallPromptReady);
+    window.addEventListener("gameday:install-complete", onInstalled);
 
     return () => {
+      window.clearTimeout(delayTimer);
       observer.disconnect();
       window.removeEventListener("resize", onResize);
       window.removeEventListener("appinstalled", onInstalled);
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("gameday:install-prompt-ready", onInstallPromptReady);
+      window.removeEventListener("gameday:install-complete", onInstalled);
     };
   }, []);
 
@@ -80,13 +98,13 @@ export function PWAInstallBanner() {
     return pathname === "/welcome" || pathname.startsWith("/auth");
   }, [pathname]);
 
-  const canPrompt = Boolean(deferredPrompt) || (isIos && !installed);
-  const visible = isMobile && !dismissed && !installed && !hiddenForRoute && !bodyRouteActive && canPrompt;
+  const visible = delayElapsed && isMobile && !dismissed && !installed && !hiddenForRoute && !bodyRouteActive;
 
   async function handleInstall() {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
       const result = await deferredPrompt.userChoice.catch(() => null);
+      window.__gamedayDeferredInstallPrompt = null;
       setDeferredPrompt(null);
       if (result?.outcome === "accepted") {
         setInstalled(true);
@@ -96,13 +114,17 @@ export function PWAInstallBanner() {
 
     if (isIos) {
       setShowIosModal(true);
+      return;
     }
+
+    setShowManualModal(true);
   }
 
   function handleDismiss() {
     window.localStorage.setItem(STORAGE_KEY, "1");
     setDismissed(true);
     setShowIosModal(false);
+    setShowManualModal(false);
   }
 
   if (!visible) return null;
@@ -174,6 +196,45 @@ export function PWAInstallBanner() {
               <button
                 type="button"
                 onClick={() => setShowIosModal(false)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-line bg-[var(--bg-surface-elevated)] px-4 text-sm font-semibold text-[color:var(--fg-primary)]"
+              >
+                Got it
+              </button>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-line bg-transparent px-4 text-sm font-semibold text-[color:var(--fg-secondary)]"
+              >
+                Don&apos;t show again
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showManualModal ? (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/45 px-4 pb-4 pt-10 lg:hidden">
+          <div className="mx-auto w-full max-w-md rounded-[1.75rem] border border-line bg-[var(--bg-surface)] p-5 shadow-popover">
+            <div className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--fg-secondary)]">
+              Install GameDay Map
+            </div>
+            <h2 className="mt-2 text-2xl font-semibold text-[color:var(--fg-primary)]">
+              Add GameDay Map from your browser menu.
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">
+              If Chrome does not show the native install prompt automatically, use the install button in the address bar or open the browser menu and choose <span className="font-semibold text-[color:var(--fg-primary)]">Install GameDay Map</span>.
+            </p>
+
+            <div className="mt-5 rounded-[1.5rem] border border-line bg-[var(--bg-surface-elevated)] p-4">
+              <div className="rounded-2xl border border-line bg-[var(--bg-surface)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
+                Look for the install icon in the address bar, then confirm the native install sheet.
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowManualModal(false)}
                 className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-line bg-[var(--bg-surface-elevated)] px-4 text-sm font-semibold text-[color:var(--fg-primary)]"
               >
                 Got it

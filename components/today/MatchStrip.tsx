@@ -1,9 +1,14 @@
 "use client";
 
+import { useState } from "react";
+
 import { CountryFlag } from "@/components/ui/CountryFlag";
-import { WatchToggleButton } from "@/components/matches/WatchToggleButton";
+import { WatchedCheckInSheet } from "@/components/matches/WatchedCheckInSheet";
+import { getHostCity } from "@/lib/data/hostCities";
+import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { formatMatchStageCompact } from "@/lib/data/today";
 import type { WorldCupMatch } from "@/lib/data/matches";
+import { useWatchlistStore } from "@/lib/store/watchlist";
 import type { CountrySummary } from "@/lib/types";
 
 type MatchStripProps = {
@@ -23,6 +28,14 @@ function formatKickoff(startsAt: string) {
   }).format(new Date(startsAt));
 }
 
+function formatVenueLabel(value?: string | null) {
+  if (!value) return null;
+  return value
+    .split("-")
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(" ");
+}
+
 export function MatchStrip({
   matches,
   countriesBySlug,
@@ -30,7 +43,20 @@ export function MatchStrip({
   badgeLabel,
   onSelect
 }: MatchStripProps) {
+  const [sheetMatchId, setSheetMatchId] = useState<string | null>(null);
+  const watchedMatches = useWatchlistStore((state) => state.watchedMatches);
+  const watchStatuses = useWatchlistStore((state) => state.watchStatuses);
+  const watchVenues = useWatchlistStore((state) => state.watchVenues);
+  const watchRatings = useWatchlistStore((state) => state.watchRatings);
+  const planWatchMatch = useWatchlistStore((state) => state.planWatchMatch);
+  const markWatchedMatch = useWatchlistStore((state) => state.markWatchedMatch);
+
   if (matches.length === 0) return null;
+
+  const activeSheetMatch = matches.find((match) => match.id === sheetMatchId) ?? null;
+  const activeSheetCityKey = activeSheetMatch ? getMatchHostCityKey(activeSheetMatch) ?? "nyc" : "nyc";
+  const activeSheetCityLabel = getHostCity(activeSheetCityKey)?.label ?? activeSheetMatch?.city ?? "the host city";
+  const activeSheetKickoffPassed = activeSheetMatch ? Date.now() > Date.parse(activeSheetMatch.startsAt) : false;
 
   return (
     <section className="space-y-4">
@@ -56,6 +82,11 @@ export function MatchStrip({
           const home = countriesBySlug[match.homeCountry];
           const away = countriesBySlug[match.awayCountry];
           const active = match.id === activeMatchId;
+          const kickoffPassed = Date.now() > Date.parse(match.startsAt);
+          const status = watchStatuses[match.id];
+          const isTracked = watchedMatches.includes(match.id);
+          const isWatched = status === "watched";
+          const plannedVenue = formatVenueLabel(watchVenues[match.id]);
 
           return (
             <div
@@ -96,12 +127,63 @@ export function MatchStrip({
                 <div className="mt-4 text-sm font-semibold text-gold">Tap to find watch spots →</div>
               </button>
               <div className="mt-4">
-                <WatchToggleButton matchId={match.id} className="w-full" />
+                {isWatched ? (
+                  <button
+                    type="button"
+                    onClick={() => setSheetMatchId(match.id)}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-gold bg-gold/10 px-4 text-sm font-semibold text-deep"
+                  >
+                    ✓ Watched
+                  </button>
+                ) : kickoffPassed ? (
+                  <button
+                    type="button"
+                    onClick={() => setSheetMatchId(match.id)}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-deep transition hover:brightness-105"
+                  >
+                    I watched this →
+                  </button>
+                ) : isTracked ? (
+                  <button
+                    type="button"
+                    onClick={() => setSheetMatchId(match.id)}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[color:var(--accent-soft-fg)] bg-[var(--accent-soft-bg)] px-4 text-sm font-semibold text-[color:var(--accent-soft-fg)]"
+                  >
+                    {plannedVenue ? "Edit plan" : "✓ Watching"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => planWatchMatch(match.id)}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-line bg-[var(--bg-surface)] px-4 text-sm font-semibold text-deep"
+                  >
+                    I’ll watch this →
+                  </button>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+      {activeSheetMatch ? (
+        <WatchedCheckInSheet
+          open
+          cityKey={activeSheetCityKey}
+          cityLabel={activeSheetCityLabel}
+          kickoffPassed={activeSheetKickoffPassed}
+          initialVenueSlug={watchVenues[activeSheetMatch.id]}
+          initialRating={watchRatings[activeSheetMatch.id]}
+          onClose={() => setSheetMatchId(null)}
+          onSubmit={({ venueSlug, rating }) => {
+            if (activeSheetKickoffPassed) {
+              markWatchedMatch(activeSheetMatch.id, { venueSlug, rating });
+            } else {
+              planWatchMatch(activeSheetMatch.id, venueSlug);
+            }
+            setSheetMatchId(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
