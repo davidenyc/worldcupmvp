@@ -55,6 +55,7 @@ export function SiteHeader() {
   const { isDark, setTheme } = useTheme();
   const { tier } = useMembership();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [cityMenuOpen, setCityMenuOpen] = useState(false);
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
@@ -82,6 +83,16 @@ export function SiteHeader() {
   useEffect(() => {
     setAccountMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const openCitySwitcher = () => {
+      setAccountMenuOpen(false);
+      setCityMenuOpen(true);
+    };
+
+    window.addEventListener("gameday:open-city-switcher", openCitySwitcher);
+    return () => window.removeEventListener("gameday:open-city-switcher", openCitySwitcher);
+  }, []);
 
   useEffect(() => {
     setMenuMounted(true);
@@ -146,6 +157,7 @@ export function SiteHeader() {
   function navigateToCity(nextCity: string) {
     setUserCity(nextCity);
     setAccountMenuOpen(false);
+    setCityMenuOpen(false);
 
     const segments = (pathname ?? "/").split("/").filter(Boolean);
     const currentCity = getActiveCityFromPath(pathname);
@@ -247,7 +259,10 @@ export function SiteHeader() {
                 <div className="grid gap-2 p-3">
                   <button
                     type="button"
-                    onClick={() => navigateToCity(activeCityData.key)}
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      setCityMenuOpen(true);
+                    }}
                     className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
                   >
                     <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {activeCityData.label}</span>
@@ -276,6 +291,38 @@ export function SiteHeader() {
                     </span>
                     <span>→</span>
                   </button>
+                </div>
+              </div>
+            </>,
+            document.body
+          )
+        : null}
+
+      {menuMounted && cityMenuOpen
+        ? createPortal(
+            <>
+              <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setCityMenuOpen(false)} />
+              <div className="fixed inset-x-4 top-[calc(env(safe-area-inset-top,0px)+4.75rem)] z-50 mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover">
+                <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
+                  <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Switch city</div>
+                  <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">Choose the host city you want to browse.</div>
+                </div>
+                <div className="grid max-h-[min(60vh,28rem)] gap-2 overflow-y-auto p-3">
+                  {HOST_CITIES.map((city) => (
+                    <button
+                      key={city.key}
+                      type="button"
+                      onClick={() => navigateToCity(city.key)}
+                      className={`inline-flex min-h-11 items-center justify-between rounded-full border px-4 text-sm font-semibold transition ${
+                        city.key === activeCity
+                          ? "border-gold bg-gold/10 text-deep"
+                          : "border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] hover:bg-[var(--bg-surface-elevated)]"
+                      }`}
+                    >
+                      <span>{city.label}</span>
+                      <span className="text-[color:var(--fg-muted)]">{city.shortLabel}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </>,
