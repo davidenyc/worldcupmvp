@@ -199,6 +199,24 @@ function syncUserProfileToServer(updates: Partial<UserProfile>) {
   });
 }
 
+function syncWatchedMatchToServer(matchId: string, watchVenueSlug: string | null) {
+  if (!activeAuthUser) return;
+
+  void fetch(`/api/me/watched-matches/${matchId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ watchVenueSlug })
+  });
+}
+
+function removeWatchedMatchFromServer(matchId: string) {
+  if (!activeAuthUser) return;
+
+  void fetch(`/api/me/watched-matches/${matchId}`, {
+    method: "DELETE"
+  });
+}
+
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -229,13 +247,14 @@ export const useUserStore = create<UserStore>()(
         set({
           profile: createDefaultProfile()
         }),
-      // SRC: local-only until watched-matches API lands.
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       toggleWatchlistMatch: (matchId) =>
         set((state) => {
           const alreadyWatching = state.profile.watchlistMatchIds.includes(matchId);
           if (alreadyWatching) {
             const nextWatchVenues = { ...state.profile.watchVenues };
             delete nextWatchVenues[matchId];
+            removeWatchedMatchFromServer(matchId);
 
             return {
               profile: appendActivityEntry(normalizeProfile({
@@ -250,6 +269,7 @@ export const useUserStore = create<UserStore>()(
             };
           }
 
+          syncWatchedMatchToServer(matchId, state.profile.watchVenues[matchId] ?? null);
           return {
             profile: appendActivityEntry(normalizeProfile({
                 ...state.profile,
@@ -261,29 +281,33 @@ export const useUserStore = create<UserStore>()(
             })
           };
         }),
-      // SRC: local-only until watched-matches API lands.
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       setWatchVenue: (matchId, venueSlug) =>
-        set((state) => ({
-          profile: appendActivityEntry(normalizeProfile({
-            ...state.profile,
-            watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
-              ? state.profile.watchlistMatchIds
-              : [...state.profile.watchlistMatchIds, matchId],
-            watchVenues: {
-              ...state.profile.watchVenues,
-              [matchId]: venueSlug
-            }
-          }), {
-            kind: "watch_venue_set",
-            label: venueSlug ? `Picked a venue for match ${matchId}.` : `Updated venue plan for match ${matchId}.`,
-            href: "/me"
-          })
-        })),
-      // SRC: local-only until watched-matches API lands.
+        set((state) => {
+          syncWatchedMatchToServer(matchId, venueSlug);
+          return {
+            profile: appendActivityEntry(normalizeProfile({
+              ...state.profile,
+              watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
+                ? state.profile.watchlistMatchIds
+                : [...state.profile.watchlistMatchIds, matchId],
+              watchVenues: {
+                ...state.profile.watchVenues,
+                [matchId]: venueSlug
+              }
+            }), {
+              kind: "watch_venue_set",
+              label: venueSlug ? `Picked a venue for match ${matchId}.` : `Updated venue plan for match ${matchId}.`,
+              href: "/me"
+            })
+          };
+        }),
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       clearWatchVenue: (matchId) =>
         set((state) => {
           const nextWatchVenues = { ...state.profile.watchVenues };
           delete nextWatchVenues[matchId];
+          syncWatchedMatchToServer(matchId, null);
           return {
             profile: normalizeProfile({
               ...state.profile,
@@ -479,6 +503,7 @@ export function useUserHydration() {
         const data = await response.json();
         const favoriteCountrySlug = data.profile?.favoriteCountrySlug ?? undefined;
         const followedCountries = (data.followedCountries ?? []) as string[];
+        const watchedMatches = (data.watchedMatches ?? []) as Array<{ matchId: string; watchVenueSlug?: string | null }>;
 
         hydrateFromServer({
           id: user.id,
@@ -499,7 +524,13 @@ export function useUserHydration() {
           defaultFilters: data.profile?.defaultFilters ?? createDefaultProfile().defaultFilters,
           promoOptIns: data.profile?.promoOptIns ?? createDefaultProfile().promoOptIns,
           welcomeSeenAt: data.profile?.welcomeSeenAt ? new Date(data.profile.welcomeSeenAt).getTime() : undefined,
-          joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString()
+          joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString(),
+          watchlistMatchIds: watchedMatches.map((entry) => entry.matchId),
+          watchVenues: Object.fromEntries(
+            watchedMatches
+              .filter((entry) => entry.watchVenueSlug)
+              .map((entry) => [entry.matchId, entry.watchVenueSlug ?? null])
+          )
         });
       })
       .catch(() => {

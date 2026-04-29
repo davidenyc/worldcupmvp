@@ -46,7 +46,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [profile, followedCountries, membership] = await Promise.all([
+  const [profile, followedCountries, membership, watchedMatches] = await Promise.all([
     prisma.profile.findUnique({
       where: { id: user.id }
     }),
@@ -56,6 +56,10 @@ export async function GET() {
     }),
     prisma.profileMembership.findUnique({
       where: { profileId: user.id }
+    }),
+    prisma.profileWatchedMatch.findMany({
+      where: { profileId: user.id },
+      orderBy: { watchedAt: "asc" }
     })
   ]);
 
@@ -63,7 +67,11 @@ export async function GET() {
     profile,
     authEmail: user.email ?? "",
     followedCountries: followedCountries.map((entry) => entry.countrySlug),
-    membership
+    membership,
+    watchedMatches: watchedMatches.map((entry) => ({
+      matchId: entry.matchId,
+      watchVenueSlug: entry.watchVenueSlug
+    }))
   });
 }
 
