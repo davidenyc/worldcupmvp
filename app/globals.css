@@ -22,6 +22,8 @@
   --fg-muted: rgba(10, 22, 40, 0.55);
   --fg-on-accent: #0a1628;
   --fg-on-strong: #ffffff;
+  --fg-secondary-on-strong: rgba(255, 255, 255, 0.78);
+  --fg-muted-on-strong: rgba(255, 255, 255, 0.6);
 
   --border-subtle: #d8e3f5;
   --border-strong: rgba(10, 22, 40, 0.12);
@@ -73,6 +75,8 @@
   --fg-muted: rgba(230, 237, 243, 0.6);
   --fg-on-accent: #0a1628;
   --fg-on-strong: #f7fafc;
+  --fg-secondary-on-strong: rgba(247, 250, 252, 0.78);
+  --fg-muted-on-strong: rgba(247, 250, 252, 0.6);
 
   --border-subtle: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.07);
