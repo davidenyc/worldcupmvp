@@ -54,7 +54,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   return {
     title: `Best ${country.name} Watch Party Bars in the US | GameDay Map`,
-    description: `Find every ${country.name} bar and restaurant across all 17 World Cup 2026 host cities. Find your fellow supporters and watch the games together.`
+    description: `Find every ${country.name} bar and restaurant across all 17 World Cup 2026 host cities. Find your fellow supporters and watch the games together.`,
+    openGraph: {
+      images: [`/api/og?type=country&slug=${country.slug}`]
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [`/api/og?type=country&slug=${country.slug}`]
+    }
   };
 }
 

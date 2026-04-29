@@ -52,12 +52,14 @@ export async function generateMetadata({
       url: `https://gamedaymap.com/${city.key}/map`,
       title,
       description,
-      siteName: "GameDay Map"
+      siteName: "GameDay Map",
+      images: [`/api/og?type=city-map&city=${city.key}`]
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description
+      description,
+      images: [`/api/og?type=city-map&city=${city.key}`]
     }
   };
 }

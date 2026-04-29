@@ -53,7 +53,6 @@ export async function generateMetadata({
   const venue = data.venue;
   const title = `${venue.name} — Watch World Cup 2026 | GameDay Map`;
   const description = `Watch World Cup 2026 at ${venue.name} in ${venue.neighborhood}, ${venue.city}. ${formatStarRating(venue.rating)} rated. ${toTitleCase(venue.venueIntent.replace(/_/g, " "))}. Directions, reservation requests, and more.`;
-  const countryEmoji = data.country?.flagEmoji ?? "⚽";
 
   return {
     title,
@@ -67,13 +66,13 @@ export async function generateMetadata({
       description,
       siteName: "GameDay Map",
       url: `/venue/${venue.slug}`,
-      images: [
-        {
-          url: `/og?title=${encodeURIComponent(venue.name)}&subtitle=${encodeURIComponent(`${venue.neighborhood || venue.borough} · ${data.country?.name ?? "Sports Bar"}`)}&emoji=${encodeURIComponent(countryEmoji)}`,
-          width: 1200,
-          height: 630
-        }
-      ]
+      images: [`/api/og?type=venue&slug=${venue.slug}`]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`/api/og?type=venue&slug=${venue.slug}`]
     }
   };
 }
