@@ -582,14 +582,12 @@ export function useUserHydration() {
   const { user, loading } = useSession();
   const hydrateFromServer = useUserStore((state) => state.hydrateFromServer);
   const ensureUser = useUserStore((state) => state.ensureUser);
-  const resetUser = useUserStore((state) => state.resetUser);
 
   useEffect(() => {
     if (loading) return;
 
     if (!user) {
       setActiveAuthUser(null);
-      resetUser();
       ensureUser();
       return;
     }
@@ -649,5 +647,5 @@ export function useUserHydration() {
       .catch(() => {
         ensureUser();
       });
-  }, [ensureUser, hydrateFromServer, loading, resetUser, user]);
+  }, [ensureUser, hydrateFromServer, loading, user]);
 }
