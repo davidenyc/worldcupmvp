@@ -1,8 +1,10 @@
 {
   "name": "GameDay Map",
-  "short_name": "GameDay",
-  "description": "Find bars to watch World Cup 2026 with fans from your country",
-  "start_url": "/",
+  "short_name": "GameDay Map",
+  "description": "Find World Cup 2026 watch parties, fan venues, and promos across 17 host cities.",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a1628",
   "theme_color": "#f4b942",
