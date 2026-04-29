@@ -22,6 +22,8 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useMembership } from "@/lib/store/membership";
 import { useTheme } from "@/lib/store/theme";
+import { useSession } from "@/lib/hooks/useSession";
+import { useUser } from "@/lib/store/user";
 
 const CITY_LOOKUP = new Map(HOST_CITIES.map((city) => [city.key, city] as const));
 
@@ -54,6 +56,8 @@ export function SiteHeader() {
   const { userCity, suggestedCity, setUserCity } = useUserCity();
   const { isDark, setTheme } = useTheme();
   const { tier } = useMembership();
+  const { user: authUser } = useSession();
+  const localUser = useUser();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
@@ -254,9 +258,25 @@ export function SiteHeader() {
                 style={{ top: menuPosition.top, right: menuPosition.right }}
               >
                 <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
-                  <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Account</div>
+                  {authUser ? (
+                    <>
+                      <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Signed in</div>
+                      <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-[color:var(--fg-primary)]">
+                        <span>{localUser.avatarEmoji || "⚽"}</span>
+                        <span>{localUser.displayName || authUser.email || "Fan"}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Account</div>
+                  )}
                 </div>
                 <div className="grid gap-2 p-3">
+                  {!authUser ? (
+                    <Link href="/auth/sign-in" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
+                      <span>Sign in / Sign up</span>
+                      <span>→</span>
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -291,6 +311,12 @@ export function SiteHeader() {
                     </span>
                     <span>→</span>
                   </button>
+                  {authUser ? (
+                    <Link href="/auth/sign-out" className="inline-flex h-11 items-center justify-between rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]">
+                      <span>Sign out</span>
+                      <span>→</span>
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </>,
@@ -332,28 +358,28 @@ export function SiteHeader() {
 
       {hideMobileNav ? null : (
         <div
-          className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
+          className={`mobile-nav-shell fixed inset-x-0 bottom-0 z-[70] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
             mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
           }`}
         >
-          <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
+          <div className="relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
             <nav className="flex items-stretch justify-between gap-1">
-              <Link href="/" className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              <a href="/" className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Home className="h-5 w-5" />
                 <span>Home</span>
-              </Link>
-              <Link href={mapHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </a>
+              <a href={mapHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <MapIcon className="h-5 w-5" />
                 <span>Map</span>
-              </Link>
-              <Link href={promosHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/promos") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </a>
+              <a href={promosHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/promos") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Tag className="h-5 w-5" />
                 <span>Promos</span>
-              </Link>
-              <Link href={myHref} className={`flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </a>
+              <a href={myHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Trophy className="h-5 w-5" />
                 <span>My Cup</span>
-              </Link>
+              </a>
             </nav>
           </div>
         </div>
