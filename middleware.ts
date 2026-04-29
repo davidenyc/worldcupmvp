@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getHostCity } from "@/lib/data/hostCities";
+import { updateSession } from "@/lib/supabase/middleware";
 
 const VALID_CITY_KEYS = new Set([
   "nyc",
@@ -25,7 +26,9 @@ const VALID_CITY_KEYS = new Set([
 const VALID_TOP_LEVEL_ROUTES = new Set([
   "about",
   "admin",
+  "app",
   "account",
+  "auth",
   "country",
   "groups",
   "map",
@@ -42,10 +45,11 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "terms",
   "today",
   "tonight",
+  "welcome",
   "venue"
 ]);
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (
@@ -54,8 +58,10 @@ export function middleware(request: NextRequest) {
     pathname === "/favicon.ico" ||
     pathname.match(/\.[^/]+$/)
   ) {
-    return NextResponse.next();
+    return updateSession(request);
   }
+
+  const response = await updateSession(request);
 
   if (pathname === "/tonight") {
     const url = new URL(`/today${search}`, request.url);
@@ -71,7 +77,7 @@ export function middleware(request: NextRequest) {
     VALID_TOP_LEVEL_ROUTES.has(firstSegment) ||
     getHostCity(firstSegment)
   ) {
-    return NextResponse.next();
+    return response;
   }
 
   const restOfPath = segments.slice(1).join("/");

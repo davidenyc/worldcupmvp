@@ -20,8 +20,8 @@ export function VibeSelector({
             onClick={() => onChange(vibe)}
             className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
               active
-                ? "border-[#f4b942] bg-[#f4b942] text-[#0a1628]"
-                : "border-[#d8e3f5] bg-white text-[#0a1628]"
+                ? "border-gold bg-gold text-deep"
+                : "border-line bg-white text-deep"
             }`}
           >
             {vibe.charAt(0).toUpperCase() + vibe.slice(1)}

@@ -11,10 +11,10 @@ export function HomeCityPrompt() {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event("gameday:open-city-switcher"))}
-      className="inline-flex min-h-11 items-center gap-1 text-sm text-[color:var(--fg-secondary)] transition hover:text-[color:var(--fg-primary)]"
+      className="inline-flex items-center gap-1 text-sm text-[color:var(--fg-secondary)] transition hover:text-[color:var(--fg-primary)]"
     >
       <span>Not in {activeCity?.label ?? "New York"}?</span>
-      <span className="font-semibold text-[color:var(--fg-primary)]">Pick another →</span>
+      <span className="font-semibold text-[color:var(--fg-primary)] underline underline-offset-4">Pick another →</span>
     </button>
   );
 }

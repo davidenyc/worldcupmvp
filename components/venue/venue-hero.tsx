@@ -84,7 +84,7 @@ export function VenueHero({ venue }: { venue: RankedVenue }) {
                 fill
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-[#0a1628]/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[color:color-mix(in_srgb,var(--bg-deep)_80%,transparent)] via-[color:color-mix(in_srgb,var(--bg-deep)_25%,transparent)] to-transparent" />
               <div className="absolute left-5 top-5 flex flex-wrap gap-2">
                 {venue.isOfficialFanHub && <Badge className="bg-accent text-white">Official fan hub</Badge>}
                 {venue.acceptsReservations && <Badge>Reservations available</Badge>}

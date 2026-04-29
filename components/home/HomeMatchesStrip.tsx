@@ -11,12 +11,21 @@ import { useUserCity } from "@/lib/hooks/useUserCity";
 import { KickoffCountdown } from "./KickoffCountdown";
 
 function formatMatchPreviewTime(startsAt: string) {
-  return new Date(startsAt).toLocaleString("en-US", {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
     month: "short",
     day: "numeric",
     hour: "numeric",
-    minute: "2-digit"
+    minute: "2-digit",
+    hour12: true
   });
+  const parts = formatter.formatToParts(new Date(startsAt));
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "";
+  const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value ?? "";
+  return `${month} ${day}, ${hour}:${minute} ${dayPeriod}`.trim();
 }
 
 export function HomeMatchesStrip({

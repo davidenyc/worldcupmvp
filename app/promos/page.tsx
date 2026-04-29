@@ -1,7 +1,32 @@
+import type { Metadata } from "next";
+
 import { PromosPageClient } from "@/components/promos/PromosPageClient";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
 import { getMapPageData } from "@/lib/data/repository";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams?: { city?: string };
+}): Promise<Metadata> {
+  const city = getHostCity(searchParams?.city ?? "")?.key ?? null;
+  const cityLabel = city ? (getHostCity(city)?.label ?? "your city") : "17 host cities";
+
+  return {
+    title: city ? `${cityLabel} World Cup promos | GameDay Map` : "World Cup promos | GameDay Map",
+    description: city
+      ? `Save at watch parties, fan bars, and match-night venues in ${cityLabel}.`
+      : "Save at watch parties, fan bars, and supporter rooms across all 17 host cities.",
+    openGraph: {
+      images: [`/api/og?type=promos${city ? `&city=${city}` : ""}`]
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [`/api/og?type=promos${city ? `&city=${city}` : ""}`]
+    }
+  };
+}
 
 export default async function PromosPage({
   searchParams

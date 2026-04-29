@@ -316,7 +316,11 @@ export function NYCFlagPinMapClient({
         touchZoom
         zoomControl={false}
         className="h-full w-full"
-        style={{ background: isDark ? "#111827" : "#eef4ff" }}
+        style={{
+          background: isDark
+            ? "var(--bg-surface-strong)"
+            : "var(--bg-surface-elevated)"
+        }}
         {...tapDisabled}
       >
         <MapReadyBridge
@@ -360,7 +364,7 @@ export function NYCFlagPinMapClient({
           const country = venue.likelySupporterCountry ? countryLookup.get(venue.likelySupporterCountry) : null;
           const neutralSportsBar = isNeutralSportsBar(venue);
           const flagEmoji = country?.flagEmoji ?? "📍";
-          const accentColor = country?.primaryColors[0] ?? (neutralSportsBar ? "#f4b942" : "#16324f");
+          const accentColor = country?.primaryColors[0] ?? (neutralSportsBar ? "var(--gold)" : "var(--bg-deep)");
           const selected = selectedVenueId === venue.id;
           const shouldAnimate = animatedVenueIds.includes(venue.id);
           const hasPromo = promoVenueIdSet.has(venue.slug) || promoVenueIdSet.has(venue.id);

@@ -30,7 +30,7 @@ export default function JoinGroupPage({ params }: { params: { code: string } }) 
               router.push(`/venue/${group.venueId}`);
             }
           }}
-          className="mt-5 inline-flex rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]"
+          className="mt-5 inline-flex rounded-full bg-gold px-5 py-3 text-sm font-bold text-[color:var(--fg-on-accent)]"
         >
           Join this GameDay Crew
         </button>

@@ -54,7 +54,7 @@ export function SearchPageClient({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search bars, restaurants, countries..."
-        className="h-14 w-full rounded-full border border-[#d8e3f5] bg-white px-5 text-lg outline-none ring-[#f4b942] focus:ring-2"
+        className="h-14 w-full rounded-full border border-line bg-white px-5 text-lg outline-none ring-gold focus:ring-2"
       />
       <div className="relative mt-4">
         <div ref={cityStripRef} className="flex gap-2 overflow-x-auto pr-40 sm:pr-44">
@@ -63,7 +63,7 @@ export function SearchPageClient({
               key={item.key}
               type="button"
               onClick={() => setCity(item.key)}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${city === item.key ? "bg-[#f4b942] text-[#0a1628]" : "border border-line bg-white text-navy"}`}
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${city === item.key ? "bg-gold text-deep" : "border border-line bg-white text-navy"}`}
             >
               {item.label}
             </button>
@@ -99,7 +99,7 @@ export function SearchPageClient({
             title={`No venues found for "${query}" in ${HOST_CITIES.find((item) => item.key === city)?.label ?? city}`}
             subtitle={`Try "French bar", "sports bar", or "Argentina".`}
             action={
-              <Link href={`/${city}/map`} className="inline-flex rounded-full bg-[#f4b942] px-5 py-2.5 text-sm font-bold text-[#0a1628]">
+              <Link href={`/${city}/map`} className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-bold text-deep">
                 Browse the map
               </Link>
             }

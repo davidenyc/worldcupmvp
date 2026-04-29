@@ -9,7 +9,7 @@ import {
   getPromoRedemptionLabel
 } from "@/lib/data/promos";
 import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
-import { FEATURE_GATES, useMembership } from "@/lib/store/membership";
+import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
 import { useUser } from "@/lib/store/user";
 import { PromoRedemptionModal } from "@/components/promos/PromoRedemptionModal";
@@ -26,7 +26,7 @@ export function PromoCard({
   reservationUrl?: string;
   compact?: boolean;
 }) {
-  const { tier } = useMembership();
+  const { tier, hasFeature } = useMembership();
   const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
@@ -38,11 +38,7 @@ export function PromoCard({
   const recentPromoClaims = savedPromos.filter(
     (entry) => Date.now() - Date.parse(entry.claimedAt) <= 7 * 24 * 60 * 60 * 1000
   );
-  const freeClaimLimitReached =
-    tier === "free" &&
-    !FEATURE_GATES.unlimited_promo_redemptions.includes(tier) &&
-    recentPromoClaims.length >= 1 &&
-    !savedPromo;
+  const freeClaimLimitReached = !hasFeature("unlimited_promo_redemptions") && recentPromoClaims.length >= 1 && !savedPromo;
 
   async function handlePrimaryAction() {
     if (savedPromo) {
@@ -80,7 +76,7 @@ export function PromoCard({
     }
 
     savePromo(payload.savedPromo);
-    toast.success("Saved to My World Cup");
+    toast.success("Saved to My Cup");
     setOpen(true);
   }
 
@@ -94,11 +90,11 @@ export function PromoCard({
         }`}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="rounded-full bg-[#eef4ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]">
+          <div className="rounded-full bg-surface-2 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-deep">
             {getPromoRedemptionLabel(promo.redemption)}
           </div>
           {promo.tier_required !== "free" ? (
-            <div className="rounded-full bg-[#0a1628] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+            <div className="rounded-full bg-deep px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-on-strong)]">
               {promo.tier_required === "fan" ? "Fan Pass" : "Elite"}
             </div>
           ) : null}
@@ -119,7 +115,7 @@ export function PromoCard({
             minute: "2-digit"
           })}
         </div>
-        <div className="mt-4 inline-flex rounded-full bg-[#f4b942] px-3 py-2 text-sm font-semibold text-[#0a1628]">
+        <div className="mt-4 inline-flex rounded-full bg-gold px-3 py-2 text-sm font-semibold text-deep">
           {saving
             ? "Saving…"
             : savedPromo

@@ -37,15 +37,15 @@ export function LockedFeature({
   const overlayCard = (
     <div className={`rounded-2xl bg-white/90 px-4 py-3 text-center shadow-lg ${compact ? "max-w-[10rem]" : "max-w-[12rem]"}`}>
       <div className="text-xl">🔒</div>
-      <div className="mt-1 text-xs font-bold text-[#0a1628]">{tierLabel} Feature</div>
+      <div className="mt-1 text-xs font-bold text-deep">{tierLabel} Feature</div>
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="mt-2 text-xs font-bold text-[#f4b942] underline"
+        className="mt-2 text-xs font-bold text-gold underline"
       >
         Preview
       </button>
-      <Link href={membershipHref} className="mt-2 block text-xs font-bold text-[#0a1628] underline">
+      <Link href={membershipHref} className="mt-2 block text-xs font-bold text-deep underline">
         Upgrade
       </Link>
     </div>
@@ -55,22 +55,22 @@ export function LockedFeature({
 
   if (resolvedLockStyle === "replace") {
     content = (
-      <div className="rounded-2xl border border-[#f4b942]/40 bg-[#fff8e7] p-5 text-center">
+      <div className="rounded-2xl border border-gold/40 bg-[var(--accent-soft-bg)] p-5 text-center">
         <div className="text-2xl">🔒</div>
-        <div className="mt-2 text-base font-bold text-[#0a1628]">{tierLabel} required</div>
-        <p className="mx-auto mt-2 max-w-xs text-sm text-[#0a1628]/68">
+        <div className="mt-2 text-base font-bold text-deep">{tierLabel} required</div>
+        <p className="mx-auto mt-2 max-w-xs text-sm text-[color:var(--fg-secondary)]">
           Upgrade to {tierLabel} to unlock this feature and the rest of the premium matchday toolkit.
         </p>
         <Link
           href={membershipHref}
-          className="mt-4 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+          className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-bold text-deep"
         >
           Upgrade
         </Link>
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="mt-3 block w-full text-center text-sm font-semibold text-[#0a1628]/60 underline"
+          className="mt-3 block w-full text-center text-sm font-semibold text-[color:var(--fg-secondary)] underline"
         >
           Preview instant demo upgrade
         </button>

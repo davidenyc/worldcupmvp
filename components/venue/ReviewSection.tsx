@@ -37,19 +37,19 @@ export function ReviewSection({ venueId }: { venueId: string }) {
       <div className="mt-4 space-y-3">
         {reviews.length ? (
           reviews.map((review) => (
-            <div key={review.id} className="rounded-2xl border border-line bg-white/80 p-4 dark:border-white/10 dark:bg-white/5">
+            <div key={review.id} className="rounded-2xl border border-line bg-white/80 p-4 dark:border-line dark:bg-white/5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{review.avatarEmoji ?? "⚽"}</span>
-                  <div className="text-sm font-semibold text-deep dark:text-white">{review.displayName ?? "Fan"}</div>
+                  <div className="text-sm font-semibold text-deep dark:text-[color:var(--fg-on-strong)]">{review.displayName ?? "Fan"}</div>
                 </div>
                 <Badge>{review.vibe}</Badge>
               </div>
               <div className="mt-2 flex items-center justify-between gap-3">
                 <StarRating value={review.rating} readonly />
-                <div className="text-xs text-navy/55 dark:text-white/55">{new Date(review.createdAt).toLocaleDateString("en-US")}</div>
+                <div className="text-xs text-navy/55 dark:text-[color:var(--fg-muted-on-strong)]">{new Date(review.createdAt).toLocaleDateString("en-US")}</div>
               </div>
-              <p className="mt-3 text-sm text-navy/75 dark:text-white/75">{review.text}</p>
+              <p className="mt-3 text-sm text-navy/75 dark:text-[color:var(--fg-on-strong)]/75">{review.text}</p>
             </div>
           ))
         ) : (
@@ -57,9 +57,9 @@ export function ReviewSection({ venueId }: { venueId: string }) {
         )}
       </div>
 
-      <div className="mt-6 border-t border-line pt-6 dark:border-white/10">
+      <div className="mt-6 border-t border-line pt-6 dark:border-line">
         {hasReviewed ? (
-          <div className="rounded-2xl bg-[#fff8e7] p-4 text-sm font-semibold text-[#0a1628]">
+          <div className="rounded-2xl bg-[var(--accent-soft-bg)] p-4 text-sm font-semibold text-deep">
             You reviewed this venue already.
           </div>
         ) : (
@@ -92,15 +92,15 @@ export function ReviewSection({ venueId }: { venueId: string }) {
               value={text}
               onChange={(event) => setText(event.target.value.slice(0, 280))}
               placeholder="Tell other fans what to expect..."
-              className="min-h-[110px] w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-navy outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="min-h-[110px] w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-navy outline-none dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
             />
             <input
               type="date"
               value={visitedAt}
               onChange={(event) => setVisitedAt(event.target.value)}
-              className="h-12 rounded-2xl border border-line bg-white px-4 text-sm text-navy dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="h-12 rounded-2xl border border-line bg-white px-4 text-sm text-navy dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
             />
-            <button className="inline-flex rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]" type="submit">
+            <button className="inline-flex rounded-full bg-gold px-5 py-3 text-sm font-bold text-deep" type="submit">
               Submit review
             </button>
           </form>

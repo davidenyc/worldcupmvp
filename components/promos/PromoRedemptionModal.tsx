@@ -96,7 +96,7 @@ export function PromoRedemptionModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[100] bg-[#0a1628]/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[100] bg-deep/70 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-x-0 bottom-0 z-[101] max-h-[92vh] overflow-y-auto rounded-t-[2rem] bg-[var(--bg-surface)] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 text-[color:var(--fg-primary)] shadow-2xl sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[min(32rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[2rem]">
         <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-[color:var(--border-strong)] sm:hidden" />
         <div className="flex items-start justify-between gap-4">
@@ -127,12 +127,12 @@ export function PromoRedemptionModal({
         </div>
 
         {!redeemable ? (
-          <div className="mt-5 rounded-[1.5rem] border border-[#f4b942]/40 bg-[#fff8e7] p-4 text-[#0a1628]">
+          <div className="mt-5 rounded-[1.5rem] border border-gold/40 bg-[var(--accent-soft-bg)] p-4 text-deep">
             <div className="text-sm font-semibold">{getPromoLockCopy(promo)}</div>
             <button
               type="button"
               onClick={() => setShowUpgrade(true)}
-              className="mt-3 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+              className="mt-3 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
             >
               {promo.tier_required === "fan" ? "Unlock with Fan Pass" : "Get Elite to redeem"}
             </button>
@@ -158,7 +158,7 @@ export function PromoRedemptionModal({
                 <button
                   type="button"
                   onClick={copyCode}
-                  className="mt-4 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                  className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
                 >
                   Copy code
                 </button>
@@ -175,7 +175,7 @@ export function PromoRedemptionModal({
                     href={reservationUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-4 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                    className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
                   >
                     Reserve →
                   </a>
@@ -187,9 +187,9 @@ export function PromoRedemptionModal({
               type="button"
               onClick={markRedeemed}
               disabled={redeemed}
-              className="inline-flex w-full items-center justify-center rounded-full bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center rounded-full bg-deep px-4 py-3 text-sm font-semibold text-[color:var(--fg-on-strong)] disabled:opacity-60"
             >
-              {savedPromo ? "Saved to My World Cup" : redeemed ? "Redeemed" : "Tap to mark redeemed"}
+              {savedPromo ? "Saved to My Cup" : redeemed ? "Redeemed" : "Tap to mark redeemed"}
             </button>
           </div>
         )}

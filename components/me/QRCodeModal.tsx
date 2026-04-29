@@ -1,7 +1,7 @@
 // Fullscreen modal for /me that expands a saved promo QR with venue and expiry context.
 "use client";
 
-import { QRCodeImage } from "@/components/ui/QRCodeImage";
+import { MockQRCode } from "@/components/ui/MockQRCode";
 import type { Promo, SavedPromo } from "@/lib/data/promos";
 import type { RankedVenue } from "@/lib/types";
 
@@ -44,12 +44,7 @@ export function QRCodeModal({
         </div>
 
         <div className="mt-6 rounded-[1.75rem] border border-line bg-surface p-4">
-          <QRCodeImage
-            code={savedPromo.code}
-            template={promo.qrTemplate}
-            alt={`${promo.title} QR code`}
-            className="mx-auto h-72 w-72 max-w-full"
-          />
+          <MockQRCode code={savedPromo.code} className="mx-auto h-72 w-72 max-w-full" />
           <div className="mt-4 text-center">
             <div className="text-xs uppercase tracking-[0.24em] text-mist">Backup code</div>
             <div className="mt-2 text-2xl font-semibold tracking-[0.24em] text-deep">{savedPromo.code}</div>

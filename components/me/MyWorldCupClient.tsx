@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { MyActivity } from "@/components/me/MyActivity";
+import { MyActivityTimeline } from "@/components/me/MyActivityTimeline";
 import { MyFollowing } from "@/components/me/MyFollowing";
 import { MyHeroIdentity } from "@/components/me/MyHeroIdentity";
 import { MyQRCodes } from "@/components/me/MyQRCodes";
@@ -33,20 +33,63 @@ export function MyWorldCupClient({
   const favorites = useFavoritesStore((state) => state.favorites);
   const groups = useGroups((state) => state.groups);
   const watchedMatches = useWatchlistStore((state) => state.watchedMatches);
+  const watchStatuses = useWatchlistStore((state) => state.watchStatuses);
   const watchVenues = useWatchlistStore((state) => state.watchVenues);
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
 
   const savedVenueList = venues.filter((venue) => favorites.includes(venue.slug));
   const watchedMatchList = matches.filter((match) => watchedMatches.includes(match.id));
 
+  if (!user.favoriteCountrySlug) {
+    return (
+      <div className="space-y-6">
+        <EmptyState
+          emoji="🏆"
+          title="Personalize your Cup"
+          subtitle="Pick your country, city, and match-day preferences so My Cup can actually feel like yours."
+          action={
+            <Link href="/welcome" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              Personalize your Cup →
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <MyHeroIdentity user={user} tier={tier} />
-      <MyFollowing followedCountries={user.followedCountries} favoriteCity={user.favoriteCity} />
-      <MySavedVenues venues={savedVenueList} />
-      <MyWatchlist matches={watchedMatchList} watchVenues={watchVenues} cityKey={user.favoriteCity} />
+      <MyFollowing
+        favoriteCountry={user.favoriteCountrySlug}
+        followedCountries={user.followingCountrySlugs}
+        favoriteCity={user.homeCity ?? user.favoriteCity}
+      />
+      <MySavedVenues venues={savedVenueList} cityKey={user.homeCity ?? user.favoriteCity} />
+      <MyWatchlist
+        matches={watchedMatchList}
+        watchStatuses={watchStatuses}
+        watchVenues={watchVenues}
+        cityKey={user.homeCity ?? user.favoriteCity}
+      />
       <MyQRCodes savedPromos={savedPromos} promos={promos} venues={venues} />
-      <MyActivity tier={tier} />
+      <MyActivityTimeline activity={user.activity} />
+
+      <section className="surface p-6">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Preferences</div>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Default match-day setup</h2>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {user.defaultFilters.soundOn ? <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface-2 px-4 text-sm font-semibold text-deep">Sound on</span> : null}
+          {user.defaultFilters.reservationsPossible ? <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface-2 px-4 text-sm font-semibold text-deep">Reservations</span> : null}
+          {user.defaultFilters.outdoorSeating ? <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface-2 px-4 text-sm font-semibold text-deep">Outdoor</span> : null}
+          {!user.defaultFilters.soundOn && !user.defaultFilters.reservationsPossible && !user.defaultFilters.outdoorSeating ? (
+            <span className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 text-sm text-mist">No default filters yet</span>
+          ) : null}
+        </div>
+        <div className="mt-4 text-sm text-mist">
+          Promo email: {user.promoOptIns.email ? "On" : "Off"} · Match alerts: {user.promoOptIns.push ? "On" : "Off"} · <Link href="/account" className="font-semibold text-deep">Edit in Account</Link>
+        </div>
+      </section>
 
       <section className="surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">

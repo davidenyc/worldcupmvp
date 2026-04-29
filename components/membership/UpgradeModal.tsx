@@ -92,30 +92,30 @@ export function UpgradeModal({
           mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
         }`}
       >
-        <div className="bg-[#0a1628] p-6 text-center text-white">
+        <div className="bg-deep p-6 text-center text-[color:var(--fg-on-strong)]">
           <div className="text-[48px] leading-none">{tierMeta.emoji || "⭐"}</div>
-          <div className="mt-3 text-[20px] font-bold text-[#f4b942]">{tierMeta.label}</div>
-          <div className="mt-1 text-sm text-white/60">{tierMeta.price}/mo</div>
+          <div className="mt-3 text-[20px] font-bold text-gold">{tierMeta.label}</div>
+          <div className="mt-1 text-sm text-[color:var(--fg-secondary-on-strong)]">{tierMeta.price}/mo</div>
         </div>
 
         <div className="space-y-5 p-6">
           {flashingSuccess ? (
-            <div className="rounded-3xl bg-[#f4b942] px-4 py-6 text-center text-[#0a1628]">
+            <div className="rounded-3xl bg-gold px-4 py-6 text-center text-deep">
               <div className="text-2xl font-bold">🏆 Upgraded! Welcome to {tierMeta.label}</div>
             </div>
           ) : (
             <>
               <div className="text-center">
-                <h2 className="text-lg font-bold text-[#0a1628]">{headline}</h2>
-                <p className="mt-2 text-sm text-[#0a1628]/65">
+                <h2 className="text-lg font-bold text-deep">{headline}</h2>
+                <p className="mt-2 text-sm text-[color:var(--fg-secondary)]">
                   Upgrade to {tierMeta.label} to unlock this and more:
                 </p>
               </div>
 
               <ul className="space-y-2">
                 {featureList.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-[#0a1628]">
-                    <span className="mt-0.5 font-bold text-[#f4b942]">✓</span>
+                  <li key={item} className="flex items-start gap-2 text-sm text-deep">
+                    <span className="mt-0.5 font-bold text-gold">✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -124,7 +124,7 @@ export function UpgradeModal({
               <div className="space-y-3">
                 <Link
                   href={membershipHref}
-                  className="block w-full rounded-full bg-[#f4b942] px-5 py-3 text-center text-sm font-bold text-[#0a1628]"
+                  className="block w-full rounded-full bg-gold px-5 py-3 text-center text-sm font-bold text-deep"
                 >
                   Upgrade — {tierMeta.price}/mo
                 </Link>
@@ -132,7 +132,7 @@ export function UpgradeModal({
                   type="button"
                   onClick={handleInstantUpgrade}
                   disabled={upgradingInline}
-                  className="w-full text-sm font-semibold text-[#0a1628]/70 underline"
+                  className="w-full text-sm font-semibold text-[color:var(--fg-secondary)] underline"
                 >
                   {upgradingInline ? "Processing demo upgrade…" : "Or upgrade instantly (demo)"}
                 </button>
@@ -140,7 +140,7 @@ export function UpgradeModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="block w-full text-center text-sm font-semibold text-[#0a1628]/60"
+                  className="block w-full text-center text-sm font-semibold text-[color:var(--fg-secondary)]"
                 >
                   Maybe later
                 </button>

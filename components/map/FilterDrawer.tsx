@@ -111,7 +111,7 @@ export function FilterDrawer({
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-[#0a1628]/18 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-[color:color-mix(in_srgb,var(--bg-deep)_18%,transparent)] transition-opacity duration-300 ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={onClose}
@@ -119,7 +119,7 @@ export function FilterDrawer({
 
       {isDesktop ? (
         <div
-          className={`fixed left-0 top-[73px] bottom-0 z-50 hidden w-80 overflow-y-auto border-r border-[#d7e4f8] bg-white/97 shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-white/8 dark:bg-[#161b22] dark:text-white lg:block ${
+          className={`fixed left-0 top-[73px] bottom-0 z-50 hidden w-80 overflow-y-auto border-r border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_97%,transparent)] shadow-2xl backdrop-blur-md transition-transform duration-300 dark:border-line dark:bg-[var(--bg-surface-strong)] dark:text-[color:var(--fg-on-strong)] lg:block ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -163,7 +163,7 @@ export function FilterDrawer({
         </div>
       ) : (
         <div
-          className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d7e4f8] bg-white/97 text-[#0a1628] shadow-2xl backdrop-blur-md transition-transform duration-300 lg:hidden ${
+          className={`fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_97%,transparent)] text-deep shadow-2xl backdrop-blur-md transition-transform duration-300 lg:hidden ${
             open ? "translate-y-0" : "pointer-events-none translate-y-full"
           }`}
           onTouchStart={handleTouchStart}
@@ -292,18 +292,18 @@ function DrawerBody({
     <div className={`h-full ${mobile ? "max-h-[80vh] overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]" : ""}`}>
       {mobile ? (
         <div className="flex justify-center pt-3">
-          <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12 dark:bg-white/15" />
+          <div className="h-1.5 w-14 rounded-full bg-[color:color-mix(in_srgb,var(--bg-deep)_12%,transparent)] dark:bg-white/15" />
         </div>
       ) : null}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#eef4ff] bg-white/95 px-4 py-4 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 py-4 backdrop-blur">
         <div>
-          <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45">Filters</div>
-          <div className="text-sm font-semibold text-[#0a1628]">Adjust your search</div>
+          <div className="text-xs uppercase tracking-[0.22em] text-[color:var(--ink-45)]">Filters</div>
+          <div className="text-sm font-semibold text-deep">Adjust your search</div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] transition hover:bg-[#eef4ff]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-2 text-deep transition hover:bg-surface-2"
           aria-label="Close filters"
         >
           <X className="h-4 w-4" />
@@ -312,31 +312,31 @@ function DrawerBody({
 
       <div className="space-y-5 p-4">
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">🏠 Venue type</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]">🏠 Venue type</div>
           <button
             type="button"
             aria-pressed={soccerBarsMode}
             onClick={onToggleSoccerBars}
             className={`w-full rounded-[1.15rem] border px-4 py-3 text-left transition ${
               soccerBarsMode
-                ? "border-[#e63946] bg-[#fff1f2] shadow-sm dark:border-[#ff6b75] dark:bg-[#e63946]/12"
-                : "border-[#d8e3f5] bg-white hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                ? "border-[color:var(--red)] bg-[color:color-mix(in_srgb,var(--red)_10%,transparent)] shadow-sm dark:border-[color:var(--red)] dark:bg-[color:color-mix(in_srgb,var(--red)_12%,transparent)]"
+                : "border-line bg-surface hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:hover:bg-white/10"
             }`}
           >
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className={`text-sm font-semibold ${soccerBarsMode ? "text-[#a61d24] dark:text-[#ff9aa3]" : "text-[#0a1628] dark:text-white"}`}>
+                <div className={`text-sm font-semibold ${soccerBarsMode ? "text-red dark:text-red" : "text-deep dark:text-[color:var(--fg-on-strong)]"}`}>
                   ⚽ Only sports bars
                 </div>
-                <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
+                <div className="mt-1 text-xs text-mist dark:text-[color:var(--fg-on-strong)]">
                   Dedicated soccer and sports bars only, without the dining-led spots.
                 </div>
               </div>
               <div
                 className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px] font-semibold ${
                   soccerBarsMode
-                    ? "bg-[#e63946] text-white dark:bg-[#ff6b75] dark:text-[#161b22]"
-                    : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/65 dark:border-white/10 dark:bg-white/8 dark:text-white"
+                    ? "bg-red text-[color:var(--fg-on-strong)] dark:bg-red dark:text-deep"
+                    : "border border-line bg-surface-2 text-[color:var(--fg-secondary)] dark:border-line dark:bg-white/8 dark:text-[color:var(--fg-on-strong)]"
                 }`}
               >
                 {soccerBarsMode ? "On" : "Off"}
@@ -353,7 +353,7 @@ function DrawerBody({
                   aria-pressed={active}
                   onClick={() => onToggleVenueIntent(intent.key)}
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    active ? "bg-[#f4b942] text-[#0a1628] shadow-sm" : "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    active ? "bg-gold text-deep shadow-sm" : "border border-line bg-surface text-deep hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
                   }`}
                 >
                   {intent.label}
@@ -364,9 +364,9 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">🌍 Countries</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]">🌍 Countries</div>
           <div>
-            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">Popular countries</div>
+            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]">Popular countries</div>
             <div className="flex flex-wrap gap-2">
               {topCountries.map((country) => {
                 const active = selectedCountrySlugs.includes(country.slug);
@@ -376,7 +376,7 @@ function DrawerBody({
                     type="button"
                     onClick={() => onToggleCountry(country.slug)}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ${
-                      active ? "bg-[#f4b942] text-[#0a1628]" : "border border-[#e0eaf8] bg-white text-[#0a1628] hover:bg-[#f4f8ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                      active ? "bg-gold text-deep" : "border border-line bg-surface text-deep hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
                     }`}
                   >
                     <CountryFlag country={country} size="sm" />
@@ -395,7 +395,7 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">📅 Match</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]">📅 Match</div>
           <div className="grid gap-2">
             {cityMatches.length ? (
               cityMatches.map((match) => {
@@ -409,9 +409,9 @@ function DrawerBody({
                       onApplyMatch(match);
                       onClose();
                     }}
-                    className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-left text-sm transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                    className="rounded-2xl border border-line bg-surface px-4 py-3 text-left text-sm transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:hover:bg-white/10"
                   >
-                    <div className="font-semibold text-[#0a1628] dark:text-white">
+                    <div className="font-semibold text-deep dark:text-[color:var(--fg-on-strong)]">
                       <span className="inline-flex items-center gap-1">
                         <CountryFlag country={home} size="sm" />
                         {home?.name ?? match.homeCountry}
@@ -422,14 +422,14 @@ function DrawerBody({
                         {away?.name ?? match.awayCountry}
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
+                    <div className="mt-1 text-xs text-mist dark:text-[color:var(--fg-on-strong)]">
                       {new Date(match.startsAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {match.stadiumName}
                     </div>
                   </button>
                 );
               })
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#d8e3f5] bg-white px-4 py-4 text-sm text-[#0a1628]/55 dark:border-white/10 dark:bg-white/5 dark:text-white">
+              <div className="rounded-2xl border border-dashed border-line bg-surface px-4 py-4 text-sm text-mist dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]">
                 No matches loaded for this city yet.
               </div>
             )}
@@ -437,16 +437,16 @@ function DrawerBody({
         </section>
 
         <section className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.18em] text-[#0a1628]/45 dark:text-white">⚙️ More</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]">⚙️ More</div>
           <div className="grid gap-3">
             <input
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Search venues, neighborhoods, cuisine"
-              className="h-11 rounded-full border border-[#d8e3f5] bg-white px-4 text-sm text-[#0a1628] outline-none placeholder:text-[#0a1628]/35 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/35"
+              className="h-11 rounded-full border border-line bg-surface px-4 text-sm text-deep outline-none placeholder:text-[color:var(--ink-30)] dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:placeholder:text-[color:var(--fg-muted-on-strong)]"
             />
             <select
-              className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               value={sortKey}
               onChange={(event) => onSortKeyChange(event.target.value as MapSortKey)}
             >
@@ -457,7 +457,7 @@ function DrawerBody({
               <option value="distance">Closest to map center</option>
             </select>
             <select
-              className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               value={borough}
               onChange={(event) => onBoroughChange(event.target.value)}
             >
@@ -469,7 +469,7 @@ function DrawerBody({
               <option value="Staten Island">Staten Island</option>
             </select>
             <select
-              className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               value={venueType}
               onChange={(event) => onVenueTypeChange(event.target.value)}
             >
@@ -483,7 +483,7 @@ function DrawerBody({
               <option value="supporter_club">Supporter club</option>
             </select>
             <select
-              className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               value={capacityBucket}
               onChange={(event) => onCapacityBucketChange(event.target.value)}
             >
@@ -495,7 +495,7 @@ function DrawerBody({
               <option value="200_plus">200+</option>
             </select>
             <select
-              className="rounded-2xl border border-[#d8e3f5] bg-white px-4 py-3 text-sm text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+              className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               onChange={(event) => onNeighborhoodChange(event.target.value)}
               value={neighborhood}
             >
@@ -513,7 +513,7 @@ function DrawerBody({
               type="button"
               onClick={onToggleReservations}
               className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                acceptsReservations ? "border-[#0a1628] bg-[#0a1628] text-white" : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                acceptsReservations ? "border-deep bg-deep text-[color:var(--fg-on-strong)]" : "border-line bg-surface text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               }`}
             >
               Reservations available
@@ -522,7 +522,7 @@ function DrawerBody({
               type="button"
               onClick={onToggleFamilyFriendly}
               className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                familyFriendly ? "border-[#0a1628] bg-[#0a1628] text-white" : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                familyFriendly ? "border-deep bg-deep text-[color:var(--fg-on-strong)]" : "border-line bg-surface text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               }`}
             >
               Family friendly
@@ -531,7 +531,7 @@ function DrawerBody({
               type="button"
               onClick={onToggleOutdoorSeating}
               className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
-                outdoorSeating ? "border-[#0a1628] bg-[#0a1628] text-white" : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                outdoorSeating ? "border-deep bg-deep text-[color:var(--fg-on-strong)]" : "border-line bg-surface text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
               }`}
             >
               Outdoor seating
@@ -539,7 +539,7 @@ function DrawerBody({
             <button
               type="button"
               onClick={onClearAll}
-              className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+              className="rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-semibold text-deep transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
             >
               Clear all
             </button>
@@ -547,7 +547,7 @@ function DrawerBody({
               <button
                 type="button"
                 onClick={onToggleShowAllMapVenues}
-                className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                className="rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-semibold text-deep transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
               >
                 {showAllMapVenues ? "Show fewer spots" : `Show all spots · ${totalVenueCount}`}
               </button>

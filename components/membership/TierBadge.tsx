@@ -36,7 +36,7 @@ export function TierBadge({ tier, size = "sm", onClick }: TierBadgeProps) {
   if (resolvedTier === "fan") {
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full bg-[#f4b942] font-bold text-[#0a1628] ${sizeClasses[size]} ${onClick ? "cursor-pointer" : ""}`}
+        className={`inline-flex items-center gap-1 rounded-full bg-gold font-bold text-deep ${sizeClasses[size]} ${onClick ? "cursor-pointer" : ""}`}
         {...commonProps}
       >
         ⭐ Fan Pass
@@ -47,7 +47,7 @@ export function TierBadge({ tier, size = "sm", onClick }: TierBadgeProps) {
   if (resolvedTier === "elite") {
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full border-2 border-[#f4b942] bg-[#0a1628] font-bold text-[#f4b942] ${sizeClasses[size]} ${onClick ? "cursor-pointer" : ""}`}
+        className={`inline-flex items-center gap-1 rounded-full border-2 border-gold bg-deep font-bold text-gold ${sizeClasses[size]} ${onClick ? "cursor-pointer" : ""}`}
         {...commonProps}
       >
         👑 Elite

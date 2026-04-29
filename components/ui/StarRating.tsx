@@ -33,7 +33,7 @@ export function StarRating({
             onClick={() => onChange?.(star)}
             className={`text-2xl leading-none ${readonly ? "cursor-default" : "cursor-pointer"}`}
           >
-            <span className={filled ? "text-[#f4b942]" : half ? "text-[#f4b942]" : "text-gray-300"}>★</span>
+            <span className={filled ? "text-gold" : half ? "text-gold" : "text-gray-300"}>★</span>
           </button>
         );
       })}

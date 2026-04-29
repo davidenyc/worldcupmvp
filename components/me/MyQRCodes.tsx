@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { QRCodeModal } from "@/components/me/QRCodeModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { QRCodeImage } from "@/components/ui/QRCodeImage";
+import { MockQRCode } from "@/components/ui/MockQRCode";
 import type { Promo, SavedPromo } from "@/lib/data/promos";
 import type { RankedVenue } from "@/lib/types";
 
@@ -31,7 +31,7 @@ export function MyQRCodes({
     <section className="surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-mist">My QR codes</div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup QR codes</div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Saved promos</h2>
         </div>
         <Link href="/promos" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
@@ -65,12 +65,7 @@ export function MyQRCodes({
                       </span>
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                      <QRCodeImage
-                        code={promo.code}
-                        template={promoMeta.qrTemplate}
-                        alt={`${promoMeta.title} QR code`}
-                        className="h-24 w-24 shrink-0"
-                      />
+                      <MockQRCode code={promo.code} className="h-24 w-24 shrink-0" />
                       <div className="min-w-0">
                         <div className="text-xs uppercase tracking-[0.18em] text-mist">Code</div>
                         <div className="mt-1 text-sm font-semibold tracking-[0.22em] text-deep">{promo.code}</div>

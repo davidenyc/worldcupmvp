@@ -96,24 +96,24 @@ export function MatchesPageClient({
 
   return (
     <div className="pb-16">
-      <div className="sticky top-[73px] z-30 border-b border-[#d8e3f5] bg-white/90 backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/95">
+      <div className="sticky top-[73px] z-30 border-b border-line bg-white/90 backdrop-blur-md dark:border-line dark:bg-[var(--bg-surface-strong)]/95">
         <div className="container-shell flex flex-wrap items-start justify-between gap-4 py-4">
           <div>
-            <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">{city.label}</div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#0a1628] dark:text-white">{city.label} Matches</h1>
-            <div className="mt-2 text-sm text-[#0a1628]/55 dark:text-white/55">
+            <div className="text-xs uppercase tracking-[0.24em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]/45">{city.label}</div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-deep dark:text-[color:var(--fg-on-strong)]">{city.label} Matches</h1>
+            <div className="mt-2 text-sm text-mist dark:text-[color:var(--fg-muted-on-strong)]">
               {stadiumMatches.length} matches at {stadiumName} · {allMatches.length} total matches to watch
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="bg-[#eef4ff] text-[#0a1628] dark:bg-white/10 dark:text-white">
+            <Badge className="bg-surface-2 text-deep dark:bg-white/10 dark:text-[color:var(--fg-on-strong)]">
               {userCityLabel ? `Watching from ${userCityLabel}` : `${city.label} selected`}
             </Badge>
             {!userCityLabel && (
               <button
                 type="button"
                 onClick={openCitySwitcher}
-                className="rounded-full border border-[#d8e3f5] bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                className="rounded-full border border-line bg-white px-3 py-1.5 text-xs font-semibold text-deep transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
               >
                 Set your city
               </button>
@@ -134,7 +134,7 @@ export function MatchesPageClient({
                   type="button"
                   onClick={() => setTab(key)}
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    tab === key ? "bg-[#f4b942] text-[#0a1628] shadow-card" : "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    tab === key ? "bg-gold text-deep shadow-card" : "border border-line bg-white text-deep hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
                   }`}
                 >
                   {label}
@@ -148,30 +148,30 @@ export function MatchesPageClient({
       <div className="container-shell py-6 pt-5 sm:py-8 sm:pt-6">
         <div className="space-y-4 sm:space-y-8">
           {grouped.map(([date, dayMatches]) => (
-            <section key={date} className="scroll-mt-[140px] overflow-hidden rounded-[1.6rem] border border-[#d8e3f5] bg-white shadow-sm dark:border-white/10 dark:bg-[#161b22]">
+            <section key={date} className="scroll-mt-[140px] overflow-hidden rounded-[1.6rem] border border-line bg-white shadow-sm dark:border-line dark:bg-[var(--bg-surface-strong)]">
               <button
                 type="button"
                 onClick={() => toggleDate(date)}
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5 sm:py-4"
               >
                 <div>
-                  <div className="text-xs uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">
+                  <div className="text-xs uppercase tracking-[0.24em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]/45">
                     {new Date(date).toLocaleDateString("en-US", {
                       weekday: "long",
                       month: "long",
                       day: "numeric"
                     })}
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-[#0a1628] dark:text-white">
+                  <div className="mt-1 text-sm font-semibold text-deep dark:text-[color:var(--fg-on-strong)]">
                     {dayMatches.length} match{dayMatches.length === 1 ? "" : "es"}
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <span className="shrink-0 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs font-semibold text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]">
                   {expandedDates.includes(date) ? "Hide" : "Show"}
                 </span>
               </button>
               {expandedDates.includes(date) ? (
-                <div className="border-t border-[#eef4ff] px-4 py-3 dark:border-white/10 sm:px-5 sm:py-4">
+                <div className="border-t border-line px-4 py-3 dark:border-line sm:px-5 sm:py-4">
                   <div className="grid gap-3 lg:grid-cols-2">
                     {dayMatches.map((match) => {
                       const resolvedHostCityKey = getMatchHostCityKey(match);

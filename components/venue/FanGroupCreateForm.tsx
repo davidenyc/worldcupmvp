@@ -50,7 +50,7 @@ export function FanGroupCreateForm({
           value={groupName}
           onChange={(event) => setGroupName(event.target.value)}
           placeholder="Group name"
-          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-white/10 dark:bg-white/5"
+          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-line dark:bg-white/5"
         />
         <select
           value={matchId}
@@ -59,7 +59,7 @@ export function FanGroupCreateForm({
             const match = matches.find((item) => item.id === event.target.value);
             if (match) setDate(match.startsAt.slice(0, 10));
           }}
-          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-white/10 dark:bg-white/5"
+          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-line dark:bg-white/5"
         >
           {matches.map((match) => (
             <option key={match.id} value={match.id}>
@@ -71,13 +71,13 @@ export function FanGroupCreateForm({
           type="date"
           value={date}
           onChange={(event) => setDate(event.target.value)}
-          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-white/10 dark:bg-white/5"
+          className="h-12 w-full rounded-2xl border border-line bg-white px-4 text-sm dark:border-line dark:bg-white/5"
         />
-        <button type="submit" className="inline-flex rounded-full bg-[#f4b942] px-5 py-3 text-sm font-bold text-[#0a1628]">
+        <button type="submit" className="inline-flex rounded-full bg-gold px-5 py-3 text-sm font-bold text-deep">
           Create GameDay Crew
         </button>
         {createdCode ? (
-          <div className="rounded-2xl bg-[#fff8e7] p-4 text-sm font-semibold text-[#0a1628]">
+          <div className="rounded-2xl bg-[var(--accent-soft-bg)] p-4 text-sm font-semibold text-deep">
             🎉 GameDay crew created! Share code: {createdCode}
           </div>
         ) : null}

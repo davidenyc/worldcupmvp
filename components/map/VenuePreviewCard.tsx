@@ -112,14 +112,14 @@ export function VenuePreviewCard({
     if (emphasis === "success") {
       return `${popupChipBaseClass} w-full border ${
         active
-          ? "border-emerald-500 bg-emerald-500 text-white dark:border-emerald-400 dark:bg-emerald-500 dark:text-[#0a1628]"
+          ? "border-emerald-500 bg-emerald-500 text-white dark:border-emerald-400 dark:bg-emerald-500 dark:text-deep"
           : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
       } transition`;
     }
 
     return `${popupChipBaseClass} w-full border ${
       active
-        ? "border-[#f4b942] bg-[#fff4d6] text-[#0a1628] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
+        ? "border-gold bg-[var(--accent-soft-bg)] text-deep dark:border-gold dark:bg-gold/20 dark:text-gold"
         : "border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"
     } transition`;
   }
@@ -135,7 +135,7 @@ export function VenuePreviewCard({
               event.stopPropagation();
               onToggleVenueIntent?.(venue.venueIntent);
             }}
-            className={`${popupChipBaseClass} w-full transition ${intent.className} ${activeIntent ? "ring-2 ring-[#f4b942]/70 ring-offset-1 ring-offset-transparent" : ""}`}
+            className={`${popupChipBaseClass} w-full transition ${intent.className} ${activeIntent ? "ring-2 ring-gold/70 ring-offset-1 ring-offset-transparent" : ""}`}
           >
             {intent.label}
           </button>
@@ -188,7 +188,7 @@ export function VenuePreviewCard({
             onClick={handleSave}
             className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
               favorite
-                ? "border-[#f4b942] bg-[#fff4d6] text-[#c98a00] dark:border-[#f4b942] dark:bg-[#f4b942]/20 dark:text-[#ffd56b]"
+                ? "border-gold bg-[var(--accent-soft-bg)] text-[color:var(--accent-soft-fg)] dark:border-gold dark:bg-gold/20 dark:text-gold"
                 : "border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)] hover:brightness-[0.98]"
             }`}
           >
@@ -256,7 +256,7 @@ export function VenuePreviewCard({
         <div className="grid grid-cols-2 gap-1.5">
           <Link
             href={`/venue/${venue.slug}`}
-            className={`${popupActionClass} bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]`}
+            className={`${popupActionClass} bg-gold text-[color:var(--fg-on-accent)] hover:brightness-105`}
           >
             Details
           </Link>
@@ -265,7 +265,7 @@ export function VenuePreviewCard({
               href={venue.reservationUrl ?? `tel:${venue.reservationPhone!}`}
               target="_blank"
               rel="noreferrer"
-              className={`${popupActionClass} bg-[#f4b942] text-[#0a1628] hover:bg-[#f0c86b]`}
+              className={`${popupActionClass} bg-gold text-[color:var(--fg-on-accent)] hover:brightness-105`}
             >
               Reserve
             </a>

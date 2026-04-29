@@ -16,7 +16,7 @@ export function PromoCityGrid({
     <section className="space-y-4">
       <div>
         <div className="text-sm uppercase tracking-[0.18em] text-mist">By city</div>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">Host-city drill-down</h2>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-deep">Browse the host-city deal board</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {HOST_CITIES.map((city) => {

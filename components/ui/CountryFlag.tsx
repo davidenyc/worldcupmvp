@@ -38,7 +38,7 @@ export function CountryFlag({ country, size = "md", className = "" }: Props) {
   if (useCode) {
     return (
       <span
-        className={`inline-flex items-center justify-center rounded bg-[#eef4ff] px-1 text-[10px] font-black tracking-[0.1em] text-[#0a1628] ${className}`}
+        className={`inline-flex items-center justify-center rounded bg-surface-2 px-1 text-[10px] font-black tracking-[0.1em] text-deep ${className}`}
       >
         {country.fifaCode}
       </span>

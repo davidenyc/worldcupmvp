@@ -38,13 +38,13 @@ export function KickoffCountdown({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="inline-flex max-w-max items-center rounded-full bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white shadow-lg">
-      <span className="text-[#f4b942]">{String(timeLeft.days).padStart(2, "0")}</span>
-      <span className="mx-1.5 text-white/70">days</span>
-      <span className="text-[#f4b942]">{String(timeLeft.hours).padStart(2, "0")}</span>
-      <span className="mx-1.5 text-white/70">hrs</span>
-      <span className="text-[#f4b942]">{String(timeLeft.minutes).padStart(2, "0")}</span>
-      <span className="mx-1.5 text-white/70">min until kickoff</span>
+    <div className="inline-flex max-w-max items-center rounded-full bg-deep px-4 py-3 text-sm font-semibold text-[color:var(--fg-on-strong)] shadow-lg">
+      <span className="text-gold">{String(timeLeft.days).padStart(2, "0")}</span>
+      <span className="mx-1.5 text-[color:var(--fg-secondary-on-strong)]">days</span>
+      <span className="text-gold">{String(timeLeft.hours).padStart(2, "0")}</span>
+      <span className="mx-1.5 text-[color:var(--fg-secondary-on-strong)]">hrs</span>
+      <span className="text-gold">{String(timeLeft.minutes).padStart(2, "0")}</span>
+      <span className="mx-1.5 text-[color:var(--fg-secondary-on-strong)]">min until kickoff</span>
     </div>
   );
 }

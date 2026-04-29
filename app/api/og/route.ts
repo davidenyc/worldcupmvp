@@ -2,13 +2,23 @@ import { ImageResponse } from "next/og";
 import React from "react";
 
 import { demoCountries } from "@/lib/data/demo";
+import { getHostCity } from "@/lib/data/hostCities";
+import { getPromosByCity } from "@/lib/data/promos";
+import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const slug = searchParams.get("country") ?? "";
-  const country = demoCountries.find((item) => item.slug === slug);
+type OgPayload = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  emoji: string;
+  pill?: string;
+};
+
+function renderOgImage(payload: OgPayload) {
+  const { eyebrow, title, subtitle, accent, emoji, pill } = payload;
 
   return new ImageResponse(
     React.createElement(
@@ -20,33 +30,172 @@ export async function GET(request: Request) {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "64px",
-          background: country
-            ? `linear-gradient(135deg, ${country.primaryColors[0]}, #09111f)`
-            : "linear-gradient(135deg, #0f172a, #020617)",
-          color: "white",
+          padding: "56px",
+          background: "linear-gradient(145deg, #0a1628 0%, #121a27 55%, #1b2333 100%)",
+          color: "#f8fbff",
           fontFamily: "Inter, system-ui, sans-serif"
         }
       },
       React.createElement(
         "div",
-        { style: { display: "flex", flexDirection: "column", gap: "18px" } },
-        React.createElement("div", { style: { fontSize: "128px", lineHeight: 1 } }, country?.flagEmoji ?? "🏟️"),
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between"
+          }
+        },
         React.createElement(
           "div",
-          { style: { fontSize: "72px", fontWeight: 800, letterSpacing: "-0.04em" } },
-          country?.name ?? "GameDay Map"
+          { style: { display: "flex", alignItems: "center", gap: "18px" } },
+          React.createElement(
+            "div",
+            {
+              style: {
+                width: "74px",
+                height: "74px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "26px",
+                background: "#f4b942",
+                color: "#0a1628",
+                fontSize: "32px",
+                fontWeight: 900
+              }
+            },
+            "GM"
+          ),
+          React.createElement(
+            "div",
+            { style: { display: "flex", flexDirection: "column", gap: "4px" } },
+            React.createElement(
+              "div",
+              { style: { fontSize: "28px", fontWeight: 800, letterSpacing: "-0.04em" } },
+              "GameDay Map"
+            ),
+            React.createElement(
+              "div",
+              { style: { fontSize: "15px", color: "rgba(248,251,255,0.74)", textTransform: "uppercase", letterSpacing: "0.3em" } },
+              "World Cup 2026 watch parties"
+            )
+          )
+        ),
+        pill
+          ? React.createElement(
+              "div",
+              {
+                style: {
+                  padding: "12px 20px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(248,251,255,0.14)",
+                  color: "#f8fbff",
+                  fontSize: "20px",
+                  fontWeight: 700
+                }
+              },
+              pill
+            )
+          : null
+      ),
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: "22px",
+            maxWidth: "900px"
+          }
+        },
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "18px",
+              fontSize: "24px",
+              color: "rgba(248,251,255,0.78)",
+              textTransform: "uppercase",
+              letterSpacing: "0.28em"
+            }
+          },
+          React.createElement(
+            "span",
+            {
+              style: {
+                width: "14px",
+                height: "14px",
+                borderRadius: "999px",
+                background: accent
+              }
+            }
+          ),
+          eyebrow
         ),
         React.createElement(
           "div",
-          { style: { fontSize: "30px", color: "rgba(255,255,255,0.8)" } },
-          "Find World Cup watch spots across the host cities"
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "24px"
+            }
+          },
+          React.createElement("div", { style: { fontSize: "84px", lineHeight: 1 } }, emoji),
+          React.createElement(
+            "div",
+            { style: { display: "flex", flexDirection: "column", gap: "14px" } },
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "74px",
+                  fontWeight: 800,
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.05em"
+                }
+              },
+              title
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "28px",
+                  lineHeight: 1.4,
+                  color: "rgba(248,251,255,0.8)"
+                }
+              },
+              subtitle
+            )
+          )
         )
       ),
       React.createElement(
         "div",
-        { style: { fontSize: "22px", color: "rgba(255,255,255,0.75)" } },
-        "GameDay Map · World Cup 2026 fan venue finder"
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: "22px",
+            color: "rgba(248,251,255,0.72)"
+          }
+        },
+        React.createElement("div", null, "17 host cities · 48 nations · every fan diaspora"),
+        React.createElement(
+          "div",
+          {
+            style: {
+              width: "240px",
+              height: "6px",
+              borderRadius: "999px",
+              background: accent
+            }
+          }
+        )
       )
     ),
     {
@@ -54,4 +203,135 @@ export async function GET(request: Request) {
       height: 630
     }
   );
+}
+
+async function buildHomePayload() {
+  return {
+    eyebrow: "GameDay Map",
+    title: "Find your World Cup 2026 watch party.",
+    subtitle: "See fan bars, country rooms, and match-night promos across all 17 host cities.",
+    accent: "#f4b942",
+    emoji: "🏟️",
+    pill: "Home"
+  } satisfies OgPayload;
+}
+
+async function buildCityPayload(cityKey: string) {
+  const city = getHostCity(cityKey) ?? getHostCity("nyc");
+  const data = await getMapPageData(city?.key ?? "nyc");
+  const countryCount = new Set(
+    data.venues.map((venue) => venue.likelySupporterCountry).filter(Boolean)
+  ).size;
+
+  return {
+    eyebrow: `${city?.label ?? "New York"} watch map`,
+    title: `${city?.label ?? "New York"} watch parties`,
+    subtitle: `${data.venues.length} venues for ${countryCount} supporter nations, all sorted for match-day energy.`,
+    accent: "#f4b942",
+    emoji: "📍",
+    pill: city?.shortLabel?.toUpperCase() ?? "NYC"
+  } satisfies OgPayload;
+}
+
+async function buildCountryPayload(slug: string) {
+  const countries = await getAllCountries();
+  const country = countries.find((item) => item.slug === slug) ?? demoCountries.find((item) => item.slug === slug);
+
+  return {
+    eyebrow: "Country rooms",
+    title: country ? `${country.name} fan venues` : "Country fan venues",
+    subtitle: country
+      ? `Find ${country.name} watch parties across New York, Los Angeles, Miami, and the rest of the host-city grid.`
+      : "Find supporter rooms and fan bars across the host-city grid.",
+    accent: "#f4b942",
+    emoji: country?.flagEmoji ?? "🏳️",
+    pill: country?.fifaCode ?? "WC26"
+  } satisfies OgPayload;
+}
+
+async function buildVenuePayload(slug: string) {
+  const data = await getVenueDetails(slug);
+
+  if (!data) {
+    return {
+      eyebrow: "Venue not found",
+      title: "GameDay Map",
+      subtitle: "Find World Cup watch parties, fan bars, and promos across 17 host cities.",
+      accent: "#f4b942",
+      emoji: "🏟️",
+      pill: "Venue"
+    } satisfies OgPayload;
+  }
+
+  return {
+    eyebrow: `${data.venue.city} venue`,
+    title: data.venue.name,
+    subtitle: `${data.venue.neighborhood} · ${data.country?.name ?? "Sports bar"} supporters · World Cup watch room`,
+    accent: "#f4b942",
+    emoji: data.country?.flagEmoji ?? "⚽",
+    pill: data.venue.city
+  } satisfies OgPayload;
+}
+
+async function buildPromosPayload(cityKey: string | null) {
+  const city = cityKey ? getHostCity(cityKey) : null;
+  const cityLabel = city?.label ?? "17 host cities";
+
+  let promoCount = 0;
+  if (city) {
+    const mapData = await getMapPageData(city.key);
+    promoCount = getPromosByCity(city.key, mapData.venues).length;
+  }
+
+  return {
+    eyebrow: "Match-night deals",
+    title: city ? `${city.label} promos` : "World Cup promos",
+    subtitle: city
+      ? `${promoCount} live offers and venue perks ready for your next ${city.label} watch party.`
+      : "Save at watch parties, bars, and fan rooms across all 17 host cities.",
+    accent: "#f4b942",
+    emoji: "🏷️",
+    pill: city ? city.shortLabel.toUpperCase() : cityLabel
+  } satisfies OgPayload;
+}
+
+async function buildWelcomePayload() {
+  return {
+    eyebrow: "Personalize your Cup",
+    title: "Set up your GameDay Map",
+    subtitle: "Choose your city, your nation, and the rooms you want waiting for you on match day.",
+    accent: "#f4b942",
+    emoji: "✨",
+    pill: "Welcome"
+  } satisfies OgPayload;
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type") ?? "home";
+
+  let payload: OgPayload;
+
+  switch (type) {
+    case "city-map":
+      payload = await buildCityPayload(searchParams.get("city") ?? "nyc");
+      break;
+    case "country":
+      payload = await buildCountryPayload(searchParams.get("slug") ?? "");
+      break;
+    case "venue":
+      payload = await buildVenuePayload(searchParams.get("slug") ?? "");
+      break;
+    case "promos":
+      payload = await buildPromosPayload(searchParams.get("city"));
+      break;
+    case "welcome":
+      payload = await buildWelcomePayload();
+      break;
+    default:
+      payload = await buildHomePayload();
+      break;
+  }
+
+  return renderOgImage(payload);
 }

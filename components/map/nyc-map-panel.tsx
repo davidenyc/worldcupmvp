@@ -83,13 +83,13 @@ export function NycMapPanel({
       </div>
       <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
         <div
-          className={`relative overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,#eef8ff_0%,#dff2ff_42%,#f8fcff_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#17212f_0%,#111827_100%)] ${height}`}
+          className={`relative overflow-hidden rounded-[30px] border border-line bg-[color:color-mix(in_srgb,var(--bg-surface-elevated)_92%,white)] dark:border-line dark:bg-[var(--bg-surface-strong)] ${height}`}
         >
           <div className="absolute inset-0 bg-pitch-grid bg-[length:26px_26px] opacity-40" />
           <div className="absolute left-6 top-6 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-navy shadow-sm dark:bg-white/10 dark:text-white">
             Host city
           </div>
-          <div className="absolute bottom-6 left-6 rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-xs text-navy/70 shadow-sm dark:border-white/10 dark:bg-[#161b22]/90 dark:text-white/70">
+          <div className="absolute bottom-6 left-6 rounded-2xl border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_80%,transparent)] px-4 py-3 text-xs text-[color:var(--fg-secondary)] shadow-sm dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_90%,transparent)] dark:text-[color:var(--fg-secondary-on-strong)]">
             Map view with venue clustering
           </div>
 
@@ -121,7 +121,7 @@ export function NycMapPanel({
 
         <div className="space-y-3">
           {activeVenue && (
-            <div className="overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-card dark:border-white/10 dark:bg-[#161b22]">
+            <div className="overflow-hidden rounded-[28px] border border-line bg-surface shadow-card dark:border-line dark:bg-[var(--bg-surface-strong)]">
               <div className="relative h-44">
                 <Image
                   src={activeVenueImages[0]}
@@ -129,7 +129,7 @@ export function NycMapPanel({
                   fill
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/70 via-[#0a1628]/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[color:color-mix(in_srgb,var(--bg-deep)_70%,transparent)] via-[color:color-mix(in_srgb,var(--bg-deep)_20%,transparent)] to-transparent" />
               </div>
               <div className="p-5">
               <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export function NycMapPanel({
                     {activeVenue.venueTypes[0].replace(/_/g, " ")}
                   </Badge>
                 ) : null}
-                {activeVenue.acceptsReservations && <Badge className="bg-accent/15 text-accent dark:bg-[#f4b942]/25 dark:text-[#ffd56b]">Reserve</Badge>}
+                {activeVenue.acceptsReservations && <Badge className="bg-accent/15 text-accent dark:bg-gold/25 dark:text-gold">Reserve</Badge>}
               </div>
               <h4 className="mt-3 text-xl font-semibold text-deep dark:text-white">{activeVenue.name}</h4>
               <div className="mt-2 text-sm text-navy/70 dark:text-white/70">
@@ -168,7 +168,7 @@ export function NycMapPanel({
                     href={activeVenue.reservationUrl ?? `tel:${activeVenue.reservationPhone!}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full bg-accent px-3 py-2 text-sm font-medium text-[#0a1628]"
+                    className="rounded-full bg-accent px-3 py-2 text-sm font-medium text-[color:var(--fg-on-accent)]"
                   >
                     Reserve
                   </a>
@@ -220,7 +220,7 @@ export function NycMapPanel({
                 key={venue.id}
                 type="button"
                 onClick={() => setActiveVenue(venue)}
-                className="block w-full rounded-2xl border border-white/80 bg-white px-4 py-4 text-left shadow-sm transition hover:bg-sky/35 dark:border-white/10 dark:bg-[#161b22] dark:hover:bg-white/5"
+                className="block w-full rounded-2xl border border-line bg-surface px-4 py-4 text-left shadow-sm transition hover:bg-surface-2 dark:border-line dark:bg-[var(--bg-surface-strong)] dark:hover:bg-white/5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>

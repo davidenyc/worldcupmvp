@@ -24,23 +24,23 @@ export function ReservationRequestForm({ venueName, venueSlug }: { venueName: st
 
   if (!hasAccess) {
     return (
-      <div className="rounded-2xl border border-[#f4b942]/30 bg-[#0a1628] p-6 text-center">
+      <div className="rounded-2xl border border-gold/30 bg-deep p-6 text-center">
         <div className="text-3xl mb-3">🔒</div>
-        <div className="text-lg font-bold text-white mb-2">
+        <div className="text-lg font-bold text-[color:var(--fg-on-strong)] mb-2">
           Reservations are a Fan Pass feature
         </div>
-        <div className="text-sm text-white/60 mb-5 max-w-xs mx-auto">
+        <div className="text-sm text-[color:var(--fg-secondary-on-strong)] mb-5 max-w-xs mx-auto">
           Fan Pass members can request reservations at any venue in our network.
           Venues respond within 24 hours.
         </div>
         <Link
           href={`/membership?feature=reservation_request&return=${encodeURIComponent(`/venue/${venueSlug}`)}`}
-          className="inline-flex items-center gap-2 rounded-full bg-[#f4b942]
-            px-6 py-3 text-sm font-bold text-[#0a1628] transition hover:bg-[#e5a832]"
+          className="inline-flex items-center gap-2 rounded-full bg-gold
+            px-6 py-3 text-sm font-bold text-deep transition hover:brightness-95"
         >
           ⭐ Upgrade to Fan Pass — $4.99/mo
         </Link>
-        <div className="mt-2 text-xs text-white/30">Demo mode — no payment required</div>
+        <div className="mt-2 text-xs text-[color:var(--fg-on-strong)]/30">Demo mode — no payment required</div>
       </div>
     );
   }

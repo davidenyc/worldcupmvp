@@ -578,7 +578,14 @@ export function MapPageClient({
     Boolean(deferredQuery),
     sortKey !== "matchday"
   ].filter(Boolean).length;
-
+  const mobileChipClass =
+    "inline-flex min-h-9 snap-start items-center gap-2 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 text-sm font-semibold text-deep shadow-sm backdrop-blur-md dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_96%,transparent)] dark:text-[color:var(--fg-on-strong)]";
+  const mobileChipActiveClass =
+    "border-gold bg-[var(--accent-soft-bg)] text-deep dark:border-gold dark:bg-[var(--accent-soft-bg)] dark:text-gold";
+  const selectedCountryFlags = selectedCountrySlugs
+    .map((slug) => countryLookup.get(slug)?.flagEmoji)
+    .filter(Boolean)
+    .join(" ");
   const filterVenues = (venues: RankedVenue[]) => {
     const filtered = venues.filter((venue) => {
       if (selectedCountrySlugs.length && !venue.associatedCountries.some((slug) => selectedCountrySlugs.includes(slug))) return false;
@@ -1033,6 +1040,96 @@ export function MapPageClient({
     setSelectedCountrySlugs([]);
   };
 
+  const mobileControlStrip = !selectedVenue && !mobileResultsOpen && !mobileGamesOpen ? (
+    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top,0px)+3.6rem)] z-40 px-3">
+      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max min-w-full snap-x snap-mandatory items-center gap-2 pb-1">
+          <button
+            type="button"
+            onClick={() => setCitySelectorOpen(true)}
+            className={mobileChipClass}
+            aria-label={`Switch city from ${selectedCityConfig.label}`}
+          >
+            📍 {selectedCityConfig.shortLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDrawerOpen(false);
+              setMobileResultsOpen(false);
+              setMobileGamesOpen((current) => !current);
+            }}
+            className={`${mobileChipClass} ${mobileGamesOpen ? mobileChipActiveClass : ""}`}
+            aria-label="Browse games"
+          >
+            🏟 Games
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileGamesOpen(false);
+              setFilterDrawerOpen(true);
+            }}
+            className={`${mobileChipClass} ${filterDrawerOpen ? mobileChipActiveClass : ""}`}
+            aria-label={`Open filters${hasActiveFilters ? `, ${activeFilterCount} active` : ""}`}
+          >
+            ⚙ Filters{hasActiveFilters ? ` · ${activeFilterCount}` : ""}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileResultsOpen(true)}
+            className={mobileChipClass}
+            aria-label={`Open venues list, ${filteredVenues.length} venues`}
+          >
+            📍 Venues
+          </button>
+          <button
+            type="button"
+            onClick={() => setAcceptsReservations((current) => !current)}
+            className={`${mobileChipClass} ${acceptsReservations ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle reservations filter"
+          >
+            Reservations
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpenNowOnly((current) => !current)}
+            className={`${mobileChipClass} ${openNowOnly ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle open now filter"
+          >
+            Open now
+          </button>
+          <button
+            type="button"
+            onClick={() => setHighAtmosphereOnly((current) => !current)}
+            className={`${mobileChipClass} ${highAtmosphereOnly ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle high atmosphere filter"
+          >
+            High atmosphere
+          </button>
+          <button
+            type="button"
+            onClick={toggleSoccerBars}
+            className={`${mobileChipClass} ${soccerBarsMode ? mobileChipActiveClass : ""}`}
+            aria-label="Toggle sports bar filter"
+          >
+            Sports bars
+          </button>
+          {selectedCountryFlags ? (
+            <button
+              type="button"
+              onClick={clearCountryFilters}
+              className={`${mobileChipClass} ${mobileChipActiveClass}`}
+              aria-label="Clear country filters"
+            >
+              {selectedCountryFlags} Clear nations
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const handleApplyMatch = (match: WorldCupMatch) => {
     const nextCountries = [match.homeCountry, match.awayCountry];
     const isSameMatchSelection =
@@ -1077,10 +1174,10 @@ export function MapPageClient({
         </section>
       ) : null}
       {resultsReady && tier === "free" && !upsellDismissed ? (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e6c879] bg-[var(--accent-soft-bg)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-gold/40 bg-[var(--accent-soft-bg)] px-4 py-3 text-sm text-[color:var(--fg-primary)]">
           <button type="button" onClick={() => setShowFilterModal(true)} className="min-w-0 text-left">
             <span className="font-semibold text-[color:var(--fg-primary)]">Unlock ranked results, watch-party priority booking, and city alerts.</span>
-            <span className="mt-1 block text-xs font-bold text-[#9b6b04]">Fan Pass $4.99/mo</span>
+            <span className="mt-1 block text-xs font-bold text-[color:var(--accent-soft-fg)]">Fan Pass $4.99/mo</span>
           </button>
           <button
             type="button"
@@ -1140,6 +1237,7 @@ export function MapPageClient({
             />
           </div>
         }
+        mobileControls={mobileControlStrip}
         results={resultsPanel}
         resultsCountLabel={`${filteredVenues.length} venues`}
         hasActiveFilters={hasActiveFilters}
@@ -1220,7 +1318,7 @@ export function MapPageClient({
                     setMobileResultsOpen(false);
                     setMobileGamesOpen((current) => !current);
                   }}
-                  className="inline-flex h-12 min-w-[11rem] items-center justify-between gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                  className="inline-flex h-12 min-w-[11rem] items-center justify-between gap-2 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 text-sm font-semibold text-deep shadow-lg backdrop-blur dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_95%,transparent)] dark:text-[color:var(--fg-on-strong)]"
                 >
                   <span>🏟 Games</span>
                   <span className="text-xs opacity-65">▾</span>
@@ -1235,7 +1333,7 @@ export function MapPageClient({
                         clearAllFilters();
                       }
                     }}
-                    className="inline-flex h-12 items-center rounded-full bg-[#f4b942] px-3.5 text-xs font-bold text-[#0a1628] shadow-lg"
+                    className="inline-flex h-12 items-center rounded-full bg-gold px-3.5 text-xs font-bold text-deep shadow-lg"
                   >
                     {selectedCountrySlugs.length > 0
                       ? selectedCountrySlugs.map((slug) => countryLookup.get(slug)?.flagEmoji ?? slug).join(" ")
@@ -1246,7 +1344,7 @@ export function MapPageClient({
               </div>
 
               {citySelectorOpen ? (
-                <div className="w-[min(92vw,22rem)] overflow-hidden rounded-2xl border border-[#d8e3f5] bg-white shadow-2xl dark:border-white/10 dark:bg-[#161b22]">
+                <div className="w-[min(92vw,22rem)] overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl dark:border-line dark:bg-[var(--bg-surface-strong)]">
                   <div className="max-h-[60vh] overflow-y-auto p-3">
                     <CitySelector
                       selectedCity={city}
@@ -1265,21 +1363,21 @@ export function MapPageClient({
                   setMobileGamesOpen(false);
                   setFilterDrawerOpen(true);
                 }}
-                className="inline-flex h-12 min-w-[11rem] items-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white"
+                className="inline-flex h-12 min-w-[11rem] items-center gap-2 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 text-sm font-semibold text-deep shadow-lg backdrop-blur dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_95%,transparent)] dark:text-[color:var(--fg-on-strong)]"
               >
                 ⚙ Filters{hasActiveFilters ? ` · ${activeFilterCount}` : ""}
               </button>
 
               {activeQuickMatchOption && mobileGamesOpen ? (
-                <div className="hidden w-[min(92vw,22rem)] rounded-2xl border border-[#d8e3f5] bg-white/95 p-3 text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
+                <div className="hidden w-[min(92vw,22rem)] rounded-2xl border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] p-3 text-deep shadow-2xl backdrop-blur dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_95%,transparent)] dark:text-[color:var(--fg-on-strong)] lg:block">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/55 dark:text-white">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mist dark:text-[color:var(--fg-on-strong)]">
                       Games
                     </div>
                     <button
                       type="button"
                       onClick={() => setMobileGamesOpen(false)}
-                      className="rounded-full border border-[#d8e3f5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                      className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-deep transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
                     >
                       Close
                     </button>
@@ -1293,10 +1391,10 @@ export function MapPageClient({
                         disabled={!option.matches.length}
                         className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
                           option.key === activeQuickMatchOption.key
-                            ? "bg-[#f4b942] text-[#0a1628]"
+                            ? "bg-gold text-deep"
                             : option.matches.length
-                              ? "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-                              : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35 dark:border-white/10 dark:bg-white/5 dark:text-white/35"
+                              ? "border border-line bg-surface text-deep hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
+                              : "border border-line bg-surface-2 text-[color:var(--ink-30)] dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-muted-on-strong)]"
                         }`}
                       >
                         {option.label}
@@ -1315,20 +1413,20 @@ export function MapPageClient({
                           key={match.id}
                           type="button"
                           onClick={() => handleApplyMatch(match)}
-                          className="w-full rounded-2xl border border-[#d8e3f5] bg-white px-3 py-3 text-left transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                          className="w-full rounded-2xl border border-line bg-surface px-3 py-3 text-left transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:hover:bg-white/10"
                         >
-                          <div className="text-sm font-semibold text-[#0a1628] dark:text-white">
+                          <div className="text-sm font-semibold text-deep dark:text-[color:var(--fg-on-strong)]">
                             <span className="inline-flex items-center gap-1">
                               <span>{home?.flagEmoji ?? "🏁"}</span>
                               <span>{home?.name ?? match.homeCountry}</span>
                             </span>
-                            <span className="mx-2 text-[#0a1628]/40 dark:text-white">vs</span>
+                            <span className="mx-2 text-[color:var(--ink-40)] dark:text-[color:var(--fg-on-strong)]">vs</span>
                             <span className="inline-flex items-center gap-1">
                               <span>{away?.flagEmoji ?? "🏁"}</span>
                               <span>{away?.name ?? match.awayCountry}</span>
                             </span>
                           </div>
-                          <div className="mt-1 text-xs text-[#0a1628]/55 dark:text-white">
+                          <div className="mt-1 text-xs text-mist dark:text-[color:var(--fg-on-strong)]">
                             {new Date(match.startsAt).toLocaleString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -1338,7 +1436,7 @@ export function MapPageClient({
                             })}{" "}
                             ET
                           </div>
-                          <div className="mt-1 text-[11px] text-[#0a1628]/58 dark:text-white/68">
+                          <div className="mt-1 text-[11px] text-[color:var(--fg-secondary)] dark:text-[color:var(--fg-on-strong)]/68">
                             {stats.spots} spots · {stats.sportsBars} sports bars
                           </div>
                         </button>
@@ -1352,7 +1450,7 @@ export function MapPageClient({
                 <button
                   type="button"
                   onClick={handleToggleShowAllMapVenues}
-                  className="hidden h-12 min-w-[11rem] items-center justify-center gap-2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:inline-flex"
+                  className="hidden h-12 min-w-[11rem] items-center justify-center gap-2 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 text-sm font-semibold text-deep shadow-lg backdrop-blur dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_95%,transparent)] dark:text-[color:var(--fg-on-strong)] lg:inline-flex"
                 >
                   {showAllMapVenues ? "Show fewer" : "Show all"}
                 </button>
@@ -1360,7 +1458,7 @@ export function MapPageClient({
             </div>
 
             {!hasActiveFilters && filteredVenues.length > 0 && !selectedVenue && !mobileGamesOpen ? (
-              <div className="absolute bottom-4 left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-3 text-sm font-semibold text-[#0a1628] shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#161b22]/95 dark:text-white lg:block">
+              <div className="absolute bottom-4 left-1/2 z-30 hidden -translate-x-1/2 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 py-3 text-sm font-semibold text-deep shadow-2xl backdrop-blur dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_95%,transparent)] dark:text-[color:var(--fg-on-strong)] lg:block">
                 {showAllMapVenues || !canToggleShowAllMapVenues
                   ? "All spots visible"
                   : `${mapVenues.length} spots shown`}
@@ -1379,14 +1477,14 @@ export function MapPageClient({
                 <button
                   type="button"
                   onClick={handleToggleShowAllMapVenues}
-                  className="rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white"
+                  className="rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 py-2 text-sm font-semibold text-deep shadow-lg backdrop-blur-md dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_96%,transparent)] dark:text-[color:var(--fg-on-strong)]"
                 >
                   {showAllMapVenues ? "Show fewer" : "Show all"}
                 </button>
               ) : null}
 
               {!selectedVenue && filteredVenues.length > 0 ? (
-                <div className="rounded-full border border-[#d8e3f5] bg-white/95 px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 dark:text-white">
+                <div className="rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] px-4 py-2 text-sm font-semibold text-deep shadow-lg backdrop-blur-md dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_96%,transparent)] dark:text-[color:var(--fg-on-strong)]">
                   {filteredVenues.length} venues
                 </div>
               ) : null}
@@ -1401,17 +1499,17 @@ export function MapPageClient({
             type="button"
             aria-label="Close games sheet"
             onClick={() => setMobileGamesOpen(false)}
-            className="fixed inset-0 z-40 bg-[#0a1628]/18 lg:hidden"
+            className="fixed inset-0 z-40 bg-[color:color-mix(in_srgb,var(--bg-deep)_18%,transparent)] lg:hidden"
           />
           <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
-            <div className="mx-3 mb-[calc(env(safe-area-inset-bottom)+0.5rem)] overflow-hidden rounded-[1.75rem] border border-[#d8e3f5] bg-white text-[#0a1628] shadow-2xl">
+            <div className="mx-3 mb-[calc(env(safe-area-inset-bottom)+0.5rem)] overflow-hidden rounded-[1.75rem] border border-line bg-surface text-deep shadow-2xl">
               <div className="flex justify-center pt-3">
-                <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12" />
+                <div className="h-1.5 w-14 rounded-full bg-[color:color-mix(in_srgb,var(--bg-deep)_12%,transparent)]" />
               </div>
-              <div className="border-b border-[#eef4ff] px-4 py-3">
+              <div className="border-b border-line px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--ink-45)]">
                       Games in {selectedCityConfig.label}
                     </div>
                     <div className="mt-1 text-base font-semibold">
@@ -1421,7 +1519,7 @@ export function MapPageClient({
                   <button
                     type="button"
                     onClick={() => setMobileGamesOpen(false)}
-                    className="rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-1.5 text-xs font-semibold text-[#0a1628]"
+                    className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs font-semibold text-deep"
                   >
                     Close
                   </button>
@@ -1430,7 +1528,7 @@ export function MapPageClient({
 
               <div className="max-h-[72vh] space-y-3 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <section className="space-y-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Next up</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--ink-45)]">Next up</div>
                   <div className="space-y-2">
                     {activeQuickMatchOption.matches.slice(0, 3).map((match) => {
                       const home = countryLookup.get(match.homeCountry);
@@ -1442,16 +1540,16 @@ export function MapPageClient({
                           key={match.id}
                           type="button"
                           onClick={() => handleApplyMatch(match)}
-                          className="w-full rounded-[1.35rem] border border-[#d8e3f5] bg-[#f8fbff] px-4 py-3 text-left shadow-sm transition hover:bg-[#eef4ff]"
+                          className="w-full rounded-[1.35rem] border border-line bg-surface-2 px-4 py-3 text-left shadow-sm transition hover:bg-surface-2"
                         >
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#0a1628]">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-deep">
                             <span>{home?.flagEmoji ?? "🏁"}</span>
                             <span className="truncate">{home?.name ?? match.homeCountry}</span>
-                            <span className="text-[#0a1628]/35">vs</span>
+                            <span className="text-[color:var(--ink-30)]">vs</span>
                             <span>{away?.flagEmoji ?? "🏁"}</span>
                             <span className="truncate">{away?.name ?? match.awayCountry}</span>
                           </div>
-                          <div className="mt-1 text-xs text-[#0a1628]/60">
+                          <div className="mt-1 text-xs text-[color:var(--fg-secondary)]">
                             {new Date(match.startsAt).toLocaleString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -1461,7 +1559,7 @@ export function MapPageClient({
                             })}{" "}
                             ET
                           </div>
-                          <div className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0a1628]/75">
+                          <div className="mt-2 inline-flex rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold text-[color:var(--fg-secondary)]">
                             {stats.spots} watch spots · {stats.sportsBars} sports bars
                           </div>
                         </button>
@@ -1470,20 +1568,20 @@ export function MapPageClient({
                   </div>
                 </section>
 
-                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-white shadow-sm">
+                <section className="rounded-[1.35rem] border border-line bg-surface shadow-sm">
                   <button
                     type="button"
                     onClick={() => setMobileBrowseExpanded((current) => !current)}
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Browse by day</div>
-                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">Today, tomorrow, or popular upcoming</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--ink-45)]">Browse by day</div>
+                      <div className="mt-1 text-sm font-semibold text-deep">Today, tomorrow, or popular upcoming</div>
                     </div>
-                    <span className="text-sm text-[#0a1628]/55">{mobileBrowseExpanded ? "−" : "+"}</span>
+                    <span className="text-sm text-mist">{mobileBrowseExpanded ? "−" : "+"}</span>
                   </button>
                   {mobileBrowseExpanded ? (
-                    <div className="border-t border-[#eef4ff] px-4 py-3">
+                    <div className="border-t border-line px-4 py-3">
                       <div className="grid grid-cols-2 gap-2">
                         {quickMatchOptions.map((option) => (
                           <button
@@ -1493,10 +1591,10 @@ export function MapPageClient({
                             disabled={!option.matches.length}
                             className={`rounded-full px-3 py-2 text-xs font-semibold transition ${
                               option.key === activeQuickMatchOption.key
-                                ? "bg-[#f4b942] text-[#0a1628]"
+                                ? "bg-gold text-deep"
                                 : option.matches.length
-                                  ? "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]"
-                                  : "border border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628]/35"
+                                  ? "border border-line bg-surface-2 text-deep"
+                                  : "border border-line bg-surface-2 text-[color:var(--ink-30)]"
                             }`}
                           >
                             {option.key === "local" ? selectedCityConfig.label : option.label}
@@ -1507,27 +1605,27 @@ export function MapPageClient({
                   ) : null}
                 </section>
 
-                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-white shadow-sm">
+                <section className="rounded-[1.35rem] border border-line bg-surface shadow-sm">
                   <button
                     type="button"
                     onClick={() => setMobileCityExpanded((current) => !current)}
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0a1628]/45">Host city</div>
-                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">{selectedCityConfig.label}</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--ink-45)]">Host city</div>
+                      <div className="mt-1 text-sm font-semibold text-deep">{selectedCityConfig.label}</div>
                     </div>
-                    <span className="text-sm text-[#0a1628]/55">{mobileCityExpanded ? "−" : "+"}</span>
+                    <span className="text-sm text-mist">{mobileCityExpanded ? "−" : "+"}</span>
                   </button>
                   {mobileCityExpanded ? (
-                    <div className="border-t border-[#eef4ff] px-4 py-3">
+                    <div className="border-t border-line px-4 py-3">
                       <button
                         type="button"
                         onClick={() => {
                           setMobileGamesOpen(false);
                           setCitySelectorOpen(true);
                         }}
-                        className="inline-flex w-full items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-4 py-2.5 text-sm font-semibold text-[#0a1628]"
+                        className="inline-flex w-full items-center justify-center rounded-full border border-line bg-surface-2 px-4 py-2.5 text-sm font-semibold text-deep"
                       >
                         Switch city
                       </button>
@@ -1535,29 +1633,29 @@ export function MapPageClient({
                   ) : null}
                 </section>
 
-                <section className="rounded-[1.35rem] border border-[#d8e3f5] bg-[#fff8e7] shadow-sm">
+                <section className="rounded-[1.35rem] border border-line bg-[var(--accent-soft-bg)] shadow-sm">
                   <button
                     type="button"
                     onClick={() => setMobileDealsExpanded((current) => !current)}
                     className="flex w-full items-center justify-between px-4 py-3 text-left"
                   >
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#c98a00]">Game-day deals</div>
-                      <div className="mt-1 text-sm font-semibold text-[#0a1628]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-soft-fg)]">Game-day deals</div>
+                      <div className="mt-1 text-sm font-semibold text-deep">
                         {activePromoCount > 0 ? `${activePromoCount} live deals in ${selectedCityConfig.shortLabel}` : "Sponsored match-night perks"}
                       </div>
                     </div>
-                    <span className="text-sm text-[#0a1628]/55">{mobileDealsExpanded ? "−" : "+"}</span>
+                    <span className="text-sm text-mist">{mobileDealsExpanded ? "−" : "+"}</span>
                   </button>
                   {mobileDealsExpanded ? (
-                    <div className="space-y-2 border-t border-[#f4d18c] px-4 py-3">
-                      <div className="text-xs text-[#0a1628]/70">
+                    <div className="space-y-2 border-t border-gold/40 px-4 py-3">
+                      <div className="text-xs text-[color:var(--fg-secondary)]">
                         Show up 30 minutes before the match or reserve ahead to unlock participating venue promos.
                       </div>
                       {promoVenues.map((venue) => (
-                        <div key={venue.id} className="rounded-2xl border border-[#f4d18c] bg-white px-3 py-3">
-                          <div className="text-sm font-semibold text-[#0a1628]">{venue.name}</div>
-                          <div className="mt-1 text-xs text-[#0a1628]/60">{venue.neighborhood} · {venue.acceptsReservations ? "Reserve to lock it in" : "Walk in 30 min early"}</div>
+                        <div key={venue.id} className="rounded-2xl border border-gold/40 bg-surface px-3 py-3">
+                          <div className="text-sm font-semibold text-deep">{venue.name}</div>
+                          <div className="mt-1 text-xs text-[color:var(--fg-secondary)]">{venue.neighborhood} · {venue.acceptsReservations ? "Reserve to lock it in" : "Walk in 30 min early"}</div>
                           <div className="mt-2 flex gap-2">
                             <button
                               type="button"
@@ -1565,7 +1663,7 @@ export function MapPageClient({
                                 setMobileGamesOpen(false);
                                 handleSelectVenue(venue);
                               }}
-                              className="inline-flex flex-1 items-center justify-center rounded-full bg-[#f4b942] px-3 py-2 text-xs font-semibold text-[#0a1628]"
+                              className="inline-flex flex-1 items-center justify-center rounded-full bg-gold px-3 py-2 text-xs font-semibold text-deep"
                             >
                               View on map
                             </button>
@@ -1575,7 +1673,7 @@ export function MapPageClient({
                                 setMobileGamesOpen(false);
                                 setMobileResultsOpen(true);
                               }}
-                              className="inline-flex flex-1 items-center justify-center rounded-full border border-[#d8e3f5] bg-[#f8fbff] px-3 py-2 text-xs font-semibold text-[#0a1628]"
+                              className="inline-flex flex-1 items-center justify-center rounded-full border border-line bg-surface-2 px-3 py-2 text-xs font-semibold text-deep"
                             >
                               Reserve / lock in
                             </button>
@@ -1597,15 +1695,15 @@ export function MapPageClient({
             type="button"
             aria-label="Close city selector"
             onClick={() => setCitySelectorOpen(false)}
-            className="fixed inset-0 z-40 bg-[#0a1628]/18 lg:hidden"
+            className="fixed inset-0 z-40 bg-[color:color-mix(in_srgb,var(--bg-deep)_18%,transparent)] lg:hidden"
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-[#d8e3f5] bg-white/97 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-[#161b22]/96 lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-[1.75rem] border-t border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_97%,transparent)] shadow-2xl backdrop-blur-md dark:border-line dark:bg-[color:color-mix(in_srgb,var(--bg-surface-strong)_96%,transparent)] lg:hidden">
             <div className="flex justify-center pt-4">
-              <div className="h-1.5 w-14 rounded-full bg-[#0a1628]/12" />
+              <div className="h-1.5 w-14 rounded-full bg-[color:color-mix(in_srgb,var(--bg-deep)_12%,transparent)]" />
             </div>
-            <div className="border-b border-[#d8e3f5] px-4 py-3">
-              <div className="text-xs uppercase tracking-[0.22em] text-[#0a1628]/45">Switch city</div>
-              <div className="mt-1 text-sm font-semibold text-[#0a1628]">Choose your host city</div>
+            <div className="border-b border-line px-4 py-3">
+              <div className="text-xs uppercase tracking-[0.22em] text-[color:var(--ink-45)]">Switch city</div>
+              <div className="mt-1 text-sm font-semibold text-deep">Choose your host city</div>
             </div>
             <div className="max-h-[calc(80vh-4.5rem)] overflow-y-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <CitySelector

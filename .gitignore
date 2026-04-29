@@ -9,3 +9,9 @@ prisma/dev.db
 .codex-seed-build
 tsconfig.tsbuildinfo
 # lib/cache/places/*.json
+briefs/*
+!briefs/CODEX_LAUNCH_READINESS.md
+data/promo-redemptions.jsonl
+prisma/migrations/20260429002000_profile_tables/
+test-results/
+GameDay_Developer_NDA*.docx

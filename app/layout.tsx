@@ -4,12 +4,15 @@ import type { ReactNode } from "react";
 import "leaflet/dist/leaflet.css";
 import "@/app/globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { AuthHashErrorBridge } from "@/components/auth/AuthHashErrorBridge";
 import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
+import { PWAInstallBanner } from "@/components/layout/PWAInstallBanner";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { PushNotificationBridge } from "@/components/native/PushNotificationBridge";
 import { StatusBarInit } from "@/components/native/StatusBarInit";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { UserHydrationBridge } from "@/components/layout/UserHydrationBridge";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -53,11 +56,32 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       }
     })();
   `;
+  const installPromptScript = `
+    (() => {
+      try {
+        window.__gamedayDeferredInstallPrompt = window.__gamedayDeferredInstallPrompt ?? null;
+
+        window.addEventListener("beforeinstallprompt", (event) => {
+          event.preventDefault();
+          window.__gamedayDeferredInstallPrompt = event;
+          window.dispatchEvent(new CustomEvent("gameday:install-prompt-ready"));
+        });
+
+        window.addEventListener("appinstalled", () => {
+          window.__gamedayDeferredInstallPrompt = null;
+          window.dispatchEvent(new CustomEvent("gameday:install-complete"));
+        });
+      } catch (error) {
+        window.__gamedayDeferredInstallPrompt = null;
+      }
+    })();
+  `;
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: installPromptScript }} />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -68,9 +92,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-[100dvh] bg-bg text-deep" suppressHydrationWarning>
         <Toaster richColors position="top-center" />
+        <AuthHashErrorBridge />
         <ServiceWorkerRegistration />
+        <UserHydrationBridge />
         <SiteHeader />
         <main>{children}</main>
+        <PWAInstallBanner />
         <SiteFooter />
         <PushNotificationBridge />
         <StatusBarInit />

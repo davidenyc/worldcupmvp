@@ -42,7 +42,7 @@ export function VenueActionBar({
         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex shrink-0 rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+        className="inline-flex shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
       >
         📍 Directions
       </a>
@@ -57,14 +57,14 @@ export function VenueActionBar({
             toast.success("Link copied!");
           }
         }}
-        className="inline-flex shrink-0 rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+        className="inline-flex shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
       >
         🔗 Share
       </button>
       <button
         type="button"
         onClick={handleSave}
-        className="inline-flex shrink-0 rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+        className="inline-flex shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
       >
         ❤️ {isSaved ? "Saved" : "Save"}
       </button>
@@ -73,7 +73,7 @@ export function VenueActionBar({
         onClick={() => {
           document.getElementById("reservation-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
-        className="inline-flex shrink-0 rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+        className="inline-flex shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
       >
         📅 Reserve
       </button>
@@ -82,7 +82,7 @@ export function VenueActionBar({
         onClick={() => {
           document.getElementById("review-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }}
-        className="inline-flex shrink-0 rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+        className="inline-flex shrink-0 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
       >
         ✏️ Review
       </button>
