@@ -10,6 +10,7 @@ import { PushNotificationBridge } from "@/components/native/PushNotificationBrid
 import { StatusBarInit } from "@/components/native/StatusBarInit";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { UserHydrationBridge } from "@/components/layout/UserHydrationBridge";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-[100dvh] bg-bg text-deep" suppressHydrationWarning>
         <Toaster richColors position="top-center" />
         <ServiceWorkerRegistration />
+        <UserHydrationBridge />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

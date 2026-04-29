@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { useSession } from "@/lib/hooks/useSession";
+
 export interface UserProfile {
   id: string;
   displayName: string;
@@ -64,7 +66,14 @@ export type UserStore = {
   setPromoOptIns: (optIns: Partial<UserProfile["promoOptIns"]>) => void;
   markWelcomeSeen: (at?: number) => void;
   resetOnboarding: () => void;
+  hydrateFromServer: (payload: Partial<UserProfile>) => void;
 };
+
+let activeAuthUser: { id: string; email: string } | null = null;
+
+function setActiveAuthUser(nextUser: { id: string; email: string } | null) {
+  activeAuthUser = nextUser;
+}
 
 function createIdentity() {
   return {
@@ -150,17 +159,60 @@ function appendActivityEntry(
   });
 }
 
+function buildServerProfilePatch(updates: Partial<UserProfile>) {
+  const patch: Record<string, unknown> = {};
+
+  if ("displayName" in updates) patch.displayName = updates.displayName ?? null;
+  if ("firstName" in updates) patch.firstName = updates.firstName ?? null;
+  if ("avatarEmoji" in updates) patch.avatarEmoji = updates.avatarEmoji ?? null;
+  if ("homeCity" in updates) patch.homeCity = updates.homeCity ?? null;
+  if ("favoriteCity" in updates) patch.favoriteCity = updates.favoriteCity;
+  if ("favoriteCountrySlug" in updates) patch.favoriteCountrySlug = updates.favoriteCountrySlug ?? null;
+  if ("language" in updates) patch.language = updates.language;
+  if ("prefersDarkMode" in updates) patch.prefersDarkMode = updates.prefersDarkMode;
+  if ("defaultFilters" in updates) patch.defaultFilters = updates.defaultFilters;
+  if ("promoOptIns" in updates) patch.promoOptIns = updates.promoOptIns;
+  if ("welcomeSeenAt" in updates) {
+    patch.welcomeSeenAt = updates.welcomeSeenAt ? new Date(updates.welcomeSeenAt).toISOString() : null;
+  }
+
+  const followedCountries =
+    updates.followingCountrySlugs ?? updates.followedCountries ?? updates.favoriteCountries;
+
+  if (followedCountries) {
+    patch.followedCountries = followedCountries;
+  }
+
+  return patch;
+}
+
+function syncUserProfileToServer(updates: Partial<UserProfile>) {
+  if (!activeAuthUser) return;
+
+  const patch = buildServerProfilePatch(updates);
+  if (!Object.keys(patch).length) return;
+
+  void fetch("/api/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch)
+  });
+}
+
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
       profile: createDefaultProfile(),
-      updateUser: (updates) =>
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      updateUser: (updates) => {
         set((state) => ({
           profile: normalizeProfile({
             ...state.profile,
             ...updates
           })
-        })),
+        }));
+        syncUserProfileToServer(updates);
+      },
       ensureUser: () => {
         const { profile } = get();
         if (profile.id) return;
@@ -172,10 +224,12 @@ export const useUserStore = create<UserStore>()(
           })
         });
       },
+      // SRC: local-only — anonymous identity bootstrap stays client-side.
       resetUser: () =>
         set({
           profile: createDefaultProfile()
         }),
+      // SRC: local-only until watched-matches API lands.
       toggleWatchlistMatch: (matchId) =>
         set((state) => {
           const alreadyWatching = state.profile.watchlistMatchIds.includes(matchId);
@@ -207,6 +261,7 @@ export const useUserStore = create<UserStore>()(
             })
           };
         }),
+      // SRC: local-only until watched-matches API lands.
       setWatchVenue: (matchId, venueSlug) =>
         set((state) => ({
           profile: appendActivityEntry(normalizeProfile({
@@ -224,6 +279,7 @@ export const useUserStore = create<UserStore>()(
             href: "/me"
           })
         })),
+      // SRC: local-only until watched-matches API lands.
       clearWatchVenue: (matchId) =>
         set((state) => {
           const nextWatchVenues = { ...state.profile.watchVenues };
@@ -235,10 +291,12 @@ export const useUserStore = create<UserStore>()(
             })
           };
         }),
+      // SRC: local-only — server ActivityEvent sync is deferred.
       appendActivity: (entry) =>
         set((state) => ({
           profile: appendActivityEntry(state.profile, entry)
         })),
+      // SRC: local-only — server ActivityEvent sync is deferred.
       clearActivity: () =>
         set((state) => ({
           profile: normalizeProfile({
@@ -246,90 +304,96 @@ export const useUserStore = create<UserStore>()(
             activity: []
           })
         })),
-      setFirstName: (firstName) =>
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setFirstName: (firstName) => {
+        const trimmed = firstName?.trim() || undefined;
+        const currentDisplayName = get().profile.displayName;
+        get().updateUser({
+          firstName: trimmed,
+          displayName: trimmed || currentDisplayName
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setHomeCity: (homeCity) => {
+        get().updateUser({
+          homeCity,
+          favoriteCity: homeCity ?? get().profile.favoriteCity
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setFavoriteCountry: (favoriteCountrySlug) => {
+        const profile = get().profile;
+        get().updateUser({
+          favoriteCountrySlug,
+          favoriteCountries: favoriteCountrySlug
+            ? [favoriteCountrySlug, ...profile.favoriteCountries.filter((entry) => entry !== favoriteCountrySlug)]
+            : [],
+          followedCountries: favoriteCountrySlug
+            ? [favoriteCountrySlug, ...profile.followedCountries.filter((entry) => entry !== favoriteCountrySlug)]
+            : profile.followedCountries,
+          followingCountrySlugs: favoriteCountrySlug
+            ? [favoriteCountrySlug, ...profile.followingCountrySlugs.filter((entry) => entry !== favoriteCountrySlug)]
+            : profile.followingCountrySlugs
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setFollowing: (followingCountrySlugs) => {
+        const favoriteCountrySlug = get().profile.favoriteCountrySlug;
+        get().updateUser({
+          followingCountrySlugs,
+          followedCountries: followingCountrySlugs,
+          favoriteCountries: favoriteCountrySlug
+            ? [favoriteCountrySlug, ...followingCountrySlugs.filter((entry) => entry !== favoriteCountrySlug)]
+            : followingCountrySlugs
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setDefaultFilters: (filters) => {
+        get().updateUser({
+          defaultFilters: {
+            ...get().profile.defaultFilters,
+            ...filters
+          }
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      setPromoOptIns: (optIns) => {
+        get().updateUser({
+          promoOptIns: {
+            ...get().profile.promoOptIns,
+            ...optIns
+          }
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      markWelcomeSeen: (at = Date.now()) => {
+        get().updateUser({
+          welcomeSeenAt: at
+        });
+      },
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      resetOnboarding: () => {
+        get().updateUser({
+          firstName: undefined,
+          homeCity: undefined,
+          favoriteCountrySlug: undefined,
+          followingCountrySlugs: [],
+          favoriteCountries: [],
+          followedCountries: [],
+          defaultFilters: createDefaultProfile().defaultFilters,
+          promoOptIns: createDefaultProfile().promoOptIns,
+          welcomeSeenAt: undefined,
+          activity: [],
+          watchlistMatchIds: [],
+          watchVenues: {}
+        });
+      },
+      // SRC: hybrid — server-backed hydration with local cache fallback.
+      hydrateFromServer: (payload) =>
         set((state) => ({
           profile: normalizeProfile({
             ...state.profile,
-            firstName: firstName?.trim() || undefined,
-            displayName: firstName?.trim() || state.profile.displayName
-          })
-        })),
-      setHomeCity: (homeCity) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            homeCity,
-            favoriteCity: homeCity ?? state.profile.favoriteCity
-          })
-        })),
-      setFavoriteCountry: (favoriteCountrySlug) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            favoriteCountrySlug,
-            favoriteCountries: favoriteCountrySlug ? [favoriteCountrySlug, ...state.profile.favoriteCountries.filter((entry) => entry !== favoriteCountrySlug)] : [],
-            followedCountries: favoriteCountrySlug
-              ? [favoriteCountrySlug, ...state.profile.followedCountries.filter((entry) => entry !== favoriteCountrySlug)]
-              : state.profile.followedCountries,
-            followingCountrySlugs: favoriteCountrySlug
-              ? [favoriteCountrySlug, ...state.profile.followingCountrySlugs.filter((entry) => entry !== favoriteCountrySlug)]
-              : state.profile.followingCountrySlugs
-          })
-        })),
-      setFollowing: (followingCountrySlugs) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            followingCountrySlugs,
-            followedCountries: followingCountrySlugs,
-            favoriteCountries: state.profile.favoriteCountrySlug
-              ? [state.profile.favoriteCountrySlug, ...followingCountrySlugs.filter((entry) => entry !== state.profile.favoriteCountrySlug)]
-              : followingCountrySlugs
-          })
-        })),
-      setDefaultFilters: (filters) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            defaultFilters: {
-              ...state.profile.defaultFilters,
-              ...filters
-            }
-          })
-        })),
-      setPromoOptIns: (optIns) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            promoOptIns: {
-              ...state.profile.promoOptIns,
-              ...optIns
-            }
-          })
-        })),
-      markWelcomeSeen: (at = Date.now()) =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            welcomeSeenAt: at
-          })
-        })),
-      resetOnboarding: () =>
-        set((state) => ({
-          profile: normalizeProfile({
-            ...state.profile,
-            firstName: undefined,
-            homeCity: undefined,
-            favoriteCountrySlug: undefined,
-            followingCountrySlugs: [],
-            favoriteCountries: [],
-            followedCountries: [],
-            defaultFilters: createDefaultProfile().defaultFilters,
-            promoOptIns: createDefaultProfile().promoOptIns,
-            welcomeSeenAt: undefined,
-            activity: [],
-            watchlistMatchIds: [],
-            watchVenues: {}
+            ...payload
           })
         }))
     }),
@@ -383,4 +447,63 @@ export function useOnboardingActions() {
     markWelcomeSeen: state.markWelcomeSeen,
     resetOnboarding: state.resetOnboarding
   }));
+}
+
+export function useUserHydration() {
+  const { user, loading } = useSession();
+  const hydrateFromServer = useUserStore((state) => state.hydrateFromServer);
+  const ensureUser = useUserStore((state) => state.ensureUser);
+  const resetUser = useUserStore((state) => state.resetUser);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      setActiveAuthUser(null);
+      resetUser();
+      ensureUser();
+      return;
+    }
+
+    setActiveAuthUser({
+      id: user.id,
+      email: user.email ?? ""
+    });
+
+    void fetch("/api/me")
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to hydrate user");
+        }
+
+        const data = await response.json();
+        const favoriteCountrySlug = data.profile?.favoriteCountrySlug ?? undefined;
+        const followedCountries = (data.followedCountries ?? []) as string[];
+
+        hydrateFromServer({
+          id: user.id,
+          email: data.authEmail ?? user.email ?? "",
+          displayName: data.profile?.displayName ?? user.user_metadata?.name ?? "Fan",
+          firstName: data.profile?.firstName ?? undefined,
+          avatarEmoji: data.profile?.avatarEmoji ?? undefined,
+          homeCity: data.profile?.homeCity ?? undefined,
+          favoriteCity: data.profile?.favoriteCity ?? "nyc",
+          favoriteCountrySlug,
+          followingCountrySlugs: followedCountries,
+          followedCountries,
+          favoriteCountries: favoriteCountrySlug
+            ? [favoriteCountrySlug, ...followedCountries.filter((entry) => entry !== favoriteCountrySlug)]
+            : followedCountries,
+          language: data.profile?.language ?? "en",
+          prefersDarkMode: data.profile?.prefersDarkMode ?? false,
+          defaultFilters: data.profile?.defaultFilters ?? createDefaultProfile().defaultFilters,
+          promoOptIns: data.profile?.promoOptIns ?? createDefaultProfile().promoOptIns,
+          welcomeSeenAt: data.profile?.welcomeSeenAt ? new Date(data.profile.welcomeSeenAt).getTime() : undefined,
+          joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString()
+        });
+      })
+      .catch(() => {
+        ensureUser();
+      });
+  }, [ensureUser, hydrateFromServer, loading, resetUser, user]);
 }

@@ -26,7 +26,8 @@ const profilePatchSchema = z.object({
       push: z.boolean().optional()
     })
     .optional(),
-  welcomeSeenAt: z.string().datetime().optional().nullable()
+  welcomeSeenAt: z.string().datetime().optional().nullable(),
+  followedCountries: z.array(z.string().trim().min(1).max(80)).optional()
 });
 
 async function requireAuthedUser() {
@@ -60,6 +61,7 @@ export async function GET() {
 
   return NextResponse.json({
     profile,
+    authEmail: user.email ?? "",
     followedCountries: followedCountries.map((entry) => entry.countrySlug),
     membership
   });
@@ -127,5 +129,34 @@ export async function PATCH(request: Request) {
     }
   });
 
-  return NextResponse.json({ profile, membership });
+  if (payload.followedCountries) {
+    await prisma.$transaction([
+      prisma.profileFollowedCountry.deleteMany({
+        where: { profileId: user.id }
+      }),
+      ...(payload.followedCountries.length
+        ? [
+            prisma.profileFollowedCountry.createMany({
+              data: payload.followedCountries.map((countrySlug) => ({
+                profileId: user.id,
+                countrySlug
+              })),
+              skipDuplicates: true
+            })
+          ]
+        : [])
+    ]);
+  }
+
+  const followedCountries = await prisma.profileFollowedCountry.findMany({
+    where: { profileId: user.id },
+    orderBy: { followedAt: "asc" }
+  });
+
+  return NextResponse.json({
+    profile,
+    authEmail: user.email ?? "",
+    followedCountries: followedCountries.map((entry) => entry.countrySlug),
+    membership
+  });
 }
