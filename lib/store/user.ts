@@ -28,7 +28,9 @@ export interface UserProfile {
   };
   welcomeSeenAt?: number;
   watchlistMatchIds: string[];
+  watchStatuses: Record<string, WatchStatus>;
   watchVenues: Record<string, string | null>;
+  watchRatings: Record<string, number | null>;
   activity: UserActivityEntry[];
   language: string;
   prefersDarkMode: boolean;
@@ -41,11 +43,14 @@ export interface UserProfile {
   emailSubscribed: boolean;
 }
 
+export type WatchStatus = "planned" | "watched";
+
 export interface UserActivityEntry {
   at: number;
   kind: string;
   label: string;
   href?: string;
+  payload?: Record<string, unknown>;
 }
 
 export type UserStore = {
@@ -54,6 +59,11 @@ export type UserStore = {
   ensureUser: () => void;
   resetUser: () => void;
   toggleWatchlistMatch: (matchId: string) => void;
+  planWatchMatch: (matchId: string, venueSlug?: string | null) => void;
+  markWatchedMatch: (
+    matchId: string,
+    options?: { venueSlug?: string | null; rating?: number | null }
+  ) => void;
   setWatchVenue: (matchId: string, venueSlug: string | null) => void;
   clearWatchVenue: (matchId: string) => void;
   appendActivity: (entry: Omit<UserActivityEntry, "at"> & { at?: number }) => void;
@@ -105,7 +115,9 @@ function createDefaultProfile(): UserProfile {
     },
     welcomeSeenAt: undefined,
     watchlistMatchIds: [],
+    watchStatuses: {},
     watchVenues: {},
+    watchRatings: {},
     activity: [],
     language: "en",
     prefersDarkMode: false,
@@ -142,7 +154,9 @@ function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
       ...profile.promoOptIns
     },
     watchlistMatchIds: profile.watchlistMatchIds ?? [],
+    watchStatuses: profile.watchStatuses ?? {},
     watchVenues: profile.watchVenues ?? {},
+    watchRatings: profile.watchRatings ?? {},
     activity: profile.activity ?? []
   };
 }
@@ -217,6 +231,12 @@ function removeWatchedMatchFromServer(matchId: string) {
   });
 }
 
+function withoutKey<T>(record: Record<string, T>, key: string) {
+  const next = { ...record };
+  delete next[key];
+  return next;
+}
+
 export const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -252,15 +272,15 @@ export const useUserStore = create<UserStore>()(
         set((state) => {
           const alreadyWatching = state.profile.watchlistMatchIds.includes(matchId);
           if (alreadyWatching) {
-            const nextWatchVenues = { ...state.profile.watchVenues };
-            delete nextWatchVenues[matchId];
             removeWatchedMatchFromServer(matchId);
 
             return {
               profile: appendActivityEntry(normalizeProfile({
                 ...state.profile,
                 watchlistMatchIds: state.profile.watchlistMatchIds.filter((entry) => entry !== matchId),
-                watchVenues: nextWatchVenues
+                watchStatuses: withoutKey(state.profile.watchStatuses, matchId),
+                watchVenues: withoutKey(state.profile.watchVenues, matchId),
+                watchRatings: withoutKey(state.profile.watchRatings, matchId)
               }), {
                 kind: "watchlist_removed",
                 label: "Removed a match from My Cup watchlist.",
@@ -273,11 +293,68 @@ export const useUserStore = create<UserStore>()(
           return {
             profile: appendActivityEntry(normalizeProfile({
                 ...state.profile,
-                watchlistMatchIds: [...state.profile.watchlistMatchIds, matchId]
+                watchlistMatchIds: [...state.profile.watchlistMatchIds, matchId],
+                watchStatuses: {
+                  ...state.profile.watchStatuses,
+                  [matchId]: "planned"
+                }
             }), {
               kind: "watchlist_added",
               label: "Added a match to My Cup watchlist.",
               href: "/matches"
+            })
+          };
+        }),
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      planWatchMatch: (matchId, venueSlug = null) =>
+        set((state) => {
+          syncWatchedMatchToServer(matchId, venueSlug);
+
+          return {
+            profile: normalizeProfile({
+              ...state.profile,
+              watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
+                ? state.profile.watchlistMatchIds
+                : [...state.profile.watchlistMatchIds, matchId],
+              watchStatuses: {
+                ...state.profile.watchStatuses,
+                [matchId]: "planned"
+              },
+              watchVenues: venueSlug === undefined
+                ? state.profile.watchVenues
+                : {
+                    ...state.profile.watchVenues,
+                    [matchId]: venueSlug
+                  }
+            })
+          };
+        }),
+      // SRC: hybrid — local optimistic cache, server-backed when authenticated.
+      markWatchedMatch: (matchId, options) =>
+        set((state) => {
+          const nextVenueSlug = options?.venueSlug ?? state.profile.watchVenues[matchId] ?? null;
+          const nextRating = options?.rating ?? state.profile.watchRatings[matchId] ?? null;
+
+          syncWatchedMatchToServer(matchId, nextVenueSlug);
+
+          return {
+            profile: normalizeProfile({
+              ...state.profile,
+              watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
+                ? state.profile.watchlistMatchIds
+                : [...state.profile.watchlistMatchIds, matchId],
+              watchStatuses: {
+                ...state.profile.watchStatuses,
+                [matchId]: "watched"
+              },
+              watchVenues: {
+                ...state.profile.watchVenues,
+                [matchId]: nextVenueSlug
+              },
+              watchRatings: {
+                ...state.profile.watchRatings,
+                [matchId]: nextRating
+              }
             })
           };
         }),
@@ -291,6 +368,10 @@ export const useUserStore = create<UserStore>()(
               watchlistMatchIds: state.profile.watchlistMatchIds.includes(matchId)
                 ? state.profile.watchlistMatchIds
                 : [...state.profile.watchlistMatchIds, matchId],
+              watchStatuses: {
+                ...state.profile.watchStatuses,
+                [matchId]: state.profile.watchStatuses[matchId] ?? "planned"
+              },
               watchVenues: {
                 ...state.profile.watchVenues,
                 [matchId]: venueSlug
@@ -305,13 +386,11 @@ export const useUserStore = create<UserStore>()(
       // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       clearWatchVenue: (matchId) =>
         set((state) => {
-          const nextWatchVenues = { ...state.profile.watchVenues };
-          delete nextWatchVenues[matchId];
           syncWatchedMatchToServer(matchId, null);
           return {
             profile: normalizeProfile({
               ...state.profile,
-              watchVenues: nextWatchVenues
+              watchVenues: withoutKey(state.profile.watchVenues, matchId)
             })
           };
         }),
@@ -409,7 +488,9 @@ export const useUserStore = create<UserStore>()(
           welcomeSeenAt: undefined,
           activity: [],
           watchlistMatchIds: [],
-          watchVenues: {}
+          watchStatuses: {},
+          watchVenues: {},
+          watchRatings: {}
         });
       },
       // SRC: hybrid — server-backed hydration with local cache fallback.
@@ -504,6 +585,7 @@ export function useUserHydration() {
         const favoriteCountrySlug = data.profile?.favoriteCountrySlug ?? undefined;
         const followedCountries = (data.followedCountries ?? []) as string[];
         const watchedMatches = (data.watchedMatches ?? []) as Array<{ matchId: string; watchVenueSlug?: string | null }>;
+        const localProfile = useUserStore.getState().profile;
 
         hydrateFromServer({
           id: user.id,
@@ -526,11 +608,18 @@ export function useUserHydration() {
           welcomeSeenAt: data.profile?.welcomeSeenAt ? new Date(data.profile.welcomeSeenAt).getTime() : undefined,
           joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString(),
           watchlistMatchIds: watchedMatches.map((entry) => entry.matchId),
+          watchStatuses: Object.fromEntries(
+            watchedMatches.map((entry) => [
+              entry.matchId,
+              localProfile.watchStatuses[entry.matchId] ?? "planned"
+            ])
+          ),
           watchVenues: Object.fromEntries(
             watchedMatches
               .filter((entry) => entry.watchVenueSlug)
               .map((entry) => [entry.matchId, entry.watchVenueSlug ?? null])
-          )
+          ),
+          watchRatings: localProfile.watchRatings
         });
       })
       .catch(() => {
