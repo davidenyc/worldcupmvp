@@ -172,7 +172,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
         </div>
       </header>
 
-      <div className="relative w-full overflow-hidden rounded-2xl bg-[#f6f9ff]">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-bg">
         <div className="aspect-[16/10] sm:aspect-[2.2/1]">
           <ComposableMap
             projection="geoMercator"
