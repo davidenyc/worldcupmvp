@@ -252,9 +252,9 @@ export function SiteHeader() {
       {menuMounted && accountMenuOpen
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setAccountMenuOpen(false)} />
+              <div className="fixed inset-0 z-[75] bg-black/20" onClick={() => setAccountMenuOpen(false)} />
               <div
-                className="fixed z-50 w-[min(92vw,18rem)] overflow-hidden rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover"
+                className="fixed z-[80] w-[min(92vw,18rem)] overflow-hidden rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover"
                 style={{ top: menuPosition.top, right: menuPosition.right }}
               >
                 <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
@@ -345,8 +345,8 @@ export function SiteHeader() {
       {menuMounted && cityMenuOpen
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setCityMenuOpen(false)} />
-              <div className="fixed inset-x-4 top-[calc(env(safe-area-inset-top,0px)+4.75rem)] z-50 mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover">
+              <div className="fixed inset-0 z-[75] bg-black/20" onClick={() => setCityMenuOpen(false)} />
+              <div className="fixed inset-x-4 top-[calc(env(safe-area-inset-top,0px)+4.75rem)] z-[80] mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-popover">
                 <div className="border-b border-[color:var(--border-subtle)] px-4 py-3">
                   <div className="text-small uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">Switch city</div>
                   <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">Choose the host city you want to browse.</div>

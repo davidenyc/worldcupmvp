@@ -78,7 +78,10 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
               </button>
             ) : null}
           </div>
-          <Link href={`/venue/${venue.slug}`} className="mt-3 block text-xl font-semibold tracking-tight text-[color:var(--fg-primary)]">
+          <Link
+            href={`/venue/${venue.slug}`}
+            className="mt-3 block text-xl font-semibold tracking-tight text-[color:var(--fg-primary)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden"
+          >
             {venue.name}
           </Link>
           <div className="mt-2 flex items-center gap-2 text-sm text-[color:var(--fg-secondary)]">
