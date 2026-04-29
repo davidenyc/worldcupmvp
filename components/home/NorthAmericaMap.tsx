@@ -49,7 +49,7 @@ const LABEL_DIR: Record<string, LabelDir> = {
   seattle: "left",
   toronto: "top-left",
   boston: "top-right",
-  nyc: "right",
+  nyc: "top-right",
   philadelphia: "bottom-right",
   "kansas-city": "top",
   "san-francisco": "left",
@@ -67,13 +67,23 @@ const LABEL_DIR: Record<string, LabelDir> = {
 const CLUSTER_LABELS = new Set(["nyc", "boston", "philadelphia", "toronto", "san-francisco", "las-vegas", "los-angeles"]);
 
 const LABEL_PAD_BY_CITY: Partial<Record<string, number>> = {
-  nyc: 2,
-  boston: 2,
-  philadelphia: 2,
-  toronto: 2,
-  "san-francisco": 2,
-  "las-vegas": 2,
-  "los-angeles": 2
+  nyc: 1,
+  boston: 1,
+  philadelphia: 1,
+  toronto: 1,
+  "san-francisco": 1,
+  "las-vegas": 1,
+  "los-angeles": 1
+};
+
+const LABEL_FONT_SIZE_BY_CITY: Partial<Record<string, number>> = {
+  toronto: 8.5,
+  boston: 8.5,
+  nyc: 8.5,
+  philadelphia: 8.5,
+  "san-francisco": 8.5,
+  "las-vegas": 8.5,
+  "los-angeles": 8.5
 };
 
 interface NorthAmericaMapProps {
@@ -208,11 +218,11 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
               const isRevealed = revealedLabel === city.key;
               const showLabel = compactLabels ? isRevealed : true;
               const dotR = 8 + Math.min((city.venueCount ?? 0) / 60, 6);
+              const labelFontSize = LABEL_FONT_SIZE_BY_CITY[city.key] ?? (CLUSTER_LABELS.has(city.key) ? 9 : 10);
               const labelText = isHovered && !compactLabels ? `${city.label} · ${city.venueCount.toLocaleString()}` : city.shortLabel;
-              const labelW = labelText.length * 6.6 + 18;
+              const labelW = labelText.length * (labelFontSize < 9 ? 5.8 : labelFontSize < 10 ? 6.1 : 6.6) + 18;
               const dir = LABEL_DIR[city.key] ?? "right";
               const labelOffset = computeLabelOffset(dir, dotR, labelW, LABEL_PAD_BY_CITY[city.key]);
-              const labelFontSize = CLUSTER_LABELS.has(city.key) ? 9 : 10;
 
               return (
                 <Marker key={city.key} coordinates={[city.lng, city.lat]}>
@@ -281,7 +291,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-mist">
-        <span>Tap any city to open its venue list</span>
+        <span>{compactLabels ? "Tap once to reveal a label, then tap again to open its venue list" : "Tap any city to open its venue list"}</span>
         <span className="sm:ml-auto">All 17 host cities fit inside the map view</span>
       </div>
     </div>
