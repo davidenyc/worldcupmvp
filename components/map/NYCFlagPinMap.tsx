@@ -34,14 +34,14 @@ export function NYCFlagPinMap(props: NYCFlagPinMapProps) {
 
   if (loadFailed) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#eef4ff] px-6 text-center text-sm font-medium text-[#0a1628] dark:bg-[#0d1117] dark:text-white">
+      <div className="flex h-full w-full items-center justify-center bg-surface-2 px-6 text-center text-sm font-medium text-deep dark:bg-[var(--bg-surface-strong)] dark:text-[color:var(--fg-on-strong)]">
         The city map is refreshing. Reload once to retry.
       </div>
     );
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#eef4ff] px-6 text-center text-sm font-medium text-[#0a1628] dark:bg-[#0d1117] dark:text-white">
+    <div className="flex h-full w-full items-center justify-center bg-surface-2 px-6 text-center text-sm font-medium text-deep dark:bg-[var(--bg-surface-strong)] dark:text-[color:var(--fg-on-strong)]">
       Loading city map…
     </div>
   );

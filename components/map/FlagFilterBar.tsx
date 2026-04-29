@@ -33,12 +33,12 @@ export function FlagFilterBar({
   return (
     <div
       className={`space-y-4 ${
-        compact ? "" : "rounded-2xl border border-[#d8e3f5] bg-white/95 p-4 text-[#0a1628] backdrop-blur-md shadow-sm dark:border-white/10 dark:bg-[#161b22] dark:text-white"
+        compact ? "" : "rounded-2xl border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_95%,transparent)] p-4 text-deep backdrop-blur-md shadow-sm dark:border-line dark:bg-[var(--bg-surface-strong)] dark:text-[color:var(--fg-on-strong)]"
       }`}
     >
       {selectedCountrySlugs.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#f4f8ff] p-2 dark:bg-white/8">
-          <span className="mr-1 text-xs font-semibold text-[#0a1628]/55 dark:text-white">Watching:</span>
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-surface-2 p-2 dark:bg-white/8">
+          <span className="mr-1 text-xs font-semibold text-mist dark:text-[color:var(--fg-on-strong)]">Watching:</span>
           {selectedCountrySlugs.map((slug) => {
             const country = countries.find((item) => item.slug === slug);
             if (!country) return null;
@@ -48,7 +48,7 @@ export function FlagFilterBar({
                 key={slug}
                 type="button"
                 onClick={() => onToggleCountry(slug)}
-                className="inline-flex items-center gap-1 rounded-full bg-[#f4b942] px-2 py-1 text-xs font-bold text-[#0a1628]"
+                className="inline-flex items-center gap-1 rounded-full bg-gold px-2 py-1 text-xs font-bold text-deep"
               >
                 <CountryFlag country={country} size="sm" className="shrink-0" />
                 {country.name} ×
@@ -62,7 +62,7 @@ export function FlagFilterBar({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="🔍 Search countries"
-        className="h-11 w-full rounded-full border border-[#d8e3f5] bg-white px-4 text-sm text-[#0a1628] outline-none placeholder:text-[#0a1628]/35 dark:border-white/10 dark:bg-white/8 dark:text-white dark:placeholder:text-white/30"
+        className="h-11 w-full rounded-full border border-line bg-surface px-4 text-sm text-deep outline-none placeholder:text-[color:var(--ink-30)] dark:border-line dark:bg-white/8 dark:text-[color:var(--fg-on-strong)] dark:placeholder:text-[color:var(--fg-muted-on-strong)]"
       />
 
       <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -77,8 +77,8 @@ export function FlagFilterBar({
                 onClick={() => onToggleCountry(country.slug)}
                 className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-sm transition ${
                   active
-                    ? "border-[#f4b942] bg-[#f4b942] font-bold text-[#0a1628]"
-                    : "border-[#d8e3f5] bg-white text-[#0a1628] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    ? "border-gold bg-gold font-bold text-deep"
+                    : "border-line bg-surface text-deep dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)]"
                 }`}
               >
                 <CountryFlag country={country} size="sm" className="shrink-0" />
