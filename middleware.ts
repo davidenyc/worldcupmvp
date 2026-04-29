@@ -27,6 +27,7 @@ const VALID_TOP_LEVEL_ROUTES = new Set([
   "about",
   "admin",
   "account",
+  "auth",
   "country",
   "groups",
   "map",
