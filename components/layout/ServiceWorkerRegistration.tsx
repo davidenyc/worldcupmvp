@@ -23,7 +23,21 @@ export function ServiceWorkerRegistration() {
           return;
         }
 
-        await navigator.serviceWorker.register("/sw.js");
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        const userCity = window.localStorage.getItem("userCity") ?? "nyc";
+
+        const sendCityContext = () => {
+          registration.active?.postMessage({
+            type: "CACHE_CITY_CONTEXT",
+            cityKey: userCity
+          });
+        };
+
+        if (registration.active) {
+          sendCityContext();
+        } else {
+          navigator.serviceWorker.ready.then(sendCityContext).catch(() => undefined);
+        }
       } catch (error) {
         console.error("Service worker registration failed", error);
       }

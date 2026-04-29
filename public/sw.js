@@ -1,6 +1,6 @@
-const CACHE_NAME = "gameday-map-v2";
+const CACHE_NAME = "gameday-map-v3";
 const OFFLINE_URL = "/offline";
-const SHELL_ROUTES = ["/", "/nyc/map", "/nyc/matches", "/manifest.json", OFFLINE_URL];
+const SHELL_ROUTES = ["/", "/app", "/today", "/nyc/map", "/nyc/matches", "/manifest.json", OFFLINE_URL];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ROUTES)));
@@ -14,6 +14,13 @@ self.addEventListener("activate", (event) => {
     )
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "CACHE_CITY_CONTEXT") return;
+
+  const cityKey = event.data.cityKey || "nyc";
+  event.waitUntil(cacheCityContext(cityKey));
 });
 
 self.addEventListener("fetch", (event) => {
@@ -78,4 +85,22 @@ async function staleWhileRevalidate(request) {
     });
 
   return cached ?? fetchPromise;
+}
+
+async function cacheCityContext(cityKey) {
+  const cache = await caches.open(CACHE_NAME);
+  const cityRoutes = [`/${cityKey}/map`, `/${cityKey}/matches`, "/today", "/app"];
+
+  await Promise.all(
+    cityRoutes.map(async (route) => {
+      try {
+        const response = await fetch(route, { credentials: "same-origin" });
+        if (response.ok) {
+          await cache.put(route, response.clone());
+        }
+      } catch (error) {
+        // Ignore offline cache refresh failures; existing cache entries still work.
+      }
+    })
+  );
 }
