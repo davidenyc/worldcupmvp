@@ -1,4 +1,5 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
 import { HOST_CITIES } from "@/lib/data/hostCities";
@@ -10,8 +11,11 @@ import { HomeHeroIntro } from "./HomeHeroIntro";
 import { HomeKpiCards } from "./HomeKpiCards";
 import { HomeMatchesStrip } from "./HomeMatchesStrip";
 import { InstallAppBanner } from "./InstallAppBanner";
-import { NorthAmericaMap } from "./NorthAmericaMap";
 import { PremiumUpsellBanner } from "./PremiumUpsellBanner";
+
+const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
+  ssr: false
+});
 
 async function getCityVenueCount(cityKey: string) {
   const data = await getMapPageData(cityKey);
