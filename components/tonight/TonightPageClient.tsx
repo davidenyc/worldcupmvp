@@ -492,14 +492,14 @@ export function TodayPageClient({
                 <button
                   type="button"
                   onClick={() => handleModeChange("bar")}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "bar" ? "bg-[#f4b942] text-[#0a1628]" : "text-[color:var(--fg-secondary)]"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "bar" ? "bg-gold text-deep" : "text-[color:var(--fg-secondary)]"}`}
                 >
                   🍺 Find a bar
                 </button>
                 <button
                   type="button"
                   onClick={() => handleModeChange("restaurant")}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "restaurant" ? "bg-[#f4b942] text-[#0a1628]" : "text-[color:var(--fg-secondary)]"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "restaurant" ? "bg-gold text-deep" : "text-[color:var(--fg-secondary)]"}`}
                 >
                   🍽️ Find a restaurant
                 </button>
@@ -580,7 +580,7 @@ export function TodayPageClient({
                         {toTitleCase(venue.venueIntent.replace(/_/g, " "))} for {country?.name ?? "mixed supporter rooms"}.
                       </div>
                       <div className="mt-auto pt-4">
-                        <div className="inline-flex min-h-8 items-center rounded-full bg-[#0a1628] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] leading-none text-white">
+                        <div className="inline-flex min-h-8 items-center rounded-full bg-deep px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] leading-none text-[color:var(--fg-on-strong)]">
                           {getSoccerAtmosphereRating(venue)} atmosphere
                         </div>
                       </div>
@@ -591,7 +591,7 @@ export function TodayPageClient({
               {marqueeMatch ? (
                 <Link
                   href={`/${activeCity.key}/map?countries=${marqueeMatch.homeCountry},${marqueeMatch.awayCountry}`}
-                  className="mt-4 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                  className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
                 >
                   See all {filteredVenues.length} spots →
                 </Link>
@@ -643,28 +643,28 @@ export function TodayPageClient({
             <button
               type="button"
               onClick={() => updateQuery({ reservations: reservationsOnly ? null : "1" })}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${reservationsOnly ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${reservationsOnly ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
             >
               Reservations
             </button>
             <button
               type="button"
               onClick={() => updateQuery({ walkIn: walkInOnly ? null : "1" })}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${walkInOnly ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${walkInOnly ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
             >
               Walk-in only
             </button>
             <button
               type="button"
               onClick={() => updateQuery({ openNow: openNowOnly ? null : "1" })}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${openNowOnly ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${openNowOnly ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
             >
               Open now
             </button>
             <button
               type="button"
               onClick={() => updateQuery({ outdoor: outdoorOnly ? null : "1" })}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${outdoorOnly ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${outdoorOnly ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
             >
               Outdoor seating
             </button>
@@ -694,10 +694,10 @@ export function TodayPageClient({
             />
             {mode === "restaurant" ? (
               <>
-                <button type="button" onClick={() => updateQuery({ vegetarian: vegetarian ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${vegetarian ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Vegetarian</button>
-                <button type="button" onClick={() => updateQuery({ halal: halal ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${halal ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Halal</button>
-                <button type="button" onClick={() => updateQuery({ kosher: kosher ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${kosher ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Kosher</button>
-                <button type="button" onClick={() => updateQuery({ liveMusic: liveMusic ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${liveMusic ? "bg-[#f4b942] text-[#0a1628]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Live music</button>
+                <button type="button" onClick={() => updateQuery({ vegetarian: vegetarian ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${vegetarian ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Vegetarian</button>
+                <button type="button" onClick={() => updateQuery({ halal: halal ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${halal ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Halal</button>
+                <button type="button" onClick={() => updateQuery({ kosher: kosher ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${kosher ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Kosher</button>
+                <button type="button" onClick={() => updateQuery({ liveMusic: liveMusic ? null : "1" })} className={`rounded-full px-3 py-2 text-sm font-semibold ${liveMusic ? "bg-gold text-deep" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}>Live music</button>
               </>
             ) : null}
             <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pr-3">
@@ -708,7 +708,7 @@ export function TodayPageClient({
                     key={country.slug}
                     type="button"
                     onClick={() => toggleCountry(country.slug)}
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold ${active ? "bg-[#0a1628] text-white" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold ${active ? "bg-deep text-[color:var(--fg-on-strong)]" : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"}`}
                   >
                     <CountryFlag country={country} size="sm" />
                     <span>{country.fifaCode}</span>
@@ -723,7 +723,7 @@ export function TodayPageClient({
               <button
                 type="button"
                 onClick={() => setShowCountryGrid(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f4b942] px-3 py-2 text-sm font-semibold text-[#0a1628]"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gold px-3 py-2 text-sm font-semibold text-deep"
               >
                 See all 48
               </button>
@@ -783,7 +783,7 @@ export function TodayPageClient({
                       href={`https://maps.apple.com/?q=${encodeURIComponent(venue.address)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-full bg-[#0a1628] px-3 py-2 text-sm font-semibold text-white"
+                      className="rounded-full bg-deep px-3 py-2 text-sm font-semibold text-[color:var(--fg-on-strong)]"
                     >
                       Directions
                     </a>
@@ -791,7 +791,7 @@ export function TodayPageClient({
                 </div>
               </div>
             ))}
-            <Link href={`/${activeCity.key}/map`} className="inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]">
+            <Link href={`/${activeCity.key}/map`} className="inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep">
               See all →
             </Link>
           </div>
@@ -852,7 +852,7 @@ export function TodayPageClient({
             type="button"
             aria-label="Close country picker"
             onClick={() => setShowCountryGrid(false)}
-            className="fixed inset-0 z-40 bg-[#0a1628]/45"
+            className="fixed inset-0 z-40 bg-deep/45"
           />
           <div className="fixed inset-x-4 bottom-4 z-50 max-h-[70vh] overflow-hidden rounded-[1.75rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-4 py-3">
@@ -878,7 +878,7 @@ export function TodayPageClient({
                     onClick={() => toggleCountry(country.slug)}
                     className={`inline-flex items-center gap-2 rounded-2xl px-3 py-3 text-left text-sm font-semibold ${
                       active
-                        ? "bg-[#0a1628] text-white"
+                        ? "bg-deep text-[color:var(--fg-on-strong)]"
                         : "border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[color:var(--fg-primary)]"
                     }`}
                   >

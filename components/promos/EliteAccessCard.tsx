@@ -87,16 +87,16 @@ export function EliteAccessCard({
   if (tier !== "elite") {
     return (
       <>
-        <div className="rounded-[1.75rem] border border-[#f4b942]/35 bg-[#fff8e7] p-5 text-[#0a1628]">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#c98a00]">Elite access</div>
+        <div className="rounded-[1.75rem] border border-gold/35 bg-[var(--accent-soft-bg)] p-5 text-deep">
+          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--accent-soft-fg)]">Elite access</div>
           <h3 className="mt-2 text-xl font-semibold">Skip the line with your Elite QR</h3>
-          <p className="mt-2 text-sm leading-6 text-[#0a1628]/70">
+          <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">
             Partner venues can fast-track Supporter Elite members on busy match nights with a rotating access QR.
           </p>
           <button
             type="button"
             onClick={() => setShowUpgrade(true)}
-            className="mt-4 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+            className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
           >
             Get Elite to unlock
           </button>
@@ -110,23 +110,23 @@ export function EliteAccessCard({
 
   return (
     <>
-      <div className="rounded-[1.75rem] border border-[#d8e3f5] bg-white p-5 dark:border-white/10 dark:bg-[#161b22]">
-        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0a1628]/45 dark:text-white/45">Member perk</div>
-        <h3 className="mt-2 text-xl font-semibold text-[#0a1628] dark:text-white">Elite venue access at {venueName}</h3>
-        <p className="mt-2 text-sm leading-6 text-[#0a1628]/70 dark:text-white/70">
+      <div className="rounded-[1.75rem] border border-line bg-white p-5 dark:border-line dark:bg-[var(--bg-surface-strong)]">
+        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]/45">Member perk</div>
+        <h3 className="mt-2 text-xl font-semibold text-deep dark:text-[color:var(--fg-on-strong)]">Elite venue access at {venueName}</h3>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)] dark:text-[color:var(--fg-secondary-on-strong)]">
           Show your rotating QR at the host stand for priority entry when the room is packed.
         </p>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-4 inline-flex rounded-full bg-[#0a1628] px-4 py-2 text-sm font-semibold text-white dark:bg-[#f4b942] dark:text-[#0a1628]"
+          className="mt-4 inline-flex rounded-full bg-deep px-4 py-2 text-sm font-semibold text-[color:var(--fg-on-strong)] dark:bg-gold dark:text-deep"
         >
           Show Elite QR
         </button>
       </div>
       {open ? (
         <>
-          <div className="fixed inset-0 z-[100] bg-[#0a1628]/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[100] bg-deep/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-[2rem] bg-[var(--bg-surface)] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 sm:left-1/2 sm:top-1/2 sm:w-[min(28rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[2rem]">
             <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-[color:var(--border-strong)] sm:hidden" />
             <div className="flex items-start justify-between gap-4">
@@ -148,7 +148,7 @@ export function EliteAccessCard({
             <button
               type="button"
               onClick={runManualCheck}
-              className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-[#f4b942] px-4 py-3 text-sm font-semibold text-[#0a1628]"
+              className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-gold px-4 py-3 text-sm font-semibold text-deep"
             >
               Run manual scan check
             </button>

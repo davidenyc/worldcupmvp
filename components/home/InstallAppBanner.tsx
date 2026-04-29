@@ -23,7 +23,7 @@ export function InstallAppBanner() {
   if (!visible) return null;
 
   return (
-    <div className="rounded-[1.75rem] bg-[#f4b942] px-4 py-4 text-[#0a1628] shadow-lg">
+    <div className="rounded-[1.75rem] bg-gold px-4 py-4 text-deep shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold leading-6">
           📲 Add GameDay Map to your home screen — tap Share → Add to Home Screen
@@ -34,7 +34,7 @@ export function InstallAppBanner() {
             window.localStorage.setItem(STORAGE_KEY, "1");
             setVisible(false);
           }}
-          className="rounded-full border border-[#0a1628]/12 bg-white/65 px-3 py-1 text-xs font-bold text-[#0a1628]"
+          className="rounded-full border border-[color:var(--border-strong)] bg-white/65 px-3 py-1 text-xs font-bold text-deep"
         >
           Dismiss
         </button>

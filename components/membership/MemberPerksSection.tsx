@@ -29,11 +29,11 @@ export function MemberPerksSection() {
   const { tier } = useMembership();
 
   return (
-    <section className="rounded-[2rem] border border-[#d8e3f5] bg-white p-6 dark:border-white/10 dark:bg-[#161b22]">
-      <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0a1628]/45 dark:text-white/45">
+    <section className="rounded-[2rem] border border-line bg-white p-6 dark:border-line dark:bg-[var(--bg-surface-strong)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[color:var(--ink-45)] dark:text-[color:var(--fg-on-strong)]/45">
         Member perks
       </div>
-      <h2 className="mt-2 text-3xl font-bold text-[#0a1628] dark:text-white">What your membership unlocks on match night</h2>
+      <h2 className="mt-2 text-3xl font-bold text-deep dark:text-[color:var(--fg-on-strong)]">What your membership unlocks on match night</h2>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {PERKS.map((perk) => {
           const unlocked = perk.tier === "fan" ? tier !== "free" : tier === "elite";
@@ -42,11 +42,11 @@ export function MemberPerksSection() {
               key={perk.title}
               className={`rounded-[1.5rem] border p-5 ${
                 unlocked
-                  ? "border-[#f4b942]/40 bg-[#fff8e7] text-[#0a1628]"
-                  : "border-[#d8e3f5] bg-[#f8fbff] text-[#0a1628] dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
+                  ? "border-gold/40 bg-[var(--accent-soft-bg)] text-deep"
+                  : "border-line bg-surface-2 text-deep dark:border-line dark:bg-white/[0.03] dark:text-[color:var(--fg-on-strong)]"
               }`}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#c98a00]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--accent-soft-fg)]">
                 {perk.tier === "fan" ? "Fan Pass" : "Elite"}
               </div>
               <div className="mt-2 text-xl font-semibold">{perk.title}</div>

@@ -67,20 +67,20 @@ export function MatchCard({
   const isTomorrow = dateKey === tomorrowKey;
 
   return (
-    <article className="rounded-[1.35rem] border border-[#d8e3f5] bg-white p-4 text-[#0a1628] shadow-sm dark:border-white/8 dark:bg-[#161b22] dark:text-white sm:p-5">
+    <article className="rounded-[1.35rem] border border-line bg-white p-4 text-deep shadow-sm dark:border-line dark:bg-[var(--bg-surface-strong)] dark:text-[color:var(--fg-on-strong)] sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#0a1628] dark:text-white sm:text-base">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-deep dark:text-[color:var(--fg-on-strong)] sm:text-base">
             <CountryFlag country={home} size="md" />
             <span>{home?.name ?? match.homeCountry}</span>
-            <span className="text-[#0a1628]/40 dark:text-white/35">vs</span>
+            <span className="text-[color:var(--ink-40)] dark:text-[color:var(--fg-on-strong)]/35">vs</span>
             <span>{away?.name ?? match.awayCountry}</span>
             <CountryFlag country={away} size="md" />
           </div>
-          <div className="text-xs text-[#0a1628]/60 dark:text-white/55 sm:text-sm">
+          <div className="text-xs text-[color:var(--fg-secondary)] dark:text-[color:var(--fg-muted-on-strong)] sm:text-sm">
             {match.group ? `Group ${match.group}` : match.stageLabel} · {dateLabel} · {timeLabel} ET
           </div>
-          <div className="text-xs text-[#0a1628]/60 dark:text-white/55 sm:text-sm">📍 {match.stadiumName}, {stadiumLabel}</div>
+          <div className="text-xs text-[color:var(--fg-secondary)] dark:text-[color:var(--fg-muted-on-strong)] sm:text-sm">📍 {match.stadiumName}, {stadiumLabel}</div>
         </div>
 
         <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -94,18 +94,18 @@ export function MatchCard({
               ⚡ Tomorrow
             </span>
           )}
-          {isLocal && <span className="rounded-full bg-[#eef4ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0a1628] dark:bg-white/10 dark:text-white">📍 Local</span>}
+          {isLocal && <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-deep dark:bg-white/10 dark:text-[color:var(--fg-on-strong)]">📍 Local</span>}
         </div>
       </div>
 
       <div className="mt-4">
-        <div className="text-xs uppercase tracking-[0.2em] text-[#0a1628]/45">Where to watch</div>
+        <div className="text-xs uppercase tracking-[0.2em] text-[color:var(--ink-45)]">Where to watch</div>
         <div className="mt-2.5">
           {userCity ? (
             <button
               type="button"
               onClick={() => onWatchSpots(match, userCity)}
-              className="inline-flex w-full items-center justify-center rounded-full bg-[#f4b942] px-4 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:bg-[#f0c86b] sm:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-deep transition hover:brightness-105 sm:w-auto"
             >
               📍 Find watch spots near you →
             </button>
@@ -113,7 +113,7 @@ export function MatchCard({
             <button
               type="button"
               onClick={onRequestCitySelector}
-              className="inline-flex w-full items-center justify-center rounded-full border border-[#d8e3f5] bg-white px-4 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-full border border-line bg-white px-4 py-2.5 text-sm font-semibold text-deep transition hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10 sm:w-auto"
             >
               📍 Find watch spots near you →
             </button>
@@ -122,10 +122,10 @@ export function MatchCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Badge className="bg-[#eef4ff] text-[#0a1628] dark:bg-white/10 dark:text-white">{match.stageLabel}</Badge>
+        <Badge className="bg-surface-2 text-deep dark:bg-white/10 dark:text-[color:var(--fg-on-strong)]">{match.stageLabel}</Badge>
         {isToday && <Badge className="bg-red-50 text-red-700 ring-1 ring-red-200">Today</Badge>}
         {isTomorrow && <Badge className="bg-amber-50 text-amber-700 ring-1 ring-amber-200">Tomorrow</Badge>}
-        {isLocal && <Badge className="bg-[#eef4ff] text-[#0a1628] dark:bg-white/10 dark:text-white">Local</Badge>}
+        {isLocal && <Badge className="bg-surface-2 text-deep dark:bg-white/10 dark:text-[color:var(--fg-on-strong)]">Local</Badge>}
       </div>
 
       <div className="mt-4">

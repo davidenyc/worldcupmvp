@@ -70,7 +70,7 @@ export function MatchSchedule({
             type="button"
             onClick={() => setTab(key)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              tab === key ? "bg-[#f4b942] text-[#0a1628] shadow-card" : "border border-[#d8e3f5] bg-white text-[#0a1628] hover:bg-[#eef4ff]"
+              tab === key ? "bg-gold text-deep shadow-card" : "border border-line bg-white text-deep hover:bg-surface-2"
             }`}
           >
             {label}
@@ -141,7 +141,7 @@ export function MatchSchedule({
                     <div className="mt-4">
                       <Link
                         href={`/${cityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
-                        className="inline-flex items-center justify-center rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:bg-[#f0c86b]"
+                        className="inline-flex items-center justify-center rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep transition hover:brightness-105"
                       >
                         Find watch spots →
                       </Link>

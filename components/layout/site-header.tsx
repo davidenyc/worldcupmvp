@@ -195,7 +195,7 @@ export function SiteHeader() {
             <Link href="/" className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)] hover:text-[color:var(--fg-primary)]">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
-                style={{ backgroundColor: "#f4b942", color: "#ffffff" }}
+                style={{ backgroundColor: "var(--gold)", color: "var(--fg-on-strong)" }}
               >
                 GM
               </div>

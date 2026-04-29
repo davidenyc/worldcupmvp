@@ -87,7 +87,7 @@ export function CitySelector({ selectedCity, onSelectCity }: CitySelectorProps) 
     <div className="w-full space-y-2 overflow-x-auto pb-1">
       {COUNTRY_GROUPS.map((group) => (
         <div key={group.key} className="mb-2 flex items-center gap-2">
-          <div className="mr-1 flex items-center gap-1.5 whitespace-nowrap text-lg font-semibold text-[#0a1628]/70 dark:text-white">
+          <div className="mr-1 flex items-center gap-1.5 whitespace-nowrap text-lg font-semibold text-[color:var(--fg-secondary)] dark:text-[color:var(--fg-on-strong)]">
             <span>{group.flag}</span>
             <span className="text-sm uppercase tracking-[0.24em]">{group.label}</span>
           </div>
@@ -103,13 +103,13 @@ export function CitySelector({ selectedCity, onSelectCity }: CitySelectorProps) 
                   onClick={() => onSelectCity(city.key)}
                   className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
                     active
-                      ? "bg-[#f4b942] text-[#0a1628] shadow-sm"
-                      : "border border-[#d7e4f8] bg-white text-[#0a1628] hover:bg-[#eef4ff] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                      ? "bg-gold text-deep shadow-sm"
+                      : "border border-line bg-white text-deep hover:bg-surface-2 dark:border-line dark:bg-white/5 dark:text-[color:var(--fg-on-strong)] dark:hover:bg-white/10"
                   }`}
                 >
                   <span>{city.label}</span>
                   {city.hasMatch && (
-                    <span className={`text-xs ${active ? "text-[#0a1628]" : "text-rose-500 dark:text-rose-300"}`}>📍</span>
+                    <span className={`text-xs ${active ? "text-deep" : "text-rose-500 dark:text-rose-300"}`}>📍</span>
                   )}
                 </button>
               );

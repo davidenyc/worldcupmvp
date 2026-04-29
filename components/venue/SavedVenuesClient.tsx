@@ -44,7 +44,7 @@ export function SavedVenuesClient({ venues }: { venues: RankedVenue[] }) {
                   toast.success("List copied!");
                 }
               }}
-              className="rounded-full border border-[#d8e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#0a1628]"
+              className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-deep"
             >
               Share my list
             </button>
@@ -53,14 +53,14 @@ export function SavedVenuesClient({ venues }: { venues: RankedVenue[] }) {
       </div>
 
       {tier === "free" && favorites.length >= 5 ? (
-        <div className="mt-6 rounded-2xl border border-[#f4b942] bg-[#fff8e7] p-4">
-          <div className="font-bold text-[#0a1628]">⭐ You&apos;ve saved 5 venues — the Free limit</div>
-          <div className="mt-1 text-sm text-[#0a1628]/70">
+        <div className="mt-6 rounded-2xl border border-gold bg-[var(--accent-soft-bg)] p-4">
+          <div className="font-bold text-deep">⭐ You&apos;ve saved 5 venues — the Free limit</div>
+          <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">
             Upgrade to Fan Pass to save unlimited venues from all 17 cities.
           </div>
           <Link
             href="/membership?feature=unlimited_saves&return=%2Fsaved"
-            className="mt-3 inline-flex rounded-full bg-[#f4b942] px-4 py-2 text-sm font-bold text-[#0a1628]"
+            className="mt-3 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-bold text-deep"
           >
             Upgrade to Fan Pass →
           </Link>
@@ -80,7 +80,7 @@ export function SavedVenuesClient({ venues }: { venues: RankedVenue[] }) {
             title="No saved venues yet"
             subtitle="Browse venues in your city and tap the heart to save them."
             action={
-              <Link href={exploreHref} className="inline-flex rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-[#0a1628]">
+              <Link href={exploreHref} className="inline-flex rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-deep">
                 Find venues →
               </Link>
             }
