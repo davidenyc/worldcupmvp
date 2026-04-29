@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+import { useSession } from "@/lib/hooks/useSession";
 
 export type MembershipTier = "free" | "fan" | "elite";
 
@@ -102,6 +105,19 @@ interface MembershipState {
   canAddCountryFilter: (currentCount: number) => boolean;
   canSaveVenue: (currentCount: number) => boolean;
   getLimit: (key: keyof typeof TIER_META.free.limits) => number;
+  hydrateMembership: (payload: { tier: MembershipTier; upgradedAt: string | null }) => void;
+}
+
+let membershipServerEnabled = false;
+
+function syncMembershipTier(tier: MembershipTier) {
+  if (!membershipServerEnabled) return;
+
+  void fetch("/api/me/membership/demo-set", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier })
+  });
 }
 
 export const useMembership = create<MembershipState>()(
@@ -109,11 +125,15 @@ export const useMembership = create<MembershipState>()(
     (set, get) => ({
       tier: "free",
       upgradedAt: null,
-      setTier: (tier) =>
+      // SRC: hybrid — local demo cache, server-backed when authenticated.
+      setTier: (tier) => {
         set({
           tier,
           upgradedAt: tier === "free" ? null : new Date().toISOString()
-        }),
+        });
+        syncMembershipTier(tier);
+      },
+      // SRC: local-only reset used on sign-out fallback.
       reset: () => set({ tier: "free", upgradedAt: null }),
       hasFeature: (feature) => {
         const { tier } = get();
@@ -132,8 +152,41 @@ export const useMembership = create<MembershipState>()(
       getLimit: (key) => {
         const { tier } = get();
         return TIER_META[tier].limits[key];
-      }
+      },
+      // SRC: hybrid — server hydration with local cache fallback.
+      hydrateMembership: ({ tier, upgradedAt }) => set({ tier, upgradedAt })
     }),
     { name: "gameday-membership" }
   )
 );
+
+export function useMembershipHydration() {
+  const { user, loading } = useSession();
+  const hydrateMembership = useMembership((state) => state.hydrateMembership);
+  const reset = useMembership((state) => state.reset);
+
+  useEffect(() => {
+    if (loading) return;
+
+    membershipServerEnabled = Boolean(user);
+
+    if (!user) {
+      reset();
+      return;
+    }
+
+    void fetch("/api/me/membership")
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to hydrate membership");
+        }
+
+        const data = await response.json();
+        hydrateMembership({
+          tier: data.membership?.tier ?? "free",
+          upgradedAt: data.membership?.upgradedAt ?? null
+        });
+      })
+      .catch(() => {});
+  }, [hydrateMembership, loading, reset, user]);
+}
