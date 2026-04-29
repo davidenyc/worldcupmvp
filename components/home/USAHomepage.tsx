@@ -10,7 +10,6 @@ import { HomeCountryPicker } from "./HomeCountryPicker";
 import { HomeHeroIntro } from "./HomeHeroIntro";
 import { HomeKpiCards } from "./HomeKpiCards";
 import { HomeMatchesStrip } from "./HomeMatchesStrip";
-import { InstallAppBanner } from "./InstallAppBanner";
 import { PremiumUpsellBanner } from "./PremiumUpsellBanner";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
@@ -139,7 +138,6 @@ export async function USAHomepage() {
             </div>
 
             <div className="space-y-4">
-              <InstallAppBanner />
               <PremiumUpsellBanner />
             </div>
           </section>

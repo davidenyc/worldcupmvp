@@ -200,10 +200,10 @@ export function SiteHeader() {
                 GM
               </div>
               <div className="min-w-0">
-                <div className="truncate text-lg font-extrabold tracking-tight text-deep sm:text-xl">
+                <div className="truncate text-lg font-extrabold tracking-tight text-[color:var(--fg-primary)] sm:text-xl">
                   GameDay Map<span className="ml-0.5 font-black text-gold">.</span>
                 </div>
-                <div className="hidden truncate text-xs text-mist lg:block">
+                <div className="hidden truncate text-xs text-[color:var(--fg-secondary)] lg:block">
                   World Cup 2026 watch parties
                 </div>
               </div>

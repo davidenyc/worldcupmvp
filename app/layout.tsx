@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import "@/app/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
+import { PWAInstallBanner } from "@/components/layout/PWAInstallBanner";
 import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { PushNotificationBridge } from "@/components/native/PushNotificationBridge";
 import { StatusBarInit } from "@/components/native/StatusBarInit";
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <UserHydrationBridge />
         <SiteHeader />
         <main>{children}</main>
+        <PWAInstallBanner />
         <SiteFooter />
         <PushNotificationBridge />
         <StatusBarInit />

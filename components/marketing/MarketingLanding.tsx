@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
 import { HOST_CITIES } from "@/lib/data/hostCities";
-import { getAllCountries, getMapPageData } from "@/lib/data/repository";
 
 const howItWorks = [
   {
@@ -29,17 +28,17 @@ const featuredFanGroups = [
   { name: "Dallas Colombia Corner", city: "Dallas", crowd: "One room, one heartbeat." }
 ];
 
-export async function MarketingLanding() {
-  const [countries, cityVenueGroups] = await Promise.all([
-    getAllCountries(),
-    Promise.all(HOST_CITIES.map((city) => getMapPageData(city.key)))
-  ]);
+const landingMetrics = [
+  { label: "Host cities", value: HOST_CITIES.length.toString().padStart(2, "0") },
+  { label: "Nations tracked", value: "48" },
+  { label: "Verified venues", value: "1,100+" }
+];
 
-  const venueCount = cityVenueGroups.reduce((total, payload) => total + payload.venues.length, 0);
+export function MarketingLanding() {
 
   return (
-    <main className="bg-bg text-deep">
-      <section className="bg-deep text-[color:var(--fg-on-strong)]">
+    <main className="bg-bg text-[color:var(--fg-primary)]">
+      <section className="bg-[var(--bg-surface-strong)] text-[color:var(--fg-on-strong)]">
         <div className="container-shell py-16 sm:py-20">
           <div className="max-w-4xl">
             <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--fg-secondary-on-strong)]">
@@ -113,11 +112,7 @@ export async function MarketingLanding() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-3">
-            {[
-              { label: "Host cities", value: HOST_CITIES.length.toString().padStart(2, "0") },
-              { label: "Nations tracked", value: countries.length.toString() },
-              { label: "Verified venues", value: venueCount.toLocaleString() }
-            ].map((metric) => (
+            {landingMetrics.map((metric) => (
               <div key={metric.label} className="surface p-6">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{metric.label}</div>
                 <div className="mt-3 text-4xl font-semibold tracking-tight text-deep">{metric.value}</div>
