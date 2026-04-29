@@ -138,7 +138,7 @@ export default async function VenuePage({
               href={curatedVenue.website}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex rounded-full bg-[#0a1628] px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex rounded-full bg-deep px-4 py-2 text-sm font-semibold text-[color:var(--fg-on-strong)]"
             >
               Visit Website →
             </a>
@@ -181,29 +181,29 @@ export default async function VenuePage({
                 <a
                   key={match.id}
                   href={`/${venueCityKey}/map?country=${match.homeCountry}&vsCountry=${match.awayCountry}`}
-                  className="rounded-3xl border border-[#d8e3f5] bg-white px-4 py-4 text-[#0a1628] transition hover:bg-[#f8fbff] dark:border-white/10 dark:bg-[#161b22] dark:text-white dark:hover:bg-white/5"
+                  className="rounded-3xl border border-line bg-surface px-4 py-4 text-deep transition hover:bg-surface-2 dark:border-line dark:bg-surface dark:text-deep dark:hover:bg-surface-2"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                     <span className="text-2xl">{home?.flagEmoji ?? "🏁"}</span>
                     <span>{home?.name ?? match.homeCountry}</span>
-                    <span className="text-[#0a1628]/40">vs</span>
+                    <span className="text-[color:var(--ink-40)]">vs</span>
                     <span className="text-2xl">{away?.flagEmoji ?? "🏁"}</span>
                     <span>{away?.name ?? match.awayCountry}</span>
-                    <span className="ml-auto rounded-full border border-[#d8e3f5] px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0a1628]/70">
+                    <span className="ml-auto rounded-full border border-line px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-[color:var(--fg-secondary)]">
                       {match.stageLabel ?? formatMatchStage(match.stage)}
                     </span>
                   </div>
-                  <div className="mt-2 text-xs text-[#0a1628]/60 dark:text-white/60">
+                  <div className="mt-2 text-xs text-[color:var(--fg-secondary)]">
                     {new Date(match.startsAt).toLocaleString("en-US", {
                       dateStyle: "medium",
                       timeStyle: "short",
                       timeZone: "America/New_York"
                     })}
-                    <span className="mx-2 text-[#0a1628]/30">·</span>
+                    <span className="mx-2 text-[color:var(--ink-30)]">·</span>
                     {match.stadiumName}, {match.city}
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[#0a1628]/75 dark:text-white/75">{match.note}</p>
-                  <div className="mt-3 text-sm font-semibold text-[#0a1628] dark:text-white">Find watch spots →</div>
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{match.note}</p>
+                  <div className="mt-3 text-sm font-semibold text-deep">Find watch spots →</div>
                 </a>
               );
             })}
@@ -246,7 +246,7 @@ export default async function VenuePage({
                     href={curatedVenue.reservationUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#f4b942] px-4 py-2 text-sm font-semibold text-[#0a1628]"
+                    className="inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-sm font-semibold text-[color:var(--fg-on-accent)]"
                   >
                     Reserve a spot
                     <ExternalLink className="h-4 w-4" />

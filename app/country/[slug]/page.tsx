@@ -87,23 +87,23 @@ export default async function CountryPage({ params }: { params: { slug: string }
       .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
 
     return (
-      <main className="bg-[#f7fafc] pb-12">
-        <section className="bg-[#0a1628] px-4 py-14 text-white sm:px-6 lg:px-8">
+      <main className="bg-bg pb-12">
+        <section className="bg-deep px-4 py-14 text-[color:var(--fg-on-strong)] sm:px-6 lg:px-8">
           <div className="container-shell">
             <div className="text-[80px] leading-none">{country.flagEmoji || "🏳"}</div>
             <h1 className="mt-4 text-4xl font-bold tracking-tight">{country.name}</h1>
-            <div className="mt-3 text-lg text-white/70">
+            <div className="mt-3 text-lg text-[color:var(--fg-secondary-on-strong)]">
               {venueCount} venues · {citySections.length} cities
             </div>
-            <div className="mt-2 text-sm uppercase tracking-[0.24em] text-[#f4b942]">Find your supporters</div>
+            <div className="mt-2 text-sm uppercase tracking-[0.24em] text-gold">Find your supporters</div>
           </div>
         </section>
 
         <div className="container-shell space-y-10 px-4 py-8 sm:px-6 lg:px-8">
           {guideIntro ? (
-            <section className="rounded-[1.75rem] border border-[#d8e3f5] bg-white p-5 text-[#0a1628] shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0a1628]/45">Country guide</div>
-              <p className="mt-3 max-w-3xl text-base leading-7 text-[#0a1628]/78">{guideIntro}</p>
+            <section className="rounded-[1.75rem] border border-line bg-surface p-5 text-deep shadow-sm">
+              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--ink-45)]">Country guide</div>
+              <p className="mt-3 max-w-3xl text-base leading-7 text-[color:var(--fg-secondary)]">{guideIntro}</p>
             </section>
           ) : null}
           {citySections.length ? (
@@ -111,19 +111,19 @@ export default async function CountryPage({ params }: { params: { slug: string }
               <section key={section.city.key} className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-bold text-[#0a1628]">{section.city.label}</h2>
-                    <div className="text-sm text-[#0a1628]/60">{section.venues.length} venues for {country.name} fans</div>
+                    <h2 className="text-xl font-bold text-deep">{section.city.label}</h2>
+                    <div className="text-sm text-[color:var(--fg-secondary)]">{section.venues.length} venues for {country.name} fans</div>
                   </div>
-                  <Link href={`/${section.city.key}/map?countries=${params.slug}`} className="text-sm font-semibold text-[#0a1628] underline">
+                  <Link href={`/${section.city.key}/map?countries=${params.slug}`} className="text-sm font-semibold text-deep underline">
                     View all in {section.city.label} →
                   </Link>
                 </div>
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {section.venues.slice(0, 4).map((venue) => (
-                    <Link key={venue.id} href={`/venue/${venue.slug}`} className="min-w-[260px] rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4 shadow-sm">
-                      <div className="text-lg font-semibold text-[#0a1628]">{venue.name}</div>
-                      <div className="mt-1 text-sm text-[#0a1628]/60">{venue.neighborhood}</div>
-                      <div className="mt-2 text-xs text-[#0a1628]/55">
+                    <Link key={venue.id} href={`/venue/${venue.slug}`} className="min-w-[260px] rounded-[1.5rem] border border-line bg-surface p-4 shadow-sm">
+                      <div className="text-lg font-semibold text-deep">{venue.name}</div>
+                      <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">{venue.neighborhood}</div>
+                      <div className="mt-2 text-xs text-mist">
                         {(venue.rating ?? 0).toFixed(1)} · {venue.venueIntent.replace(/_/g, " ")}
                       </div>
                     </Link>
@@ -136,7 +136,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
               emoji="🏳"
               title={`No venues found for ${country.name} yet`}
               action={
-                <Link href="/submit" className="inline-flex rounded-full bg-[#f4b942] px-5 py-2.5 text-sm font-bold text-[#0a1628]">
+                <Link href="/submit" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-bold text-[color:var(--fg-on-accent)]">
                   Submit a venue →
                 </Link>
               }
@@ -145,7 +145,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
 
           <section className="space-y-4">
             <div>
-              <h2 className="text-2xl font-bold text-[#0a1628]">Upcoming Matches</h2>
+              <h2 className="text-2xl font-bold text-deep">Upcoming Matches</h2>
             </div>
             {matches.length ? (
               <div className="grid gap-4">
@@ -154,16 +154,16 @@ export default async function CountryPage({ params }: { params: { slug: string }
                   const opponent = match.homeCountry === params.slug ? match.awayCountry : match.homeCountry;
                   const hostCityKey = getHostCity(match.city)?.key ?? "nyc";
                   return (
-                    <div key={match.id} className="rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4">
-                      <div className="font-semibold text-[#0a1628]">
+                    <div key={match.id} className="rounded-[1.5rem] border border-line bg-surface p-4">
+                      <div className="font-semibold text-deep">
                         {new Date(match.startsAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
                       </div>
-                      <div className="mt-1 text-sm text-[#0a1628]/60">
+                      <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">
                         {isTbd ? "Potential knockout match" : `vs ${opponent}`} · {match.stadiumName}, {match.city}
                       </div>
                       <Link
                         href={isTbd ? "/nyc/matches" : `/${hostCityKey}/map?countries=${params.slug}`}
-                        className="mt-3 inline-flex text-sm font-semibold text-[#0a1628] underline"
+                        className="mt-3 inline-flex text-sm font-semibold text-deep underline"
                       >
                         {isTbd ? "View full schedule →" : "Find bars →"}
                       </Link>
@@ -172,7 +172,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
                 })}
               </div>
             ) : (
-              <div className="rounded-[1.5rem] border border-[#d8e3f5] bg-white p-4 text-sm text-[#0a1628]/60">
+              <div className="rounded-[1.5rem] border border-line bg-surface p-4 text-sm text-[color:var(--fg-secondary)]">
                 No matches found — explore the full schedule. <Link href="/nyc/matches" className="font-semibold underline">Go to matches</Link>
               </div>
             )}
