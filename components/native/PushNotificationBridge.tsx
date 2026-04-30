@@ -2,9 +2,32 @@
 
 import { useEffect } from "react";
 
+import { useSession } from "@/lib/hooks/useSession";
+
 export function PushNotificationBridge() {
+  const { user } = useSession();
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    async function syncNativeToken(token: string) {
+      if (!user) return;
+
+      await fetch("/api/notifications/push/subscribe", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          provider: "apns",
+          endpoint: token,
+          p256dh: null,
+          authKey: null,
+          userAgent: navigator.userAgent
+        })
+      }).catch(() => undefined);
+    }
 
     async function initPush() {
       try {
@@ -12,6 +35,11 @@ export function PushNotificationBridge() {
         const { Capacitor } = await import("@capacitor/core");
 
         if (!Capacitor.isNativePlatform()) return;
+
+        const cachedToken = localStorage.getItem("push_token");
+        if (cachedToken) {
+          await syncNativeToken(cachedToken);
+        }
 
         const result = await PushNotifications.requestPermissions();
         if (result.receive === "granted") {
@@ -21,6 +49,7 @@ export function PushNotificationBridge() {
         PushNotifications.addListener("registration", (token) => {
           localStorage.setItem("push_token", token.value);
           console.log("Push token:", token.value);
+          void syncNativeToken(token.value);
         });
 
         PushNotifications.addListener("registrationError", (error) => {
@@ -43,7 +72,7 @@ export function PushNotificationBridge() {
     }
 
     initPush();
-  }, []);
+  }, [user]);
 
   return null;
 }
