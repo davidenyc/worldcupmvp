@@ -133,6 +133,7 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
           alt={`${hero.homeCountry.name} versus ${hero.awayCountry.name} crowd`}
           fill
           priority
+          fetchPriority="high"
           sizes="100vw"
           className="object-cover opacity-55"
         />

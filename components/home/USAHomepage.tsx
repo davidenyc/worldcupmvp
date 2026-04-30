@@ -15,17 +15,17 @@ import { ActionHero, ActionHeroError } from "./ActionHero";
 import { AliveMatchCard } from "./AliveMatchCard";
 import { EditorialPick } from "./EditorialPick";
 import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
-import { HomeFAQ } from "./HomeFAQ";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
-import { SocialProofBlock } from "./SocialProofBlock";
 import { StickyTonightPill } from "./StickyTonightPill";
 import { VibeChips } from "./VibeChips";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
   ssr: false
 });
+const SocialProofBlock = dynamic(() => import("./SocialProofBlock").then((mod) => mod.SocialProofBlock));
+const HomeFAQ = dynamic(() => import("./HomeFAQ").then((mod) => mod.HomeFAQ));
 
 async function getCityVenueCount(cityKey: string) {
   const data = await getMapPageData(cityKey);
