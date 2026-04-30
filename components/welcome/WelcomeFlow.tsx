@@ -801,19 +801,47 @@ export function WelcomeFlow() {
               ) : null}
 
               {step.id === "groups" ? (
-                <div className="space-y-3">
-                  {renderToggleRow(
-                    "Yes, save my spot for groups when they launch",
-                    wantsGroupsDraft,
-                    () => setWantsGroupsDraft((current) => !current),
-                    "One-tap invites and supporter crews land right after MVP."
-                  )}
-                  {renderToggleRow(
-                    "Maybe later",
-                    !wantsGroupsDraft,
-                    () => setWantsGroupsDraft(false),
-                    "You can always turn groups on from Account later."
-                  )}
+                <div className="grid gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setWantsGroupsDraft(true)}
+                    className={`rounded-[1.5rem] border p-5 text-left transition ${
+                      wantsGroupsDraft
+                        ? "border-gold bg-gold/10 ring-2 ring-gold/20"
+                        : "border-line bg-surface hover:bg-surface-2"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-base font-semibold text-deep">
+                          Yes, save my spot for groups when they launch
+                        </div>
+                        <div className="mt-2 text-sm leading-6 text-mist">
+                          One-tap invites and supporter crews land right after MVP.
+                        </div>
+                      </div>
+                      <span className="text-2xl leading-none">{wantsGroupsDraft ? "✓" : "👥"}</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWantsGroupsDraft(false)}
+                    className={`rounded-[1.5rem] border p-5 text-left transition ${
+                      !wantsGroupsDraft
+                        ? "border-gold bg-gold/10 ring-2 ring-gold/20"
+                        : "border-line bg-surface hover:bg-surface-2"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-base font-semibold text-deep">Maybe later</div>
+                        <div className="mt-2 text-sm leading-6 text-mist">
+                          You can always turn groups on from Account later.
+                        </div>
+                      </div>
+                      <span className="text-2xl leading-none">{!wantsGroupsDraft ? "✓" : "→"}</span>
+                    </div>
+                  </button>
                 </div>
               ) : null}
 
