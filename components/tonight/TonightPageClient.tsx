@@ -690,7 +690,7 @@ export function TodayPageClient({
               min={2}
               value={groupSize}
               onChange={(event) => updateQuery({ size: event.target.value })}
-              className="h-10 w-24 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-sm font-semibold text-[color:var(--fg-primary)]"
+              className="min-h-11 w-24 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-sm font-semibold text-[color:var(--fg-primary)]"
             />
             {mode === "restaurant" ? (
               <>

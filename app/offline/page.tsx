@@ -1,4 +1,12 @@
+import { buildMetadata } from "@/lib/seo/metadata";
 import { OfflineReadinessPanel } from "@/components/offline/OfflineReadinessPanel";
+
+export const metadata = buildMetadata({
+  title: "Offline mode",
+  description:
+    "GameDay Map offline mode keeps your recent city map and near-term World Cup match timing available when your connection drops.",
+  path: "/offline"
+});
 
 export default function OfflinePage() {
   return (

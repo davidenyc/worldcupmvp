@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ChevronRight, Clock3, ExternalLink, Heart, MapPin, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { SeededGoingChip } from "@/components/home/SeededGoingChip";
+import { useFavoritesStore } from "@/lib/store/favorites";
 import type { CountrySummary, RankedVenue } from "@/lib/types";
 import { getVenueTvLabel } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
@@ -17,6 +19,7 @@ export function MapResultsPanel({
   venues,
   countries,
   selectedVenueId,
+  activeMatchId,
   selectedCountrySlugs,
   columns = 1,
   onSelect,
@@ -25,11 +28,14 @@ export function MapResultsPanel({
   venues: RankedVenue[];
   countries: CountrySummary[];
   selectedVenueId?: string;
+  activeMatchId?: string | null;
   selectedCountrySlugs: string[];
   columns?: 1 | 2;
   onSelect: (venue: RankedVenue) => void;
   onClearAll: () => void;
 }) {
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const uniqueVenues = venues.filter(
     (venue, index, all) => all.findIndex((item) => (item.id || item.slug) === (venue.id || venue.slug)) === index
   );
@@ -77,6 +83,7 @@ export function MapResultsPanel({
           const intent = getVenueIntentMeta(venue.venueIntent, country?.name ?? null);
           const hasTV = venue.numberOfScreens > 0;
           const selected = venue.id === selectedVenueId;
+          const isSaved = favorites.includes(venue.slug);
 
           return (
             <article
@@ -106,10 +113,15 @@ export function MapResultsPanel({
                 </div>
                 <button
                   type="button"
-                  aria-label="Save venue"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-mist transition hover:text-red"
+                  aria-label={isSaved ? "Remove from saved venues" : "Save venue"}
+                  onClick={() => toggleFavorite(venue.slug)}
+                  className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition ${
+                    isSaved
+                      ? "border-gold bg-gold/10 text-deep"
+                      : "border-line bg-surface text-[color:var(--fg-secondary)] hover:border-[color:var(--border-strong)] hover:text-red"
+                  }`}
                 >
-                  <Heart className="h-4 w-4" />
+                  <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
                 </button>
               </header>
 
@@ -136,10 +148,15 @@ export function MapResultsPanel({
                   sub={hasTV ? getVenueTvLabel(venue) : "book private"}
                 />
               </div>
+              {activeMatchId ? (
+                <div>
+                  <SeededGoingChip matchId={activeMatchId} venueSlug={venue.slug} venue={venue} />
+                </div>
+              ) : null}
 
               <footer className="grid grid-cols-3 gap-2">
                 <ActionButton primary onClick={() => onSelect(venue)}>
-                  Details <ChevronRight className="h-3.5 w-3.5" />
+                  Open details <ChevronRight className="h-3.5 w-3.5" />
                 </ActionButton>
                 <ActionButton href={venue.website ?? undefined}>
                   Website <ExternalLink className="h-3.5 w-3.5" />
@@ -151,9 +168,9 @@ export function MapResultsPanel({
 
               <Link
                 href={`/venue/${venue.slug}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-xs font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98]"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:brightness-[0.98]"
               >
-                Open venue page
+                Full venue page
               </Link>
             </article>
           );
@@ -174,7 +191,7 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-deep transition hover:bg-surface-2"
+      className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-deep transition hover:bg-surface-2"
     >
       {children}
     </button>
@@ -213,10 +230,10 @@ function ActionButton({
   primary?: boolean;
 }) {
   const className = [
-    "inline-flex h-9 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition",
+    "inline-flex min-h-11 items-center justify-center gap-1 rounded-full px-3 text-sm font-semibold transition",
     primary
       ? "bg-gold text-deep hover:bg-gold/90"
-      : "border border-line bg-surface text-deep hover:bg-surface-2"
+      : "border border-line bg-surface text-deep hover:border-[color:var(--border-strong)] hover:bg-surface-2"
   ].join(" ");
 
   if (href) {

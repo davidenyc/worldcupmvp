@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MyActivityTimeline } from "@/components/me/MyActivityTimeline";
 import { MyFollowing } from "@/components/me/MyFollowing";
 import { MyHeroIdentity } from "@/components/me/MyHeroIdentity";
+import { PushPermissionCard } from "@/components/notifications/PushPermissionCard";
 import { MyQRCodes } from "@/components/me/MyQRCodes";
 import { MySavedVenues } from "@/components/me/MySavedVenues";
 import { MyWatchlist } from "@/components/me/MyWatchlist";
@@ -48,8 +49,8 @@ export function MyWorldCupClient({
           title="Personalize your Cup"
           subtitle="Pick your country, city, and match-day preferences so My Cup can actually feel like yours."
           action={
-            <Link href="/welcome" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
-              Personalize your Cup →
+            <Link href="/welcome" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              Personalize My Cup →
             </Link>
           }
         />
@@ -60,6 +61,7 @@ export function MyWorldCupClient({
   return (
     <div className="space-y-6">
       <MyHeroIdentity user={user} tier={tier} />
+      <PushPermissionCard />
       <MyFollowing
         favoriteCountry={user.favoriteCountrySlug}
         followedCountries={user.followingCountrySlugs}
@@ -97,9 +99,11 @@ export function MyWorldCupClient({
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Watch parties</div>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Your groups</h2>
           </div>
-          <Link href="/groups" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
-            Open groups →
-          </Link>
+          {groups.length ? (
+            <Link href="/groups" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
+              Open groups →
+            </Link>
+          ) : null}
         </div>
 
         <div className="mt-5">
@@ -121,7 +125,7 @@ export function MyWorldCupClient({
               title="No watch parties yet"
               subtitle="Create or join a group so your crew has one place to lock the match plan."
               action={
-                <Link href="/groups" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+                <Link href="/groups" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                   Create a group →
                 </Link>
               }

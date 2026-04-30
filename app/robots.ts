@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/admin/"]
+      disallow: ["/api/", "/auth/", "/admin/", "/me/", "/account/"]
     },
     sitemap: "https://gamedaymap.com/sitemap.xml"
   };

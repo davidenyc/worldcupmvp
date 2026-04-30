@@ -212,6 +212,7 @@ model Profile {
   prefersDarkMode     Boolean                  @default(false)
   defaultFilters      Json                     @default("{\"soundOn\":false,\"reservationsPossible\":false,\"outdoorSeating\":false}")
   promoOptIns         Json                     @default("{\"email\":false,\"push\":false}")
+  notificationPrefs   Json                     @default("{\"channels\":{\"push\":true,\"email\":true,\"in_app\":true},\"perKind\":{\"kickoff_1h\":{\"push\":true,\"email\":false},\"kickoff_30m\":{\"push\":true,\"email\":false},\"match_day_digest\":{\"email\":true,\"push\":false},\"promo_expiring\":{\"push\":true,\"email\":true},\"friend_request_received\":{\"push\":true,\"email\":true},\"watch_party_invite\":{\"push\":true,\"email\":true},\"watch_party_rsvp\":{\"push\":true,\"email\":false},\"new_promo_at_saved\":{\"push\":true,\"email\":false}}}")
   welcomeSeenAt       DateTime?
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
@@ -221,6 +222,9 @@ model Profile {
   watchedMatches      ProfileWatchedMatch[]
   membership          ProfileMembership?
   activity            ActivityEvent[]
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  promoRedemptions    PromoRedemption[]
 }
 
 model ProfileFollowedCountry {
@@ -271,6 +275,59 @@ model ActivityEvent {
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId, at(sort: Desc)])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  profileId String   @db.Uuid
+  kind      String
+  title     String
+  body      String
+  payload   Json
+  channels  String[]
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt(sort: Desc)])
+  @@index([profileId, readAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  profileId String   @db.Uuid
+  provider  String
+  endpoint  String
+  p256dh    String?
+  authKey   String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, endpoint])
+  @@index([profileId])
+}
+
+model PromoRedemption {
+  id             String   @id @default(cuid())
+  profileId      String   @db.Uuid
+  promoId        String
+  redemptionCode String
+  claimedAt      DateTime @default(now())
+  expiresAt      DateTime
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, promoId])
+  @@index([promoId])
+}
+
+model RateLimit {
+  key             String   @id
+  count           Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Match {

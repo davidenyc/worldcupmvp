@@ -35,9 +35,11 @@ export function MyWatchlist({
           <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Watching</div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Watch plans and check-ins</h2>
         </div>
-        <Link href="/matches" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
-          Browse the schedule →
-        </Link>
+        {matches.length ? (
+          <Link href="/matches" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
+            Browse the schedule →
+          </Link>
+        ) : null}
       </div>
 
       <div className="mt-5">
@@ -92,7 +94,7 @@ export function MyWatchlist({
             title="No matches saved"
             subtitle="Tap “I’m watching this” on Home, Today, or Matches to keep your slate together."
             action={
-              <Link href="/matches" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              <Link href="/matches" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                 Browse the schedule →
               </Link>
             }

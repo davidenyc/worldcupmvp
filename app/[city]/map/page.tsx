@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { MapPageClient } from "@/components/map/MapPageClient";
 import { getMapPageData } from "@/lib/data/repository";
 import { getHostCity } from "@/lib/data/hostCities";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList, toAbsoluteUrl } from "@/lib/seo/schema";
 
 async function getCityGuideIntro(cityKey: string) {
   try {
@@ -33,35 +35,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const city = getHostCity(params.city);
   if (!city) {
-    return {
-      title: "GameDay Map",
+    return buildMetadata({
+      title: "City map",
       description: "Find World Cup 2026 watch parties near you."
-    };
+    });
   }
 
   const data = await getMapPageData(city.key);
   const neighborhoods = Array.from(new Set(data.venues.map((venue) => venue.neighborhood))).slice(0, 3);
   const description = `Find the best ${city.label} bars and restaurants to watch World Cup 2026 matches with fans from your country. ${data.venues.length} curated venues across ${neighborhoods.join(", ")}.`;
-  const title = `Best Bars to Watch World Cup 2026 in ${city.label} | GameDay Map`;
-
-  return {
-    title,
+  return buildMetadata({
+    title: `${city.label} map`,
     description,
-    openGraph: {
-      type: "website",
-      url: `https://gamedaymap.com/${city.key}/map`,
-      title,
-      description,
-      siteName: "GameDay Map",
-      images: [`/api/og?type=city-map&city=${city.key}`]
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [`/api/og?type=city-map&city=${city.key}`]
-    }
-  };
+    path: `/${city.key}/map`,
+    image: `/api/og?type=city-map&city=${city.key}`
+  });
 }
 
 export default async function MapPage({
@@ -73,26 +61,46 @@ export default async function MapPage({
   if (!city) notFound();
 
   const [data, cityGuideIntro] = await Promise.all([getMapPageData(city.key), getCityGuideIntro(city.key)]);
-  const topVenue = data.venues[0];
-
-  const localBusinessSchema = topVenue
-    ? {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        name: topVenue.name,
-        address: topVenue.address,
-        description: topVenue.description,
-        url: `https://gamedaymap.com/venue/${topVenue.slug}`,
-        areaServed: city.label
-      }
-    : null;
+  const localBusinessSchemas = data.venues
+    .slice()
+    .sort((left, right) => (right.reviewCount ?? 0) - (left.reviewCount ?? 0) || (right.rating ?? 0) - (left.rating ?? 0))
+    .slice(0, 10)
+    .map((venue) => ({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: venue.name,
+      description: venue.description,
+      address: venue.address,
+      telephone: venue.phone ?? undefined,
+      servesCuisine: venue.cuisineTags?.length ? venue.cuisineTags : undefined,
+      areaServed: city.label,
+      url: toAbsoluteUrl(`/venue/${venue.slug}`),
+      ...(venue.rating && venue.reviewCount
+        ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: venue.rating,
+              reviewCount: venue.reviewCount
+            }
+          }
+        : {})
+    }));
+  const breadcrumbSchema = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: city.label, path: `/${city.key}` },
+    { name: "Map", path: `/${city.key}/map` }
+  ]);
 
   return (
     <>
-      {localBusinessSchema ? (
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {localBusinessSchemas.length ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchemas) }}
         />
       ) : null}
       <MapPageClient data={data} city={city.key} cityGuideIntro={cityGuideIntro} />

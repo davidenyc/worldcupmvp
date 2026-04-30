@@ -9,7 +9,6 @@ import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import type { Promo } from "@/lib/data/promos";
 import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
-import { useUser } from "@/lib/store/user";
 import { toast } from "@/lib/toast";
 
 export function PromoDetailClient({
@@ -22,7 +21,6 @@ export function PromoDetailClient({
   reservationUrl?: string;
 }) {
   const { tier, hasFeature } = useMembership();
-  const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
   const [saving, setSaving] = useState(false);
@@ -47,9 +45,7 @@ export function PromoDetailClient({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        promoId: promo.id,
-        userId: user.id,
-        tier
+        promoId: promo.id
       })
     });
 
@@ -88,6 +84,9 @@ export function PromoDetailClient({
             </span>
           ) : null}
         </div>
+        <div className="mt-5 rounded-[1rem] bg-[var(--bg-surface-elevated)] px-4 py-3 text-sm leading-6 text-[color:var(--fg-secondary)]">
+          Save it now, then open it from My Cup at the venue. That keeps your code, expiry, and backup details in one place.
+        </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_22rem]">
@@ -114,6 +113,9 @@ export function PromoDetailClient({
           {savedPromo ? (
             <>
               <div className="mt-2 text-xl font-semibold text-deep">Your QR is ready</div>
+              <p className="mt-3 text-sm leading-7 text-mist">
+                Open this at the venue and keep the backup code handy in case the room gets busy.
+              </p>
               <MockQRCode code={savedPromo.code} className="mt-5 h-64 w-64 max-w-full" />
               <div className="mt-4 text-xs uppercase tracking-[0.18em] text-mist">Backup code</div>
               <div className="mt-1 text-lg font-semibold tracking-[0.22em] text-deep">{savedPromo.code}</div>
@@ -134,6 +136,11 @@ export function PromoDetailClient({
                   ? "This perk is reserved for Elite members. Upgrade to unlock the QR and save it to your wallet."
                   : "Claim the code now and it will show up in your My Cup QR wallet for match day."}
               </p>
+              <div className="mt-4 rounded-[1rem] bg-[var(--bg-surface-elevated)] px-4 py-3 text-sm leading-6 text-[color:var(--fg-secondary)]">
+                {promo.tier === "elite"
+                  ? "Best for the rooms and drops that are meant to feel limited."
+                  : "Once saved, you can pull it back up instantly from My Cup."}
+              </div>
               <button
                 type="button"
                 onClick={handleRedeem}

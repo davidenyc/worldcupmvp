@@ -3,17 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { getHostCity } from "@/lib/data/hostCities";
+import { useUserStore } from "@/lib/store/user";
 
 const STORAGE_KEY = "userCity";
 const MANUAL_STORAGE_KEY = "userCityManual";
 
 export function useUserCity() {
-  const [userCity, setUserCityState] = useState<string | null>(null);
-  const [hasChosenCity, setHasChosenCity] = useState(false);
+  const profileHomeCity = useUserStore((state) => state.profile.homeCity);
+  const [activeCityState, setActiveCityState] = useState<string | null>(null);
+  const [isExplicit, setIsExplicit] = useState(false);
   const [suggestedCity, setSuggestedCity] = useState<string | null>(null);
   const [geolocationAttempted, setGeolocationAttempted] = useState(false);
 
   useEffect(() => {
+    if (profileHomeCity) {
+      const resolved = getHostCity(profileHomeCity)?.key ?? profileHomeCity;
+      setActiveCityState(resolved);
+      setIsExplicit(true);
+      setGeolocationAttempted(true);
+      return;
+    }
+
     // NOTE: To test IP detection locally, run:
     //   localStorage.removeItem("userCity")
     // in your browser console, then refresh.
@@ -21,8 +31,8 @@ export function useUserCity() {
     const storedWasManual = window.localStorage.getItem(MANUAL_STORAGE_KEY) === "1";
 
     if (stored && storedWasManual) {
-      setUserCityState(stored);
-      setHasChosenCity(true);
+      setActiveCityState(stored);
+      setIsExplicit(true);
       setGeolocationAttempted(true);
       return;
     }
@@ -36,31 +46,39 @@ export function useUserCity() {
       .then((data) => {
         if (data?.cityKey) {
           setSuggestedCity(data.cityKey);
+          setActiveCityState(data.cityKey);
+          return;
         }
+
+        setActiveCityState("nyc");
       })
       .catch(() => {
         // Silently ignore — user can pick city manually.
+        setActiveCityState("nyc");
       })
       .finally(() => {
         setGeolocationAttempted(true);
       });
-  }, []);
+  }, [profileHomeCity]);
 
-  const currentCity = useMemo(() => {
-    if (userCity) return getHostCity(userCity)?.key ?? userCity;
-    return null;
-  }, [userCity]);
+  const activeCity = useMemo(() => {
+    if (activeCityState) return getHostCity(activeCityState)?.key ?? activeCityState;
+    return "nyc";
+  }, [activeCityState]);
 
   function setUserCity(cityKey: string) {
     window.localStorage.setItem(STORAGE_KEY, cityKey);
     window.localStorage.setItem(MANUAL_STORAGE_KEY, "1");
-    setUserCityState(cityKey);
-    setHasChosenCity(true);
+    useUserStore.getState().setHomeCity(cityKey);
+    setActiveCityState(cityKey);
+    setIsExplicit(true);
   }
 
   return {
-    userCity: currentCity,
-    hasChosenCity,
+    activeCity,
+    userCity: activeCity,
+    hasChosenCity: isExplicit,
+    isExplicit,
     suggestedCity,
     geolocationAttempted,
     setUserCity

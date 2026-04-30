@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { WelcomeFlow } from "@/components/welcome/WelcomeFlow";
 
 export const metadata: Metadata = {
-  title: "Personalize your Cup | GameDay Map",
+  title: "Personalize your Cup · GameDay Map",
   description: "Choose your city, your nation, and your default watch-party setup for World Cup 2026.",
   openGraph: {
     images: ["/api/og?type=welcome"]
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function WelcomePage() {
   return (
-    <main className="container-shell flex min-h-[calc(100dvh-var(--header-h))] justify-center py-6 sm:py-10">
+    <main className="flex justify-center">
       <WelcomeFlow />
     </main>
   );

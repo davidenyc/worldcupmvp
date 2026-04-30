@@ -1,124 +1,207 @@
-// First-touch marketing landing used on / before a user has personalized or signed in.
 import Link from "next/link";
 
+import { EditorialPick } from "@/components/home/EditorialPick";
+import { FeaturedVenuesForMatch } from "@/components/home/FeaturedVenuesForMatch";
+import { AliveMatchCard } from "@/components/home/AliveMatchCard";
+import { ActionHeroError } from "@/components/home/ActionHero";
+import { HomeViewTracker } from "@/components/home/HomeViewTracker";
+import { LiveActivityTicker } from "@/components/home/LiveActivityTicker";
+import { SocialProofBlock } from "@/components/home/SocialProofBlock";
 import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
-import { HOST_CITIES } from "@/lib/data/hostCities";
+import { editorialPicks } from "@/lib/data/editorialPicks";
+import { getAllCountries, getMapPageData } from "@/lib/data/repository";
+import { getFallbackTonightFeed, getTonightFeed, type TonightFeed } from "@/lib/hooks/useTonightFeed";
+import { getSeededGoingCount } from "@/lib/social/seededGoingCount";
+import { getVenueImageSet } from "@/lib/utils/venueImages";
+import { HomeScrollReset } from "./HomeScrollReset";
+import { MarketingHeroActions } from "./MarketingHeroActions";
 
-const howItWorks = [
-  {
-    title: "Pick your city",
-    body: "Start with the host city where you’ll actually be watching, not a generic national guide."
-  },
-  {
-    title: "Find your crowd",
-    body: "Filter by country and match so the room already leans toward your fan diaspora."
-  },
-  {
-    title: "Lock the plan",
-    body: "Save the right bar, promo, or venue before kickoff turns the city into chaos."
+async function getResolvedTonightFeed() {
+  try {
+    return {
+      feed: await getTonightFeed("nyc"),
+      feedError: false
+    };
+  } catch {
+    try {
+      return {
+        feed: await getFallbackTonightFeed("nyc"),
+        feedError: false
+      };
+    } catch {
+      return {
+        feed: { hero: null, carousel: [], windowLabel: "Next match day" } satisfies TonightFeed,
+        feedError: true
+      };
+    }
   }
-];
+}
 
-const featuredFanGroups = [
-  { name: "NYC Argentina Crew", city: "New York", crowd: "Blue-and-white all day." },
-  { name: "LA México Locos", city: "Los Angeles", crowd: "Big screens, louder songs, and late goals." },
-  { name: "Toronto Red Wave", city: "Toronto", crowd: "Canada nights and away-match energy." },
-  { name: "Miami Brazil Block", city: "Miami", crowd: "Flags, drums, and early arrivals." },
-  { name: "Seattle England End", city: "Seattle", crowd: "Pub-first, chants-second." },
-  { name: "Dallas Colombia Corner", city: "Dallas", crowd: "One room, one heartbeat." }
-];
+function getPrimaryCountrySlug(
+  hero: NonNullable<TonightFeed["hero"]>,
+  preferredCountrySlug?: string
+) {
+  if (preferredCountrySlug && [hero.homeCountry.slug, hero.awayCountry.slug].includes(preferredCountrySlug)) {
+    return preferredCountrySlug;
+  }
 
-const landingMetrics = [
-  { label: "Host cities", value: HOST_CITIES.length.toString().padStart(2, "0") },
-  { label: "Nations tracked", value: "48" },
-  { label: "Verified venues", value: "1,100+" }
-];
+  return hero.homeCountry.slug;
+}
 
-export function MarketingLanding() {
+function getNeighborhoodFallbackImage(neighborhood: string) {
+  const slug = neighborhood.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  switch (slug) {
+    case "williamsburg":
+      return "/neighborhoods/williamsburg.svg";
+    case "bushwick":
+      return "/neighborhoods/bushwick.svg";
+    case "lower-east-side":
+      return "/neighborhoods/lower-east-side.svg";
+    case "chelsea":
+      return "/neighborhoods/chelsea.svg";
+    case "astoria":
+      return "/neighborhoods/astoria.svg";
+    default:
+      return "/neighborhoods/default.svg";
+  }
+}
+
+export async function MarketingLanding() {
+  const [{ feed: tonightFeed, feedError }, activeMapData, allCountries] = await Promise.all([
+    getResolvedTonightFeed(),
+    getMapPageData("nyc"),
+    getAllCountries()
+  ]);
+  const countryLookup = new Map(allCountries.map((country) => [country.slug, country] as const));
+  const heroMatch = tonightFeed.hero;
+  const featuredCountrySlug = heroMatch ? getPrimaryCountrySlug(heroMatch) : null;
+  const featuredCountry = featuredCountrySlug ? countryLookup.get(featuredCountrySlug) ?? null : null;
+  const featuredMatchVenues =
+    heroMatch && featuredCountrySlug
+      ? activeMapData.venues
+          .filter((venue) => {
+            if (
+              venue.likelySupporterCountry === heroMatch.homeCountry.slug ||
+              venue.likelySupporterCountry === heroMatch.awayCountry.slug
+            ) {
+              return true;
+            }
+
+            return (
+              venue.associatedCountries.includes(heroMatch.homeCountry.slug) ||
+              venue.associatedCountries.includes(heroMatch.awayCountry.slug)
+            );
+          })
+          .map((venue) => ({
+            slug: venue.slug,
+            name: venue.name,
+            neighborhood: venue.neighborhood,
+            imageUrl: venue.imageUrls[0] ?? getVenueImageSet(venue)[0] ?? getNeighborhoodFallbackImage(venue.neighborhood),
+            rating: venue.rating,
+            goingCount: getSeededGoingCount(heroMatch.matchId, venue.slug, venue),
+            acceptsReservations: venue.acceptsReservations,
+            rankScore: venue.rankScore
+          }))
+          .sort((left, right) => right.goingCount - left.goingCount || right.rankScore - left.rankScore)
+          .slice(0, 3)
+      : [];
+  const editorialSeed = featuredCountrySlug ? editorialPicks[featuredCountrySlug] ?? null : null;
+  const editorialVenue = featuredMatchVenues[0] ?? null;
+  const tonightFansPlanning = Math.round(
+    tonightFeed.carousel.reduce((sum, match) => sum + match.projectedGoingCount, 0) * 2.7
+  );
+  const heroHref = tonightFeed.hero
+    ? `/nyc/map?match=${tonightFeed.hero.matchId}&country=${featuredCountrySlug ?? tonightFeed.hero.homeCountry.slug}`
+    : "/nyc/map";
 
   return (
     <main className="bg-bg text-[color:var(--fg-primary)]">
+      <HomeScrollReset />
+      <HomeViewTracker variant="marketing" />
       <section className="bg-[var(--bg-surface-strong)] text-[color:var(--fg-on-strong)]">
-        <div className="container-shell py-16 sm:py-20">
-          <div className="max-w-4xl">
+        <div className="container-shell py-10 sm:py-20">
+          <LiveActivityTicker cityKey="nyc" />
+          <div className="max-w-5xl">
             <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--fg-secondary-on-strong)]">
-              World Cup 2026
+              World Cup 2026 starts June 11
             </div>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Find your watch party for World Cup 2026.
+            <h1 className="mt-3 text-[2.45rem] font-semibold tracking-tight leading-[1.02] sm:mt-4 sm:text-5xl lg:text-6xl">
+              Find the room for your match.
             </h1>
-            <p className="mt-4 max-w-2xl text-lg text-[color:var(--fg-secondary-on-strong)]">
-              17 host cities · 48 nations · every fan diaspora.
+            <p className="mt-3 max-w-2xl text-base text-[color:var(--fg-secondary-on-strong)] sm:mt-4 sm:text-lg">
+              17 host cities. 48 nations. Match-night rooms that fit the crowd.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/welcome"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-6 text-base font-semibold text-[color:var(--fg-on-accent)]"
-              >
-                Personalize my Cup →
-              </Link>
-              <Link
-                href="/nyc/map"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 px-6 text-base font-semibold text-[color:var(--fg-on-strong)]"
-              >
-                See the map →
-              </Link>
-            </div>
+            <MarketingHeroActions />
           </div>
         </div>
       </section>
 
       <section className="bg-bg">
         <div className="container-shell space-y-10 py-10 sm:space-y-12 sm:py-14">
+          {tonightFeed.hero && featuredCountry ? (
+            <FeaturedVenuesForMatch
+              cityKey="nyc"
+              countryLabel={featuredCountry.name}
+              countrySlug={featuredCountry.slug}
+              totalVenueCount={tonightFeed.hero.venueCount}
+              venues={featuredMatchVenues}
+              matchId={tonightFeed.hero.matchId}
+            />
+          ) : null}
           <section>
-            <div className="text-xs uppercase tracking-[0.22em] text-mist">How it works</div>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-deep">
-              Find the right room before kickoff.
-            </h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {howItWorks.map((step, index) => (
-                <div key={step.title} className="surface p-5">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gold text-sm font-bold text-[color:var(--fg-on-accent)]">
-                    {index + 1}
+            <div className="text-xs uppercase tracking-[0.22em] text-mist">Matchday radar</div>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-deep">Where tonight gets decided.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--fg-secondary)] sm:text-base">
+              Start with the match that matters, then follow the crowd to the room that already feels alive.
+            </p>
+            {tonightFeed.carousel.length ? (
+              <div className="mt-6 space-y-4">
+                <AliveMatchCard match={tonightFeed.carousel[0]} />
+                {tonightFeed.carousel.length > 1 ? (
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {tonightFeed.carousel.slice(1, 3).map((match) => (
+                      <AliveMatchCard key={match.matchId} match={match} variant="compact" />
+                    ))}
                   </div>
-                  <h3 className="mt-4 text-xl font-semibold text-deep">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{step.body}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <div className="text-xs uppercase tracking-[0.22em] text-mist">Featured fan groups</div>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight text-deep">
-                  Sample the rooms where supporters already gather.
-                </h2>
+                ) : null}
               </div>
-              <Link href="/groups" className="text-sm font-semibold text-deep">
-                Explore groups →
-              </Link>
-            </div>
-            <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
-              {featuredFanGroups.map((group) => (
-                <div key={group.name} className="surface min-w-[16rem] flex-1 p-5 sm:min-w-[18rem]">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{group.city}</div>
-                  <div className="mt-2 text-xl font-semibold text-deep">{group.name}</div>
-                  <p className="mt-3 text-sm leading-6 text-[color:var(--fg-secondary)]">{group.crowd}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-4 md:grid-cols-3">
-            {landingMetrics.map((metric) => (
-              <div key={metric.label} className="surface p-6">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{metric.label}</div>
-                <div className="mt-3 text-4xl font-semibold tracking-tight text-deep">{metric.value}</div>
+            ) : feedError ? (
+              <div className="mt-6">
+                <ActionHeroError />
               </div>
-            ))}
+            ) : (
+              <div className="mt-6 surface flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-mist">{tonightFeed.windowLabel}</div>
+                  <div className="text-lg font-semibold tracking-tight text-deep">The next match day is coming up.</div>
+                  <p className="max-w-2xl text-sm leading-6 text-[color:var(--fg-secondary)]">
+                    Pick your city or your team now, and we&apos;ll point you straight to the rooms most worth showing up for.
+                  </p>
+                </div>
+                <MarketingHeroActions variant="compact" />
+              </div>
+            )}
           </section>
+          {editorialSeed && editorialVenue ? (
+            <EditorialPick
+              eyebrow={editorialSeed.eyebrow}
+              venueName={editorialVenue.name}
+              neighborhood={editorialVenue.neighborhood}
+              quote={editorialSeed.quote}
+              venueHref={`/venue/${editorialVenue.slug}`}
+            />
+          ) : null}
+          {tonightFansPlanning > 0 ? (
+            <SocialProofBlock
+              statLabel={`${tonightFansPlanning.toLocaleString()}+ NYC fans planning tonight`}
+              href={heroHref}
+              initialIndex={
+                tonightFeed.hero
+                  ? tonightFeed.hero.matchId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)
+                  : 0
+              }
+            />
+          ) : null}
 
           <EmailCaptureBanner />
 
@@ -131,6 +214,9 @@ export function MarketingLanding() {
             </Link>
             <Link href="/terms" className="font-medium text-deep">
               Terms
+            </Link>
+            <Link href="/membership" className="font-medium text-deep">
+              Fan Pass · Elite · Free
             </Link>
             <span className="sm:ml-auto">World Cup 2026 watch parties for real supporter rooms.</span>
           </footer>

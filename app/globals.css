@@ -232,6 +232,26 @@ a {
   text-wrap: balance;
 }
 
+.live-ticker-track {
+  animation: liveTickerMarquee 52s linear infinite;
+  will-change: transform;
+}
+
+@keyframes liveTickerMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-ticker-track {
+    animation: none;
+  }
+}
+
 .empty-state {
   @apply surface flex flex-col items-center justify-center px-6 py-12 text-center;
 }

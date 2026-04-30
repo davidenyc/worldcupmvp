@@ -1,6 +1,9 @@
 // Shared upgrade modal for /me and /promos gates, using FEATURE_GATES-backed feature keys for copy and tier targeting.
 "use client";
 
+import { useEffect } from "react";
+
+import { trackPremiumGateHit } from "@/lib/analytics/track";
 import type { MembershipTier, PremiumFeature } from "@/lib/store/membership";
 
 const FEATURE_COPY: Record<
@@ -31,9 +34,9 @@ const FEATURE_COPY: Record<
     eliteCta: "Get Elite"
   },
   reservation_request: {
-    title: "This deal is for Fan Pass members",
-    body: "Unlock member-only promos, reservation requests, and earlier access to the best rooms on match day.",
-    fanCta: "Unlock with Fan Pass",
+    title: "Reservation requests are a Fan Pass perk",
+    body: "Try it free for 7 days and request reservations before match day gets crowded.",
+    fanCta: "See plans",
     eliteCta: "Get Elite"
   },
   premium_venue_badges: {
@@ -105,6 +108,10 @@ export function UpgradePrompt({
   const tier = requiredTier ?? "fan";
   const ctaLabel = tier === "elite" ? copy.eliteCta : copy.fanCta;
   const returnQuery = encodeURIComponent("/me");
+
+  useEffect(() => {
+    trackPremiumGateHit({ feature, route: "/me" });
+  }, [feature]);
 
   return (
     <>

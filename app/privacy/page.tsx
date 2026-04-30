@@ -1,3 +1,12 @@
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export const metadata = buildMetadata({
+  title: "Privacy",
+  description:
+    "Read how GameDay Map handles local preferences, saved venues, notifications, and future account data as the World Cup product moves toward launch.",
+  path: "/privacy"
+});
+
 export default function PrivacyPage() {
   return (
     <main className="min-h-[100dvh] bg-bg px-4 py-10 sm:px-6 lg:px-8">

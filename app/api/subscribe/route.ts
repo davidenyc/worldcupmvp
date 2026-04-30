@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
+import { consumeRateLimit, getRequestIp } from "@/lib/rateLimit/consume";
+
 export async function POST(request: Request) {
   const { email } = await request.json();
+  const allowed = await consumeRateLimit({
+    key: `subscribe:${getRequestIp(request)}`,
+    limit: 5,
+    windowMs: 60 * 60_000
+  });
+
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
   if (!process.env.RESEND_API_KEY) {
     console.warn("RESEND_API_KEY is not set; skipping email send.");

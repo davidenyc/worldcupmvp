@@ -6,6 +6,7 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { readPlacesCacheForCity } from "@/lib/cache/places";
 import { getAllCountries } from "@/lib/data/repository";
+import { buildBreadcrumbList, toAbsoluteUrl } from "@/lib/seo/schema";
 
 export async function generateMetadata({
   params
@@ -38,13 +39,50 @@ export default async function CityMatchesPage({
       }
     })
   );
+  const countryLookup = new Map(countries.map((country) => [country.slug, country] as const));
+  const eventSchemas = worldCup2026Matches
+    .filter((match) => getHostCity(match.city)?.key === city.key)
+    .slice(0, 30)
+    .map((match) => ({
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: `${countryLookup.get(match.homeCountry)?.name ?? match.homeCountry} vs ${countryLookup.get(match.awayCountry)?.name ?? match.awayCountry}`,
+      startDate: match.startsAt,
+      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+      eventStatus: "https://schema.org/EventScheduled",
+      location: {
+        "@type": "Place",
+        name: match.city || city.label,
+        address: city.label
+      },
+      organizer: {
+        "@type": "Organization",
+        name: "GameDay Map",
+        url: toAbsoluteUrl(`/${city.key}/matches`)
+      }
+    }));
+  const breadcrumbSchema = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: city.label, path: `/${city.key}` },
+    { name: "Matches", path: `/${city.key}/matches` }
+  ]);
 
   return (
-    <MatchesPageClient
-      cityKey={city.key}
-      countries={countries}
-      matches={worldCup2026Matches}
-      venueCacheByCity={Object.fromEntries(venueCacheEntries)}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchemas) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <MatchesPageClient
+        cityKey={city.key}
+        countries={countries}
+        matches={worldCup2026Matches}
+        venueCacheByCity={Object.fromEntries(venueCacheEntries)}
+      />
+    </>
   );
 }

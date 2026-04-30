@@ -34,9 +34,11 @@ export function MyQRCodes({
           <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup QR codes</div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Saved promos</h2>
         </div>
-        <Link href="/promos" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
-          Browse promos →
-        </Link>
+        {savedPromos.length ? (
+          <Link href="/promos" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
+            Browse promos →
+          </Link>
+        ) : null}
       </div>
 
       <div className="mt-5">

@@ -1,3 +1,4 @@
+import { buildMetadata } from "@/lib/seo/metadata";
 import { TodayPageClient } from "@/components/today/TodayPageClient";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { type TodayPageMode } from "@/lib/data/today";
@@ -17,6 +18,13 @@ function normalizeMode(value?: string): TodayPageMode {
   if (value === "bar" || value === "restaurant") return value;
   return "all";
 }
+
+export const metadata = buildMetadata({
+  title: "Today’s matches",
+  description:
+    "See today’s World Cup match slate, compare venues by city, and move from kickoff timing to the right room in one step.",
+  path: "/today"
+});
 
 export default async function TodayPage({
   searchParams

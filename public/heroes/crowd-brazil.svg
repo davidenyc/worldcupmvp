@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <!-- TODO(davide): swap placeholder with compressed royalty-free crowd photo -->
+  <rect width="1600" height="900" fill="black"/>
+  <circle cx="1320" cy="170" r="250" fill="gold" opacity=".16"/>
+  <circle cx="240" cy="220" r="200" fill="white" opacity=".08"/>
+  <path d="M0 620C180 560 360 680 580 650s330-190 520-120 260 60 500-20V900H0z" fill="white" opacity=".08"/>
+  <text x="90" y="720" fill="white" font-size="94" font-family="Arial, sans-serif" font-weight="700">BRAZIL MATCH NIGHT</text>
+</svg>

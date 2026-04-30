@@ -25,7 +25,17 @@ export interface UserProfile {
   promoOptIns: {
     email: boolean;
     push: boolean;
+    proximityPromos: boolean;
+    groupPromos: boolean;
+    savedVenuePromoAlerts: boolean;
+    wantsGroups: boolean;
+    notificationPermission: NotificationPermission | "unsupported";
   };
+  wantsGroups: boolean;
+  proximityPromos: boolean;
+  groupPromos: boolean;
+  savedVenuePromoAlerts: boolean;
+  notificationPermission: NotificationPermission | "unsupported";
   welcomeSeenAt?: number;
   watchlistMatchIds: string[];
   watchStatuses: Record<string, WatchStatus>;
@@ -69,11 +79,15 @@ export type UserStore = {
   appendActivity: (entry: Omit<UserActivityEntry, "at"> & { at?: number }) => void;
   clearActivity: () => void;
   setFirstName: (firstName?: string) => void;
+  setEmail: (email?: string) => void;
   setHomeCity: (homeCity?: string) => void;
   setFavoriteCountry: (favoriteCountrySlug?: string) => void;
   setFollowing: (followingCountrySlugs: string[]) => void;
   setDefaultFilters: (filters: Partial<UserProfile["defaultFilters"]>) => void;
   setPromoOptIns: (optIns: Partial<UserProfile["promoOptIns"]>) => void;
+  setWantsGroups: (value: boolean) => void;
+  setExtraPromoOpts: (values: Pick<UserProfile, "proximityPromos" | "groupPromos" | "savedVenuePromoAlerts">) => void;
+  setNotificationPermission: (value: NotificationPermission | "unsupported") => void;
   markWelcomeSeen: (at?: number) => void;
   resetOnboarding: () => void;
   hydrateFromServer: (payload: Partial<UserProfile>) => void;
@@ -140,8 +154,18 @@ function createDefaultProfile(): UserProfile {
     },
     promoOptIns: {
       email: false,
-      push: false
+      push: false,
+      proximityPromos: false,
+      groupPromos: false,
+      savedVenuePromoAlerts: false,
+      wantsGroups: false,
+      notificationPermission: "default"
     },
+    wantsGroups: false,
+    proximityPromos: false,
+    groupPromos: false,
+    savedVenuePromoAlerts: false,
+    notificationPermission: "default",
     welcomeSeenAt: undefined,
     watchlistMatchIds: [],
     watchStatuses: {},
@@ -164,6 +188,18 @@ function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
   const followedCountries = profile.followedCountries ?? profile.followingCountrySlugs ?? profile.favoriteCountries ?? [];
   const followingCountrySlugs = profile.followingCountrySlugs ?? followedCountries;
   const favoriteCountrySlug = profile.favoriteCountrySlug ?? favoriteCountries[0];
+  const defaultPromoOptIns = createDefaultProfile().promoOptIns;
+  const promoOptIns = {
+    ...defaultPromoOptIns,
+    ...profile.promoOptIns
+  };
+  const wantsGroups = profile.wantsGroups ?? promoOptIns.wantsGroups ?? false;
+  const proximityPromos = profile.proximityPromos ?? promoOptIns.proximityPromos ?? false;
+  const groupPromos = profile.groupPromos ?? promoOptIns.groupPromos ?? false;
+  const savedVenuePromoAlerts =
+    profile.savedVenuePromoAlerts ?? promoOptIns.savedVenuePromoAlerts ?? false;
+  const notificationPermission =
+    profile.notificationPermission ?? promoOptIns.notificationPermission ?? "default";
 
   return {
     ...createDefaultProfile(),
@@ -179,9 +215,18 @@ function normalizeProfile(profile: Partial<UserProfile>): UserProfile {
       ...profile.defaultFilters
     },
     promoOptIns: {
-      ...createDefaultProfile().promoOptIns,
-      ...profile.promoOptIns
+      ...promoOptIns,
+      wantsGroups,
+      proximityPromos,
+      groupPromos,
+      savedVenuePromoAlerts,
+      notificationPermission
     },
+    wantsGroups,
+    proximityPromos,
+    groupPromos,
+    savedVenuePromoAlerts,
+    notificationPermission,
     watchlistMatchIds: profile.watchlistMatchIds ?? [],
     watchStatuses: profile.watchStatuses ?? {},
     watchVenues: profile.watchVenues ?? {},
@@ -469,6 +514,11 @@ export const useUserStore = create<UserStore>()(
           displayName: trimmed || currentDisplayName
         });
       },
+      setEmail: (email) => {
+        get().updateUser({
+          email: email?.trim() ?? ""
+        });
+      },
       // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       setHomeCity: (homeCity) => {
         get().updateUser({
@@ -521,6 +571,36 @@ export const useUserStore = create<UserStore>()(
           }
         });
       },
+      setWantsGroups: (value) => {
+        const profile = get().profile;
+        get().updateUser({
+          wantsGroups: value,
+          promoOptIns: {
+            ...profile.promoOptIns,
+            wantsGroups: value
+          }
+        });
+      },
+      setExtraPromoOpts: (values) => {
+        const profile = get().profile;
+        get().updateUser({
+          ...values,
+          promoOptIns: {
+            ...profile.promoOptIns,
+            ...values
+          }
+        });
+      },
+      setNotificationPermission: (value) => {
+        const profile = get().profile;
+        get().updateUser({
+          notificationPermission: value,
+          promoOptIns: {
+            ...profile.promoOptIns,
+            notificationPermission: value
+          }
+        });
+      },
       // SRC: hybrid — local optimistic cache, server-backed when authenticated.
       markWelcomeSeen: (at = Date.now()) => {
         get().updateUser({
@@ -538,6 +618,11 @@ export const useUserStore = create<UserStore>()(
           followedCountries: [],
           defaultFilters: createDefaultProfile().defaultFilters,
           promoOptIns: createDefaultProfile().promoOptIns,
+          wantsGroups: false,
+          proximityPromos: false,
+          groupPromos: false,
+          savedVenuePromoAlerts: false,
+          notificationPermission: "default",
           welcomeSeenAt: undefined,
           activity: [],
           watchlistMatchIds: [],
@@ -597,11 +682,15 @@ export function useAppendActivity() {
 export function useOnboardingActions() {
   return useUserStore((state) => ({
     setFirstName: state.setFirstName,
+    setEmail: state.setEmail,
     setHomeCity: state.setHomeCity,
     setFavoriteCountry: state.setFavoriteCountry,
     setFollowing: state.setFollowing,
     setDefaultFilters: state.setDefaultFilters,
     setPromoOptIns: state.setPromoOptIns,
+    setWantsGroups: state.setWantsGroups,
+    setExtraPromoOpts: state.setExtraPromoOpts,
+    setNotificationPermission: state.setNotificationPermission,
     markWelcomeSeen: state.markWelcomeSeen,
     resetOnboarding: state.resetOnboarding
   }));
@@ -654,6 +743,26 @@ export function useUserHydration() {
           prefersDarkMode: data.profile?.prefersDarkMode ?? false,
           defaultFilters: data.profile?.defaultFilters ?? createDefaultProfile().defaultFilters,
           promoOptIns: data.profile?.promoOptIns ?? createDefaultProfile().promoOptIns,
+          wantsGroups:
+            data.profile?.wantsGroups ??
+            data.profile?.promoOptIns?.wantsGroups ??
+            createDefaultProfile().wantsGroups,
+          proximityPromos:
+            data.profile?.proximityPromos ??
+            data.profile?.promoOptIns?.proximityPromos ??
+            createDefaultProfile().proximityPromos,
+          groupPromos:
+            data.profile?.groupPromos ??
+            data.profile?.promoOptIns?.groupPromos ??
+            createDefaultProfile().groupPromos,
+          savedVenuePromoAlerts:
+            data.profile?.savedVenuePromoAlerts ??
+            data.profile?.promoOptIns?.savedVenuePromoAlerts ??
+            createDefaultProfile().savedVenuePromoAlerts,
+          notificationPermission:
+            data.profile?.notificationPermission ??
+            data.profile?.promoOptIns?.notificationPermission ??
+            createDefaultProfile().notificationPermission,
           welcomeSeenAt: data.profile?.welcomeSeenAt ? new Date(data.profile.welcomeSeenAt).getTime() : undefined,
           joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString(),
           watchlistMatchIds: watchedMatches.map((entry) => entry.matchId),

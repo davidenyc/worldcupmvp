@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <!-- TODO(davide): swap placeholder with compressed royalty-free crowd photo -->
+  <rect width="1600" height="900" fill="black"/>
+  <circle cx="1240" cy="180" r="250" fill="white" opacity=".12"/>
+  <circle cx="320" cy="180" r="180" fill="white" opacity=".08"/>
+  <path d="M0 610C180 520 340 690 560 650s290-180 500-120 320 60 540-40V900H0z" fill="white" opacity=".1"/>
+  <text x="90" y="720" fill="white" font-size="94" font-family="Arial, sans-serif" font-weight="700">ARGENTINA MATCH NIGHT</text>
+</svg>

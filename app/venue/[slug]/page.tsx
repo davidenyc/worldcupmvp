@@ -21,6 +21,8 @@ import { getHostCity } from "@/lib/data/hostCities";
 import { getVenuePromos } from "@/lib/data/promos";
 import { formatMatchStage, worldCup2026Matches } from "@/lib/data/matches";
 import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList, toAbsoluteUrl } from "@/lib/seo/schema";
 import {
   getVenueDescriptionCopy,
   getVenueEditorialCopy,
@@ -45,36 +47,25 @@ export async function generateMetadata({
   const data = await getVenueDetails(params.slug);
 
   if (!data) {
-    return {
-      title: "Venue not found | GameDay Map"
-    };
+    return buildMetadata({
+      title: "Venue not found",
+      description: "This GameDay Map venue page could not be found.",
+      robots: {
+        index: false,
+        follow: false
+      }
+    });
   }
 
   const venue = data.venue;
-  const title = `${venue.name} — Watch World Cup 2026 | GameDay Map`;
   const description = `Watch World Cup 2026 at ${venue.name} in ${venue.neighborhood}, ${venue.city}. ${formatStarRating(venue.rating)} rated. ${toTitleCase(venue.venueIntent.replace(/_/g, " "))}. Directions, reservation requests, and more.`;
 
-  return {
-    title,
+  return buildMetadata({
+    title: venue.name,
     description,
-    alternates: {
-      canonical: `/venue/${venue.slug}`
-    },
-    openGraph: {
-      type: "website",
-      title,
-      description,
-      siteName: "GameDay Map",
-      url: `/venue/${venue.slug}`,
-      images: [`/api/og?type=venue&slug=${venue.slug}`]
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [`/api/og?type=venue&slug=${venue.slug}`]
-    }
-  };
+    path: `/venue/${venue.slug}`,
+    image: `/api/og?type=venue&slug=${venue.slug}`
+  });
 }
 
 export async function generateStaticParams() {
@@ -121,9 +112,42 @@ export default async function VenuePage({
           .filter((match) => Date.parse(match.startsAt) >= Date.now())
           .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
           .slice(0, 4);
+    const localBusinessSchema = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: curatedVenue.name,
+      description: curatedVenue.description,
+      address: curatedVenue.address,
+      telephone: curatedVenue.phone ?? undefined,
+      servesCuisine: curatedVenue.cuisineTags?.length ? curatedVenue.cuisineTags : undefined,
+      url: toAbsoluteUrl(`/venue/${curatedVenue.slug}`),
+      ...(curatedVenue.rating && curatedVenue.reviewCount
+        ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: curatedVenue.rating,
+              reviewCount: curatedVenue.reviewCount
+            }
+          }
+        : {})
+    };
+    const breadcrumbSchema = buildBreadcrumbList([
+      { name: "Home", path: "/" },
+      { name: curatedVenue.city, path: `/${venueCityKey}` },
+      { name: "Map", path: `/${venueCityKey}/map` },
+      { name: curatedVenue.name, path: `/venue/${curatedVenue.slug}` }
+    ]);
 
     return (
       <div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
         <VenueHero venue={rankedVenue} />
       <section className="container-shell py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
