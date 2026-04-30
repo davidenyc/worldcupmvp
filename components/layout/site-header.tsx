@@ -55,7 +55,7 @@ const PRIMARY_NAV_ITEMS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userCity, suggestedCity, setUserCity } = useUserCity();
+  const { activeCity: userCity, suggestedCity, setUserCity, isExplicit } = useUserCity();
   const { isDark, setTheme } = useTheme();
   const { tier } = useMembership();
   const { user: authUser } = useSession();
@@ -82,6 +82,8 @@ export function SiteHeader() {
   const myHref = "/me";
   const searchHref = `/search?city=${activeCity}`;
   const hideMobileNav = currentPath === "/welcome";
+  const isHomeSurface = currentPath === "/" || currentPath === "/app";
+  const showHeaderUpgrade = tier === "free" && !isHomeSurface;
   const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
     href: item.getHref(mapHref, todayHref, matchesHref),
     label: item.label,
@@ -225,20 +227,41 @@ export function SiteHeader() {
           </div>
 
           <div className="flex min-w-0 shrink-0 items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setAccountMenuOpen(false);
-                setCityMenuOpen(true);
-              }}
-              aria-label={`Switch city from ${activeCityData.label}`}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
-            >
-              <MapPin className="h-4 w-4" />
-              <span className="max-w-[5.5rem] truncate sm:max-w-none">{activeCityData.shortLabel}</span>
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  setCityMenuOpen(true);
+                }}
+                aria-label={`Switch city from ${activeCityData.label}`}
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
+              >
+                <MapPin className="h-4 w-4" />
+                <span className={`max-w-[5.5rem] truncate sm:max-w-none ${isExplicit ? "" : "italic text-[color:var(--fg-secondary)]"}`}>
+                  {activeCityData.shortLabel}
+                </span>
+                {!isExplicit ? (
+                  <span className="hidden text-[10px] uppercase tracking-[0.18em] text-mist sm:inline">
+                    detected
+                  </span>
+                ) : null}
+              </button>
+              {!isExplicit ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    setCityMenuOpen(true);
+                  }}
+                  className="text-[11px] font-medium text-mist transition hover:text-[color:var(--fg-secondary)]"
+                >
+                  Not {activeCityData.shortLabel}? Pick yours.
+                </button>
+              ) : null}
+            </div>
 
-            {tier === "free" ? (
+            {showHeaderUpgrade ? (
               <Link
                 href="/membership"
                 aria-label="Upgrade"

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, Clock3, ExternalLink, Heart, MapPin, Star } from "lucide-react";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { SeededGoingChip } from "@/components/home/SeededGoingChip";
 import type { CountrySummary, RankedVenue } from "@/lib/types";
 import { getVenueTvLabel } from "@/lib/utils";
 import { getVenueIntentMeta } from "@/lib/venueIntents";
@@ -17,6 +18,7 @@ export function MapResultsPanel({
   venues,
   countries,
   selectedVenueId,
+  activeMatchId,
   selectedCountrySlugs,
   columns = 1,
   onSelect,
@@ -25,6 +27,7 @@ export function MapResultsPanel({
   venues: RankedVenue[];
   countries: CountrySummary[];
   selectedVenueId?: string;
+  activeMatchId?: string | null;
   selectedCountrySlugs: string[];
   columns?: 1 | 2;
   onSelect: (venue: RankedVenue) => void;
@@ -136,6 +139,11 @@ export function MapResultsPanel({
                   sub={hasTV ? getVenueTvLabel(venue) : "book private"}
                 />
               </div>
+              {activeMatchId ? (
+                <div>
+                  <SeededGoingChip matchId={activeMatchId} venueSlug={venue.slug} venue={venue} />
+                </div>
+              ) : null}
 
               <footer className="grid grid-cols-3 gap-2">
                 <ActionButton primary onClick={() => onSelect(venue)}>

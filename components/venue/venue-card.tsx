@@ -32,10 +32,12 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
   const favorite = favorites.includes(venue.slug);
   const isAtLimit = !favorite && !canSaveVenue(favorites.length);
   const canSeeBadges = hasFeature("premium_venue_badges");
+  const canRequestReservation = hasFeature("reservation_request");
   const isHotSpot = Boolean(venue.isRealVenue && (venue.rating ?? 0) >= 4.4);
   const tvLabel = getVenueTvLabel(venue);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
 
   function handleSave() {
     if (isAtLimit) {
@@ -178,16 +180,26 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
             Website
           </a>
         )}
-        {venue.acceptsReservations && (venue.reservationUrl || venue.reservationPhone) && (
-          <a
-            href={venue.reservationUrl ?? `tel:${venue.reservationPhone!}`}
-            target="_blank"
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-2 text-white"
-            rel="noreferrer"
-          >
-            Reserve
-          </a>
-        )}
+        {venue.acceptsReservations && (venue.reservationUrl || venue.reservationPhone) ? (
+          venue.reservationType === "request_form" && !canRequestReservation ? (
+            <button
+              type="button"
+              onClick={() => setShowReservationModal(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-2 text-white"
+            >
+              Request reservation
+            </button>
+          ) : (
+            <a
+              href={venue.reservationUrl ?? `tel:${venue.reservationPhone!}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-2 text-white"
+              rel="noreferrer"
+            >
+              {venue.reservationType === "request_form" ? "Request reservation" : "Reserve"}
+            </a>
+          )
+        ) : null}
         {(venue.reservationPhone || venue.phone) && (
           <a
             href={`tel:${venue.reservationPhone ?? venue.phone ?? ""}`}
@@ -229,6 +241,13 @@ export function VenueCard({ venue }: { venue: RankedVenue }) {
           feature="premium_venue_badges"
           requiredTier="fan"
           onClose={() => setShowBadgeModal(false)}
+        />
+      ) : null}
+      {showReservationModal ? (
+        <UpgradeModal
+          feature="reservation_request"
+          requiredTier="fan"
+          onClose={() => setShowReservationModal(false)}
         />
       ) : null}
     </div>

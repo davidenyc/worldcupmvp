@@ -19,6 +19,7 @@ import { WorldCupMatch, getMatchDateKey, worldCup2026Matches } from "@/lib/data/
 import { MapPageData, MapSortKey } from "@/lib/maps/types";
 import { useMembership } from "@/lib/store/membership";
 import { RankedVenue, VenueIntentKey } from "@/lib/types";
+import { getStrongestCrowdNeighborhood } from "@/lib/social/strongestCrowdNeighborhood";
 import { getSoccerAtmosphereRating } from "@/lib/utils";
 
 const allVenueIntents: VenueIntentKey[] = [
@@ -904,6 +905,19 @@ export function MapPageClient({
     );
   }, []);
 
+  const matchdayTopNeighborhood = useMemo(() => {
+    if (!matchdayAlertMatch) {
+      return null;
+    }
+
+    const strongest = [matchdayAlertMatch.homeCountry, matchdayAlertMatch.awayCountry]
+      .map((countrySlug) => getStrongestCrowdNeighborhood(matchdayAlertMatch.id, city, countrySlug, data.venues))
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+      .sort((left, right) => right.venueCount - left.venueCount)[0];
+
+    return strongest?.neighborhood ?? null;
+  }, [city, data.venues, matchdayAlertMatch]);
+
   function clearAllFilters() {
     setSelectedCountrySlugs([]);
     setSelectedVenueIntents(defaultVenueIntents);
@@ -1193,6 +1207,7 @@ export function MapPageClient({
           venues={resultsVenues}
           countries={data.countries}
           selectedVenueId={selectedVenue?.id}
+          activeMatchId={matchdayAlertMatch?.id ?? null}
           selectedCountrySlugs={selectedCountrySlugs}
           columns={desktopResultsExpanded ? 2 : 1}
           onSelect={handleSelectVenue}
@@ -1232,6 +1247,7 @@ export function MapPageClient({
             <MatchdayBanner
               countries={data.countries}
               match={matchdayDismissed ? null : matchdayAlertMatch}
+              topNeighborhood={matchdayTopNeighborhood}
               onApplyMatch={handleApplyMatch}
               onDismiss={() => setMatchdayDismissed(true)}
             />

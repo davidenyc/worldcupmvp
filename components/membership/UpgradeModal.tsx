@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { trackPremiumGateHit } from "@/lib/analytics/track";
 import { FEATURE_GATES, PremiumFeature, TIER_META, useMembership } from "@/lib/store/membership";
 
 const FEATURE_COPY: Record<PremiumFeature, string> = {
@@ -51,6 +52,7 @@ export function UpgradeModal({
 
   useEffect(() => {
     setMounted(true);
+    trackPremiumGateHit({ feature, route: pathname ?? "/" });
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {

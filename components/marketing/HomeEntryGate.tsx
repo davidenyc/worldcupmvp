@@ -1,13 +1,13 @@
 // Client redirect gate for the root route that sends signed-in or onboarded users into /app.
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useSession } from "@/lib/hooks/useSession";
 import { useUser } from "@/lib/store/user";
 
-export function HomeEntryGate({ children }: { children: ReactNode }) {
+export function HomeEntryGate() {
   const router = useRouter();
   const { user, loading } = useSession();
   const localUser = useUser();
@@ -17,10 +17,5 @@ export function HomeEntryGate({ children }: { children: ReactNode }) {
     if (loading || !shouldRedirect) return;
     router.replace("/app");
   }, [loading, router, shouldRedirect]);
-
-  if (!loading && shouldRedirect) {
-    return null;
-  }
-
-  return <>{children}</>;
+  return null;
 }

@@ -5,6 +5,7 @@ import { demoCountries } from "@/lib/data/demo";
 import { getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
 import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
+import { getFallbackTonightFeed, getTonightFeed } from "@/lib/hooks/useTonightFeed";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,8 @@ type OgPayload = {
 
 function renderOgImage(payload: OgPayload) {
   const { eyebrow, title, subtitle, accent, emoji, pill } = payload;
+  const titleFontSize = title.length > 26 ? 62 : title.length > 18 ? 68 : 74;
+  const subtitleFontSize = subtitle.length > 100 ? 24 : 28;
 
   return new ImageResponse(
     React.createElement(
@@ -139,21 +142,37 @@ function renderOgImage(payload: OgPayload) {
           {
             style: {
               display: "flex",
-              alignItems: "center",
-              gap: "24px"
+              alignItems: "flex-start",
+              gap: "28px",
+              maxWidth: "980px"
             }
           },
-          React.createElement("div", { style: { fontSize: "84px", lineHeight: 1 } }, emoji),
           React.createElement(
             "div",
-            { style: { display: "flex", flexDirection: "column", gap: "14px" } },
+            {
+              style: {
+                width: "96px",
+                minWidth: "96px",
+                height: "96px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "64px",
+                lineHeight: 1
+              }
+            },
+            emoji
+          ),
+          React.createElement(
+            "div",
+            { style: { display: "flex", flexDirection: "column", gap: "14px", maxWidth: "860px" } },
             React.createElement(
               "div",
               {
                 style: {
-                  fontSize: "74px",
+                  fontSize: `${titleFontSize}px`,
                   fontWeight: 800,
-                  lineHeight: 1.02,
+                  lineHeight: 1.06,
                   letterSpacing: "-0.05em"
                 }
               },
@@ -163,7 +182,7 @@ function renderOgImage(payload: OgPayload) {
               "div",
               {
                 style: {
-                  fontSize: "28px",
+                  fontSize: `${subtitleFontSize}px`,
                   lineHeight: 1.4,
                   color: "rgba(248,251,255,0.8)"
                 }
@@ -306,6 +325,77 @@ async function buildWelcomePayload() {
   } satisfies OgPayload;
 }
 
+async function buildTonightPayload(cityKey: string) {
+  const city = getHostCity(cityKey) ?? getHostCity("nyc");
+
+  try {
+    const feed = await getTonightFeed(city?.key ?? "nyc");
+    const hero = feed.hero;
+
+    if (!hero) {
+      return {
+        eyebrow: `${city?.label ?? "New York"} tonight`,
+        title: "Find your match-night room.",
+        subtitle: `Watch parties, crowd signals, and venue counts for ${city?.label ?? "New York"}.`,
+        accent: "#f4b942",
+        emoji: "🌙",
+        pill: city?.shortLabel?.toUpperCase() ?? "NYC"
+      } satisfies OgPayload;
+    }
+
+    const crowdLine = hero.topNeighborhood
+      ? `Strongest ${
+          hero.topNeighborhood.supporterCountrySlug === hero.homeCountry.slug
+            ? hero.homeCountry.name
+            : hero.awayCountry.name
+        } crowd in ${hero.topNeighborhood.name}.`
+      : "Find the loudest room before kickoff.";
+
+    return {
+      eyebrow: `${feed.windowLabel} in ${city?.label ?? "New York"}`,
+      title: `${hero.homeCountry.name} vs ${hero.awayCountry.name}`,
+      subtitle: `${hero.venueCount} venues showing this in ${hero.cityLabel}. ${crowdLine}`,
+      accent: "#f4b942",
+      emoji: hero.homeCountry.flagEmoji,
+      pill: city?.shortLabel?.toUpperCase() ?? hero.cityLabel.toUpperCase()
+    } satisfies OgPayload;
+  } catch {
+    try {
+      const feed = await getFallbackTonightFeed(city?.key ?? "nyc");
+      const hero = feed.hero;
+
+      if (!hero) {
+        return {
+          eyebrow: `${city?.label ?? "New York"} tonight`,
+          title: "Watch parties loading",
+          subtitle: `We're checking the next World Cup watch parties for ${city?.label ?? "New York"}.`,
+          accent: "#f4b942",
+          emoji: "🌙",
+          pill: city?.shortLabel?.toUpperCase() ?? "NYC"
+        } satisfies OgPayload;
+      }
+
+      return {
+        eyebrow: `${feed.windowLabel} in ${city?.label ?? "New York"}`,
+        title: `${hero.homeCountry.name} vs ${hero.awayCountry.name}`,
+        subtitle: `Browse the map early for the next ${city?.label ?? "New York"} match-night room.`,
+        accent: "#f4b942",
+        emoji: hero.awayCountry.flagEmoji,
+        pill: city?.shortLabel?.toUpperCase() ?? hero.cityLabel.toUpperCase()
+      } satisfies OgPayload;
+    } catch {
+      return {
+        eyebrow: `${city?.label ?? "New York"} tonight`,
+        title: "Find your match-night room.",
+        subtitle: `Watch parties, crowd signals, and venue counts for ${city?.label ?? "New York"}.`,
+        accent: "#f4b942",
+        emoji: "🌙",
+        pill: city?.shortLabel?.toUpperCase() ?? "NYC"
+      } satisfies OgPayload;
+    }
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "home";
@@ -327,6 +417,9 @@ export async function GET(request: Request) {
       break;
     case "welcome":
       payload = await buildWelcomePayload();
+      break;
+    case "tonight":
+      payload = await buildTonightPayload(searchParams.get("city") ?? "nyc");
       break;
     default:
       payload = await buildHomePayload();

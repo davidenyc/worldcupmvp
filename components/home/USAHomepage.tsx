@@ -1,16 +1,17 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
-import { EmailCaptureBanner } from "@/components/marketing/EmailCaptureBanner";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
-import { HomeCountryPicker } from "./HomeCountryPicker";
-import { HomeHeroIntro } from "./HomeHeroIntro";
-import { HomeKpiCards } from "./HomeKpiCards";
-import { HomeMatchesStrip } from "./HomeMatchesStrip";
-import { PremiumUpsellBanner } from "./PremiumUpsellBanner";
+import { getFallbackTonightFeed, getTonightFeed, type TonightFeed } from "@/lib/hooks/useTonightFeed";
+import { ActionHero, ActionHeroError } from "./ActionHero";
+import { AliveMatchCard } from "./AliveMatchCard";
+import { HomeViewTracker } from "./HomeViewTracker";
+import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
   ssr: false
@@ -48,101 +49,116 @@ function getFeaturedMatchDay() {
   return { label: "Next match day", matches: upcoming.filter((match) => match.startsAt.slice(0, 10) === nextKey).slice(0, 6) };
 }
 
+async function getResolvedTonightFeed(cityKey: string, userCountrySlug?: string) {
+  try {
+    return {
+      feed: await getTonightFeed(cityKey, userCountrySlug),
+      feedError: false
+    };
+  } catch {
+    try {
+      return {
+        feed: await getFallbackTonightFeed(cityKey, userCountrySlug),
+        feedError: false
+      };
+    } catch {
+      return {
+        feed: { hero: null, carousel: [], windowLabel: "Schedule loading" } satisfies TonightFeed,
+        feedError: true
+      };
+    }
+  }
+}
+
 export async function USAHomepage() {
+  const supabase = createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const profile = user
+    ? await prisma.profile.findUnique({
+        where: { id: user.id }
+      })
+    : null;
+  const activeCity = profile?.homeCity ?? profile?.favoriteCity ?? "nyc";
+  const userCountrySlug = profile?.favoriteCountrySlug ?? undefined;
+
   const allCountries = await getAllCountries();
-  const [{ submissions }, cityCards] = await Promise.all([
-    getAdminQueue(),
+  const [cityCards, tonightFeedResult] = await Promise.all([
     Promise.all(
       HOST_CITIES.map(async (city) => ({
         ...city,
         matchCount: getMatchCount(city.key),
         ...(await getCityVenueCount(city.key))
       }))
-    )
+    ),
+    getResolvedTonightFeed(activeCity, userCountrySlug)
   ]);
-
-  const featuredMatchDay = getFeaturedMatchDay();
-  const latestSubmissions = [...submissions]
-    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-    .slice(0, 5);
-  const totalVenues = cityCards.reduce((total, city) => total + city.venueCount, 0);
-  const reservableVenues = cityCards.reduce((total, city) => total + city.reservableCount, 0);
+  const { feed: tonightFeed, feedError } = tonightFeedResult;
 
   return (
     <main className="bg-bg text-deep">
+      <HomeViewTracker variant="active" />
       <section className="bg-bg">
-        <div className="container-shell py-8 lg:py-12">
-          <HomeHeroIntro />
-          <HomeMatchesStrip label={featuredMatchDay.label} matches={featuredMatchDay.matches} countries={allCountries} />
-          <HomeKpiCards hostCityCount={cityCards.length} totalVenues={totalVenues} reservableVenues={reservableVenues} />
+        <div className="container-shell space-y-8 py-8 lg:py-12">
+          {feedError ? (
+            <ActionHeroError />
+          ) : (
+            <ActionHero
+              cityKey={activeCity}
+              cityLabel={HOST_CITIES.find((city) => city.key === activeCity)?.shortLabel ?? "NYC"}
+              userCountrySlug={userCountrySlug}
+              initialFeed={tonightFeed}
+            />
+          )}
+          <PrimaryCountryStrip countries={allCountries} cityKey={activeCity} />
+          <section>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.2em] text-mist">{tonightFeed.windowLabel}</div>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-deep">Tonight&apos;s matches</h2>
+              </div>
+              <Link href="/today" className="text-sm font-semibold text-[color:var(--fg-primary)]">
+                See all matches →
+              </Link>
+            </div>
+            {tonightFeed.carousel.length ? (
+              <div className="mt-5 flex gap-4 overflow-x-auto pb-2">
+                {tonightFeed.carousel.map((match) => (
+                  <AliveMatchCard key={match.matchId} match={match} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 surface px-5 py-4 text-sm text-[color:var(--fg-secondary)]">
+                We&apos;re checking on tonight&apos;s schedule. Try refresh.
+              </div>
+            )}
+          </section>
         </div>
       </section>
 
       <section className="bg-bg px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-10">
-          <NorthAmericaMap cityCards={cityCards} />
-
-          <section>
-            <h2 className="text-xs uppercase tracking-[0.22em] text-mist">Browse by country</h2>
-            <h3 className="mt-1 text-2xl font-bold text-deep">Tap the nation you&apos;re backing.</h3>
-            <div className="mt-6">
-              <HomeCountryPicker countries={allCountries} />
+        <div className="mx-auto max-w-7xl space-y-6">
+          <details className="surface p-5">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--fg-primary)]">
+              Tap to expand · 17 host cities
+            </summary>
+            <div className="mt-5">
+              <NorthAmericaMap cityCards={cityCards} />
             </div>
+          </details>
+
+          <section className="surface px-5 py-4 text-sm font-medium text-[color:var(--fg-secondary)]">
+            Pick your city. Pick your team. Show up before kickoff.
           </section>
 
-          <section className="grid gap-4 md:grid-cols-3">
-            {[
-              { title: "Pick your city", body: "Start with the host city where you'll actually be watching." },
-              { title: "Pick your team", body: "Filter by country to find the crowd and the right room." },
-              { title: "Go before kickoff", body: "See ratings, TV status, and reservation options fast." }
-            ].map((step, index) => (
-              <div key={step.title} className="surface p-5">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gold text-sm font-bold text-[color:var(--fg-on-accent)]">
-                  {index + 1}
-                </div>
-                <h2 className="mt-4 text-h2 text-[color:var(--fg-primary)]">{step.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{step.body}</p>
-              </div>
-            ))}
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="surface p-6">
-              <div className="text-small uppercase tracking-[0.18em] text-ink-55">Latest community submissions</div>
-              <h2 className="mt-2 text-h2 text-[color:var(--fg-primary)]">Fans are still adding rooms.</h2>
-              <div className="mt-5 space-y-3">
-                {latestSubmissions.length ? latestSubmissions.map((submission) => (
-                  <div key={submission.id} className="rounded-2xl border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-semibold text-[color:var(--fg-primary)]">{submission.name}</div>
-                      <span className="rounded-full bg-[var(--accent-soft-bg)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--accent-soft-fg)]">
-                        {submission.status === "approved" ? "Approved" : "Pending review"}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-sm text-[color:var(--fg-secondary)]">
-                      {submission.address} · {submission.countryAssociation}
-                    </div>
-                  </div>
-                )) : (
-                  <div className="empty-state">
-                    <div className="empty-state-emoji">📍</div>
-                    <p className="mt-3 text-sm text-[color:var(--fg-secondary)]">
-                      No fresh submissions yet. Add a venue and we'll queue it for review.
-                    </p>
-                    <Link href="/submit" className="mt-4 inline-flex h-11 items-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
-                      Add a venue
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <PremiumUpsellBanner />
-            </div>
-          </section>
-
-          <EmailCaptureBanner />
+          <footer className="px-1 text-sm text-[color:var(--fg-secondary)]">
+            <Link href="/membership" className="font-medium text-[color:var(--fg-primary)]">Fan Pass</Link>
+            {" · "}
+            <Link href="/membership?tier=elite#membership-cards" className="font-medium text-[color:var(--fg-primary)]">Elite</Link>
+            {" · "}
+            <Link href="/membership?tier=free#membership-cards" className="font-medium text-[color:var(--fg-primary)]">Free</Link>
+          </footer>
         </div>
       </section>
     </main>

@@ -1,4 +1,3 @@
-// Identity hero for the top of /me showing the fan profile, tier, city, and upgrade CTA.
 "use client";
 
 import Link from "next/link";
@@ -74,14 +73,6 @@ export function MyHeroIdentity({
           >
             Edit profile →
           </Link>
-          {tier === "free" ? (
-            <Link
-              href="/membership?feature=unlimited_saves&return=%2Fme"
-              className="inline-flex min-h-11 max-w-xl items-center rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm font-semibold text-deep"
-            >
-              Upgrade to Fan Pass — save unlimited venues and promos →
-            </Link>
-          ) : null}
         </div>
       </div>
     </section>

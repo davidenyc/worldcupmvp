@@ -13,11 +13,13 @@ function getCountry(countries: CountrySummary[], slug: string) {
 export function MatchdayBanner({
   countries,
   match,
+  topNeighborhood,
   onApplyMatch,
   onDismiss
 }: {
   countries: CountrySummary[];
   match: WorldCupMatch | null;
+  topNeighborhood?: string | null;
   onApplyMatch: (match: WorldCupMatch) => void;
   onDismiss?: () => void;
 }) {
@@ -57,6 +59,7 @@ export function MatchdayBanner({
           <span className="hidden md:inline text-white/80">·</span>
           <span className="text-white/90">Kick off {kickOff} ET</span>
           <span className="hidden lg:inline text-white/80">· {stadiumLabel}</span>
+          {topNeighborhood ? <span className="hidden xl:inline text-white/90">· 🔥 {topNeighborhood} crowd is biggest</span> : null}
         </div>
         <button
           type="button"
@@ -121,6 +124,9 @@ export function MatchdayBanner({
               <div className="text-xs font-medium text-white/85">
                 Quick filter for this fixture and nearby watch spots.
               </div>
+              {topNeighborhood ? (
+                <div className="mt-2 text-xs font-medium text-white/85">🔥 {topNeighborhood} crowd is biggest</div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => onApplyMatch(match)}
