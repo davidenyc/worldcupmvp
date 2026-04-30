@@ -7,6 +7,7 @@ import { classifyMatch } from "@/lib/time/matchWindows";
 interface LiveCountdownProps {
   startsAt: string;
   liveDurationMins?: number;
+  withSeconds?: boolean;
 }
 
 function buildCountdownMatch(startsAt: string) {
@@ -40,7 +41,31 @@ function readReducedMotionPreference() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function LiveCountdown({ startsAt }: LiveCountdownProps) {
+function formatDetailedCountdown(diffMs: number) {
+  if (diffMs <= 0) return "live now";
+
+  const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return hours > 0 ? `${days}d ${hours}h until kickoff` : `${days}d until kickoff`;
+  }
+
+  if (hours >= 6) {
+    return minutes > 0 ? `${hours}h ${minutes}m until kickoff` : `${hours}h until kickoff`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${String(seconds).padStart(2, "0")}s until kickoff`;
+  }
+
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s until kickoff`;
+}
+
+export function LiveCountdown({ startsAt, withSeconds = false }: LiveCountdownProps) {
   const [now, setNow] = useState(() => new Date());
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -60,10 +85,10 @@ export function LiveCountdown({ startsAt }: LiveCountdownProps) {
 
     const timer = window.setInterval(() => {
       setNow(new Date());
-    }, 30_000);
+    }, withSeconds ? 1_000 : 30_000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [withSeconds]);
 
   const label = useMemo(() => {
     const context = classifyMatch(buildCountdownMatch(startsAt), now, Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -76,10 +101,14 @@ export function LiveCountdown({ startsAt }: LiveCountdownProps) {
     new Date(),
     Intl.DateTimeFormat().resolvedOptions().timeZone
   ).countdownLabel;
+  const detailedLabel = useMemo(() => {
+    if (!withSeconds) return label;
+    return formatDetailedCountdown(new Date(startsAt).getTime() - now.getTime());
+  }, [label, now, startsAt, withSeconds]);
 
   return (
     <span aria-live="polite" aria-atomic="true" suppressHydrationWarning>
-      {reducedMotion ? reducedMotionLabel : label}
+      {reducedMotion ? reducedMotionLabel : detailedLabel}
     </span>
   );
 }
