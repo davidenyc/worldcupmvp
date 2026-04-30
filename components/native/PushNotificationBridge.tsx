@@ -49,7 +49,6 @@ export function PushNotificationBridge() {
 
         PushNotifications.addListener("registration", (token) => {
           localStorage.setItem("push_token", token.value);
-          console.log("Push token:", token.value);
           void syncNativeToken(token.value);
         });
 
