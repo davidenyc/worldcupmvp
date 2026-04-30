@@ -2,18 +2,18 @@ import Link from "next/link";
 
 export function MarketingHeroActions() {
   return (
-    <div className="mt-6 flex max-w-md flex-col gap-3 sm:mt-8">
+    <div className="mt-6 flex max-w-sm flex-col gap-3 sm:mt-8">
       <Link
         href="/welcome"
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)] transition hover:brightness-95"
       >
-        Personalize my Cup →
+        Personalize my Cup
       </Link>
       <Link
         href="/today?city=nyc"
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/20 px-5 text-sm font-semibold text-[color:var(--fg-on-strong)] transition hover:bg-white/10"
       >
-        See tonight&apos;s matches →
+        See tonight&apos;s matches
       </Link>
     </div>
   );
