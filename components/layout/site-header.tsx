@@ -22,6 +22,7 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useMembership } from "@/lib/store/membership";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { useTheme } from "@/lib/store/theme";
 import { useSession } from "@/lib/hooks/useSession";
 import { useUser } from "@/lib/store/user";
@@ -64,6 +65,7 @@ export function SiteHeader() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
   const [mobileNavVisible, setMobileNavVisible] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -103,6 +105,7 @@ export function SiteHeader() {
 
   useEffect(() => {
     setAccountMenuOpen(false);
+    setNotificationsOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -296,7 +299,10 @@ export function SiteHeader() {
 
             {authUser ? (
               <NotificationBell
-                onClick={() => router.push("/notifications")}
+                onClick={() => {
+                  setAccountMenuOpen(false);
+                  setNotificationsOpen(true);
+                }}
                 className={`${actionButtonClass()} lg:h-11 lg:w-11`}
               />
             ) : null}
@@ -442,6 +448,10 @@ export function SiteHeader() {
             document.body
           )
         : null}
+
+      {authUser ? (
+        <NotificationDrawer open={notificationsOpen} onOpenChange={setNotificationsOpen} />
+      ) : null}
 
       {hideMobileNav ? null : (
         <div
