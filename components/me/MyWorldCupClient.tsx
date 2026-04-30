@@ -49,7 +49,7 @@ export function MyWorldCupClient({
           title="Personalize your Cup"
           subtitle="Pick your country, city, and match-day preferences so My Cup can actually feel like yours."
           action={
-            <Link href="/welcome" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+            <Link href="/welcome" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
               Personalize your Cup →
             </Link>
           }
@@ -125,7 +125,7 @@ export function MyWorldCupClient({
               title="No watch parties yet"
               subtitle="Create or join a group so your crew has one place to lock the match plan."
               action={
-                <Link href="/groups" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+                <Link href="/groups" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                   Create a group →
                 </Link>
               }

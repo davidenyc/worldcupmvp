@@ -90,13 +90,15 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
           {fallbackMatch ? <LiveCountdown startsAt={fallbackMatch.startsAt} withSeconds /> : "Plan your first match-day room now."}
         </div>
         <div className="mt-5 h-px w-full max-w-md bg-white/15" />
-        <div className="mt-5 space-y-2 text-sm text-[color:var(--fg-secondary-on-strong)]">
+        <div className="mt-5 space-y-2 text-sm text-[color:var(--fg-on-strong)]/88">
           <p>
             {fallbackMatch
               ? `World Cup 2026 opens soon. Start with ${cityLabel} and line up your room before kickoff.`
               : `Start with ${cityLabel} and line up your room before kickoff.`}
           </p>
-          {fallbackMatch?.venueCount ? <p>{fallbackMatch.venueCount} venues already mapped in {cityLabel}</p> : null}
+          {fallbackMatch?.venueCount ? (
+            <p className="text-[color:var(--fg-secondary-on-strong)]">{fallbackMatch.venueCount} venues already mapped in {cityLabel}</p>
+          ) : null}
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
@@ -105,7 +107,7 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
           >
             Browse next match day →
           </Link>
-          <ActionHeroRefreshButton className="inline-flex min-h-12 items-center justify-center rounded-full border border-line px-5 text-sm font-semibold text-[color:var(--fg-primary)]">
+          <ActionHeroRefreshButton className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/20 bg-white/5 px-5 text-sm font-semibold text-[color:var(--fg-on-strong)] transition hover:bg-white/10">
             Refresh schedule
           </ActionHeroRefreshButton>
         </div>

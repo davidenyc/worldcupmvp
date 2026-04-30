@@ -110,7 +110,7 @@ export function MapResultsPanel({
                 <button
                   type="button"
                   aria-label="Save venue"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-mist transition hover:text-red"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[color:var(--fg-secondary)] transition hover:border-[color:var(--border-strong)] hover:text-red"
                 >
                   <Heart className="h-4 w-4" />
                 </button>
@@ -224,7 +224,7 @@ function ActionButton({
     "inline-flex min-h-11 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition",
     primary
       ? "bg-gold text-deep hover:bg-gold/90"
-      : "border border-line bg-surface text-deep hover:bg-surface-2"
+      : "border border-line bg-surface text-deep hover:border-[color:var(--border-strong)] hover:bg-surface-2"
   ].join(" ");
 
   if (href) {

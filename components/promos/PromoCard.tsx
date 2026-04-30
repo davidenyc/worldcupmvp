@@ -111,7 +111,7 @@ export function PromoCard({
             minute: "2-digit"
           })}
         </div>
-        <div className="mt-4 inline-flex rounded-full bg-gold px-3 py-2 text-sm font-semibold text-deep">
+        <div className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-deep">
           {saving
             ? "Saving…"
             : savedPromo
