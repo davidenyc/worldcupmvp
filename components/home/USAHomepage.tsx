@@ -18,6 +18,7 @@ import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
+import { SocialProofBlock } from "./SocialProofBlock";
 import { VibeChips } from "./VibeChips";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
@@ -178,6 +179,12 @@ export async function USAHomepage() {
         : "Tonight’s slate is coming into focus. Pick your city or team and we’ll get you there.";
   const editorialSeed = featuredCountrySlug ? editorialPicks[featuredCountrySlug] ?? null : null;
   const editorialVenue = featuredMatchVenues[0] ?? null;
+  const tonightFansPlanning = Math.round(
+    tonightFeed.carousel.reduce((sum, match) => sum + match.projectedGoingCount, 0) * 2.7
+  );
+  const heroHref = tonightFeed.hero
+    ? `/${activeCity}/map?match=${tonightFeed.hero.matchId}&country=${featuredCountrySlug ?? tonightFeed.hero.homeCountry.slug}`
+    : `/${activeCity}/map`;
 
   return (
     <main className="bg-bg text-deep">
@@ -242,6 +249,17 @@ export async function USAHomepage() {
             />
           ) : null}
           <VibeChips cityKey={activeCity} />
+          {tonightFansPlanning > 0 ? (
+            <SocialProofBlock
+              statLabel={`${tonightFansPlanning.toLocaleString()}+ ${activeCity.toUpperCase()} fans planning tonight`}
+              href={heroHref}
+              initialIndex={
+                tonightFeed.hero
+                  ? tonightFeed.hero.matchId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)
+                  : 0
+              }
+            />
+          ) : null}
         </div>
       </section>
 
