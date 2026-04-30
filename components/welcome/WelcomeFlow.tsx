@@ -128,6 +128,21 @@ function validateEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
+function buildWelcomeSignInHref(email: string) {
+  const trimmedEmail = email.trim();
+  const params = new URLSearchParams({
+    next: "/welcome",
+    create: "1"
+  });
+
+  if (trimmedEmail) {
+    params.set("email", trimmedEmail);
+    params.set("send", "1");
+  }
+
+  return `/auth/sign-in?${params.toString()}`;
+}
+
 function formatCountrySummary(slugs: string[]) {
   const unique = Array.from(new Set(slugs));
   const names = unique
@@ -643,17 +658,24 @@ export function WelcomeFlow() {
                 <div className="space-y-4">
                   <label className="block">
                     <span className="text-sm font-semibold text-deep">Email</span>
-                    <input
-                      value={emailDraft}
-                      onChange={(event) => {
-                        setEmailDraft(event.target.value);
-                        if (emailError) setEmailError(null);
-                      }}
-                      placeholder={authLoading ? "Checking sign-in…" : "you@email.com"}
-                      autoComplete="email"
-                      disabled={authLoading}
-                      className="mt-2 h-12 w-full rounded-2xl border border-line bg-surface px-4 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20 disabled:opacity-70"
-                    />
+                    <div className="relative mt-2">
+                      <input
+                        value={emailDraft}
+                        onChange={(event) => {
+                          setEmailDraft(event.target.value);
+                          if (emailError) setEmailError(null);
+                        }}
+                        placeholder="you@email.com"
+                        autoComplete="email"
+                        disabled={authLoading}
+                        className="h-12 w-full rounded-2xl border border-line bg-surface px-4 pr-24 text-sm text-deep outline-none transition placeholder:text-mist focus:border-gold focus:ring-2 focus:ring-gold/20 disabled:opacity-70"
+                      />
+                      {authLoading ? (
+                        <span className="pointer-events-none absolute inset-y-0 right-4 inline-flex items-center text-xs font-medium text-mist">
+                          Checking…
+                        </span>
+                      ) : null}
+                    </div>
                   </label>
                   <div className="text-xs text-mist">
                     Leave it blank to skip for now, or add one so kickoff alerts have somewhere to go.
@@ -661,10 +683,10 @@ export function WelcomeFlow() {
                   {emailError ? <div className="text-sm font-medium text-red-500">{emailError}</div> : null}
                   <button
                     type="button"
-                    onClick={() => router.push("/auth/sign-in?next=%2Fwelcome")}
+                    onClick={() => router.push(buildWelcomeSignInHref(validateEmail(emailDraft) ? emailDraft : ""))}
                     className="text-sm font-semibold text-deep underline underline-offset-4"
                   >
-                    Send me a sign-in code instead and start syncing now
+                    Use this email and start syncing now
                   </button>
                 </div>
               ) : null}
