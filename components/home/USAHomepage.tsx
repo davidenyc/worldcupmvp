@@ -18,6 +18,7 @@ import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
+import { VibeChips } from "./VibeChips";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
   ssr: false
@@ -240,6 +241,7 @@ export async function USAHomepage() {
               venueHref={`/venue/${editorialVenue.slug}`}
             />
           ) : null}
+          <VibeChips cityKey={activeCity} />
         </div>
       </section>
 

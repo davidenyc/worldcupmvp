@@ -13,6 +13,7 @@ import { CitySelector } from "@/components/ui/CitySelector";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
+import { isVibeFilterSlug, matchesVibeFilter, type VibeFilterSlug } from "@/lib/data/vibeFilters";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { WorldCupMatch, getMatchDateKey, worldCup2026Matches } from "@/lib/data/matches";
@@ -327,6 +328,7 @@ function serializeFilterState({
   capacityBucket,
   familyFriendly,
   outdoorSeating,
+  vibe,
   sortKey,
   query,
   selectedVenueSlug
@@ -343,6 +345,7 @@ function serializeFilterState({
   capacityBucket: string;
   familyFriendly: boolean;
   outdoorSeating: boolean;
+  vibe: VibeFilterSlug | "";
   sortKey: MapSortKey;
   query: string;
   selectedVenueSlug?: string | null;
@@ -373,6 +376,7 @@ function serializeFilterState({
   if (capacityBucket) params.set("capacityBucket", capacityBucket);
   if (familyFriendly) params.set("familyFriendly", "1");
   if (outdoorSeating) params.set("outdoorSeating", "1");
+  if (vibe) params.set("vibe", vibe);
   if (sortKey !== "matchday") params.set("sort", sortKey);
   if (query.trim()) params.set("q", query.trim());
   if (selectedVenueSlug) params.set("venue", selectedVenueSlug);
@@ -394,6 +398,7 @@ export function MapPageClient({
   const pathname = usePathname() ?? "/map";
   const searchParams = useSearchParams();
   const params = searchParams ?? emptySearchParams;
+  const initialVibe = params.get("vibe");
   const initialSelectedCountries = normalizeSelectedCountries(params);
   const [selectedVenue, setSelectedVenue] = useState<RankedVenue | null>(null);
   const [selectedVenueSlug, setSelectedVenueSlug] = useState(params.get("venue") ?? "");
@@ -417,6 +422,7 @@ export function MapPageClient({
   const [capacityBucket, setCapacityBucket] = useState(params.get("capacityBucket") ?? "");
   const [familyFriendly, setFamilyFriendly] = useState(parseBooleanParam(params.get("familyFriendly")));
   const [outdoorSeating, setOutdoorSeating] = useState(parseBooleanParam(params.get("outdoorSeating")));
+  const [vibe, setVibe] = useState<VibeFilterSlug | "">(isVibeFilterSlug(initialVibe) ? initialVibe : "");
   const [sortKey, setSortKey] = useState<MapSortKey>((params.get("sort") as MapSortKey) ?? "matchday");
   const [query, setQuery] = useState(params.get("q") ?? "");
   const deferredQuery = useDeferredValue(query);
@@ -469,6 +475,8 @@ export function MapPageClient({
     const nextCapacity = params.get("capacityBucket") ?? "";
     const nextFamilyFriendly = parseBooleanParam(params.get("familyFriendly"));
     const nextOutdoorSeating = parseBooleanParam(params.get("outdoorSeating"));
+    const nextVibeParam = params.get("vibe");
+    const nextVibe: VibeFilterSlug | "" = isVibeFilterSlug(nextVibeParam) ? nextVibeParam : "";
     const nextSort = (params.get("sort") as MapSortKey) ?? "matchday";
     const nextQuery = params.get("q") ?? "";
     const nextVenueSlug = params.get("venue") ?? "";
@@ -485,6 +493,7 @@ export function MapPageClient({
     setCapacityBucket(nextCapacity);
     setFamilyFriendly(nextFamilyFriendly);
     setOutdoorSeating(nextOutdoorSeating);
+    setVibe(nextVibe);
     setSortKey(nextSort);
     setQuery(nextQuery);
     setSelectedVenueSlug(nextVenueSlug);
@@ -507,6 +516,7 @@ export function MapPageClient({
       capacityBucket,
       familyFriendly,
       outdoorSeating,
+      vibe,
       sortKey,
       query,
       selectedVenueSlug
@@ -535,7 +545,8 @@ export function MapPageClient({
     selectedVenueIntents,
     soccerBarsMode,
     sortKey,
-    venueType
+    venueType,
+    vibe
   ]);
 
   const selectedCityConfig = useMemo(() => getHostCity(city) ?? HOST_CITIES[0], [city]);
@@ -559,6 +570,7 @@ export function MapPageClient({
         capacityBucket ||
         familyFriendly ||
         outdoorSeating ||
+        vibe ||
         deferredQuery ||
         sortKey !== "matchday"
     );
@@ -576,6 +588,7 @@ export function MapPageClient({
     Boolean(capacityBucket),
     familyFriendly,
     outdoorSeating,
+    Boolean(vibe),
     Boolean(deferredQuery),
     sortKey !== "matchday"
   ].filter(Boolean).length;
@@ -601,6 +614,7 @@ export function MapPageClient({
       if (capacityBucket && venue.capacityBucket !== capacityBucket) return false;
       if (familyFriendly && !venue.familyFriendly) return false;
       if (outdoorSeating && !venue.hasOutdoorViewing) return false;
+      if (vibe && !matchesVibeFilter(venue, vibe)) return false;
       if (deferredQuery) {
         const haystack = [
           venue.name,
