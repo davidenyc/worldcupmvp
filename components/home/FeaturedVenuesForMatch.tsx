@@ -47,9 +47,9 @@ export function FeaturedVenuesForMatch({
         </div>
         <Link
           href={`/${cityKey}/map?match=${matchId}&country=${countrySlug}`}
-          className="text-sm font-semibold text-[color:var(--fg-primary)]"
+          className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-surface-2"
         >
-          All {totalVenueCount} spots →
+          See all {totalVenueCount} spots →
         </Link>
       </div>
       <div className="mt-5 flex gap-4 overflow-x-auto pb-2">
@@ -75,13 +75,28 @@ export function FeaturedVenuesForMatch({
                 <h3 className="text-lg font-bold tracking-tight text-deep">{venue.name}</h3>
                 <p className="mt-1 text-sm text-[color:var(--fg-secondary)]">{venue.neighborhood}</p>
               </div>
+              <p className="text-sm leading-6 text-[color:var(--fg-secondary)]">
+                {venue.acceptsReservations
+                  ? "Good if you want to lock a table before the crowd builds."
+                  : "Best if you want to walk straight into the atmosphere."}
+              </p>
               <div className="flex flex-wrap gap-2 text-sm text-[color:var(--fg-secondary)]">
                 {venue.rating ? <span>★ {venue.rating.toFixed(1)}</span> : null}
                 {venue.rating ? <span>·</span> : null}
                 <span>{venue.goingCount}+ going</span>
               </div>
-              <div className="inline-flex h-11 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
-                {venue.acceptsReservations ? "Reserve a spot →" : "Get there →"}
+              <div className="flex items-center justify-between gap-3 rounded-[1rem] bg-[var(--bg-surface-elevated)] px-3 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-deep">
+                    {venue.acceptsReservations ? "Lock this room now" : "Good walk-in option"}
+                  </div>
+                  <div className="mt-1 text-xs text-mist">
+                    {venue.goingCount}+ fans already eyeing this spot
+                  </div>
+                </div>
+                <div className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
+                  {venue.acceptsReservations ? "Open spot →" : "Check room →"}
+                </div>
               </div>
             </div>
           </Link>

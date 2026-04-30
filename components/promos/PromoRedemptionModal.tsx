@@ -74,10 +74,7 @@ export function PromoRedemptionModal({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        promoId: promo.id,
-        venueId: promo.venue_id,
-        userId: user.id,
-        redeemedAt: new Date().toISOString()
+        promoId: promo.id
       })
     });
 
@@ -111,6 +108,7 @@ export function PromoRedemptionModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close promo"
             className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-lg"
           >
             ×
@@ -128,15 +126,15 @@ export function PromoRedemptionModal({
         </div>
 
         {!redeemable ? (
-          <div className="mt-5 rounded-[1.5rem] border border-gold/40 bg-[var(--accent-soft-bg)] p-4 text-deep">
-            <div className="text-sm font-semibold">{getPromoLockCopy(promo)}</div>
-            <button
-              type="button"
-              onClick={() => setShowUpgrade(true)}
-              className="mt-3 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
-            >
-              {promo.tier_required === "fan" ? "Unlock with Fan Pass" : "Get Elite to redeem"}
-            </button>
+            <div className="mt-5 rounded-[1.5rem] border border-gold/40 bg-[var(--accent-soft-bg)] p-4 text-deep">
+              <div className="text-sm font-semibold">{getPromoLockCopy(promo)}</div>
+              <button
+                type="button"
+                onClick={() => setShowUpgrade(true)}
+                className="mt-3 inline-flex min-h-11 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
+              >
+                {promo.tier_required === "fan" ? "Unlock with Fan Pass" : "Get Elite to redeem"}
+              </button>
           </div>
         ) : (
           <div className="mt-5 space-y-4">
@@ -159,7 +157,7 @@ export function PromoRedemptionModal({
                 <button
                   type="button"
                   onClick={copyCode}
-                  className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
+                  className="mt-4 inline-flex min-h-11 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
                 >
                   Copy code
                 </button>
@@ -176,7 +174,7 @@ export function PromoRedemptionModal({
                     href={reservationUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-4 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-deep"
+                    className="mt-4 inline-flex min-h-11 items-center rounded-full bg-gold px-4 text-sm font-semibold text-deep"
                   >
                     Reserve →
                   </a>

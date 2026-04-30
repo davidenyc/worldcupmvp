@@ -81,7 +81,7 @@ export function PromoCard({
       <button
         type="button"
         onClick={handlePrimaryAction}
-        className={`w-full rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] ${
+        className={`w-full rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:border-[color:var(--border-strong)] ${
           compact ? "min-h-[180px]" : "min-h-[220px]"
         }`}
       >
@@ -97,7 +97,7 @@ export function PromoCard({
         </div>
         <h3 className="mt-4 text-lg font-semibold text-[color:var(--fg-primary)]">{promo.title}</h3>
         <div className="mt-2 text-sm font-medium text-[color:var(--fg-secondary)]">{venueName}</div>
-        <p className="mt-2 text-sm leading-6 text-[color:var(--fg-muted)]">{promo.description}</p>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">{promo.description}</p>
         <div className="mt-4 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
           {new Date(promo.start_iso).toLocaleString("en-US", {
             month: "short",
@@ -111,14 +111,26 @@ export function PromoCard({
             minute: "2-digit"
           })}
         </div>
-        <div className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-deep">
-          {saving
-            ? "Saving…"
-            : savedPromo
-              ? "Show QR ↗"
-              : redeemable
-                ? "Save QR →"
-                : `${getPromoLockCopy(promo)} →`}
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-[1.1rem] bg-[var(--bg-surface-elevated)] px-3 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-deep">
+              {savedPromo
+                ? "QR saved in My Cup"
+                : redeemable
+                  ? "Ready to save now"
+                  : getPromoLockCopy(promo)}
+            </div>
+            <div className="mt-1 text-xs text-mist">
+              {savedPromo
+                ? "Open the QR and use it at the venue."
+                : redeemable
+                  ? "Tap to lock this offer before match day."
+                  : "Upgrade to unlock this offer."}
+            </div>
+          </div>
+          <div className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-deep">
+            {saving ? "Saving…" : savedPromo ? "Show QR ↗" : redeemable ? "Save QR →" : "Unlock →"}
+          </div>
         </div>
       </button>
       {open ? (

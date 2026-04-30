@@ -62,7 +62,7 @@ export function MySavedVenues({
             title="Nothing saved yet"
             subtitle="Browse the map and tap the heart on any venue to build your short list."
             action={
-              <Link href={`/${cityKey || "nyc"}/map`} className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              <Link href={`/${cityKey || "nyc"}/map`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                 Browse the map →
               </Link>
             }

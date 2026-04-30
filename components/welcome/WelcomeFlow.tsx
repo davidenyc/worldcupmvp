@@ -695,7 +695,7 @@ export function WelcomeFlow() {
                   <button
                     type="button"
                     onClick={() => router.push(buildWelcomeSignInHref(validateEmail(emailDraft) ? emailDraft : ""))}
-                    className="text-sm font-semibold text-deep underline underline-offset-4"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
                   >
                     Use this email and start syncing now
                   </button>
@@ -975,15 +975,15 @@ export function WelcomeFlow() {
               type="button"
               onClick={handleBack}
               disabled={isFirst}
-              className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border border-line bg-surface text-sm font-semibold text-deep transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-30"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-30"
             >
-              ←
+              ← Back
             </button>
             {!isStepRequired ? (
               <button
                 type="button"
                 onClick={handleSkip}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-mist transition hover:bg-surface-2 hover:text-deep"
               >
                 Skip
               </button>

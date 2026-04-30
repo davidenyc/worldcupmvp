@@ -298,15 +298,19 @@ export async function USAHomepage() {
         <div className="mx-auto max-w-7xl space-y-6">
           <details className="surface p-5">
             <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--fg-primary)]">
-              Tap to expand · 17 host cities
+              Explore all 17 host cities
             </summary>
             <div className="mt-5">
               <NorthAmericaMap cityCards={cityCards} />
             </div>
           </details>
 
-          <section className="surface px-5 py-4 text-sm font-medium text-[color:var(--fg-secondary)]">
-            Pick your city. Pick your team. Show up before kickoff.
+          <section className="surface px-5 py-4">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Fastest path</div>
+            <div className="mt-2 text-base font-semibold text-deep">Pick your city. Pick your team. Show up before kickoff.</div>
+            <div className="mt-2 text-sm leading-6 text-[color:var(--fg-secondary)]">
+              If you only do one thing here, start with the room that already matches the crowd you want.
+            </div>
           </section>
 
           <HomeFAQ />

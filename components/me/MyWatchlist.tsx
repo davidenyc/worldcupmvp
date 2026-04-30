@@ -94,7 +94,7 @@ export function MyWatchlist({
             title="No matches saved"
             subtitle="Tap “I’m watching this” on Home, Today, or Matches to keep your slate together."
             action={
-              <Link href="/matches" className="inline-flex rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
+              <Link href="/matches" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
                 Browse the schedule →
               </Link>
             }

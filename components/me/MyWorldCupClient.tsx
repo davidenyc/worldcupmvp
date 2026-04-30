@@ -50,7 +50,7 @@ export function MyWorldCupClient({
           subtitle="Pick your country, city, and match-day preferences so My Cup can actually feel like yours."
           action={
             <Link href="/welcome" className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 py-2.5 text-sm font-semibold text-deep">
-              Personalize your Cup →
+              Personalize My Cup →
             </Link>
           }
         />

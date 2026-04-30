@@ -23,13 +23,16 @@ export function EditorialPick({ eyebrow, venueName, neighborhood, quote, venueHr
       <blockquote className="mt-4 text-lg italic leading-8 text-[color:var(--fg-primary)]">
         “{quote}”
       </blockquote>
+      <div className="mt-4 rounded-[1rem] bg-[var(--bg-surface-elevated)] px-4 py-3 text-sm leading-6 text-[color:var(--fg-secondary)]">
+        Go here if you want the room with the strongest word-of-mouth tonight, not just the biggest generic crowd.
+      </div>
       <p className="mt-4 text-sm text-[color:var(--fg-secondary)]">— GameDay editorial team</p>
       <Link
         href={venueHref}
         onClick={() => trackEditorialPickCtaClick({ venueHref })}
-        className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
+        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
       >
-        Take me there →
+        Open this room →
       </Link>
     </section>
   );
