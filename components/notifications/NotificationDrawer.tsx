@@ -45,7 +45,7 @@ export function NotificationDrawer({ open, onOpenChange }: NotificationDrawerPro
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-subtle)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+            className="inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
           >
             <X className="h-4 w-4" />
           </button>

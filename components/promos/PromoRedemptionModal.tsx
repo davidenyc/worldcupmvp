@@ -111,7 +111,7 @@ export function PromoRedemptionModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-lg"
+            className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-lg"
           >
             ×
           </button>

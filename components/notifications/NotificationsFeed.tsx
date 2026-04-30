@@ -196,7 +196,7 @@ export function NotificationsFeed({
           type="button"
           onClick={() => void markAllRead()}
           disabled={markingAll || notifications.every((notification) => notification.readAt)}
-          className="inline-flex min-h-10 items-center rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {markingAll ? "Marking..." : "Mark all read"}
         </button>
@@ -214,7 +214,7 @@ export function NotificationsFeed({
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold transition ${
                 filter === key
                   ? "border-gold bg-gold/10 text-gold"
                   : "border-[color:var(--border-subtle)] text-[color:var(--fg-secondary)] hover:bg-[var(--bg-surface-elevated)]"
@@ -289,7 +289,7 @@ export function NotificationsFeed({
               type="button"
               onClick={() => void loadMore()}
               disabled={loadingMore}
-              className="inline-flex min-h-10 items-center rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--border-subtle)] px-4 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loadingMore ? "Loading..." : "Load more"}
             </button>
@@ -299,7 +299,7 @@ export function NotificationsFeed({
           <Link
             href="/account/notifications"
             onClick={onNavigate}
-            className="inline-flex min-h-10 items-center text-sm font-semibold text-gold"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-gold"
           >
             Notification settings →
           </Link>

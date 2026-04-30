@@ -42,7 +42,7 @@ function primaryNavClass(active: boolean) {
 }
 
 function actionButtonClass() {
-  return "inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]";
+  return "inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]";
 }
 
 const PRIMARY_NAV_ITEMS = [
@@ -260,7 +260,7 @@ export function SiteHeader() {
                   setCityMenuOpen(true);
                 }}
                 aria-label={`Switch city from ${activeCityData.label}`}
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] lg:h-11"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
               >
                 <MapPin className="h-4 w-4" />
                 <span className={`max-w-[5.5rem] truncate sm:max-w-none ${isExplicit ? "" : "italic text-[color:var(--fg-secondary)]"}`}>
@@ -290,7 +290,7 @@ export function SiteHeader() {
               <Link
                 href="/membership"
                 aria-label="Upgrade"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gold/45 bg-gold/10 text-gold transition hover:bg-gold/20 lg:h-11 lg:w-auto lg:gap-2 lg:px-4 lg:text-sm lg:font-semibold"
+                className="inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-gold/45 bg-gold/10 text-gold transition hover:bg-gold/20 lg:w-auto lg:gap-2 lg:px-4 lg:text-sm lg:font-semibold"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden lg:inline">Upgrade</span>

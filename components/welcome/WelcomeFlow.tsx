@@ -656,7 +656,7 @@ export function WelcomeFlow() {
                         key={city.key}
                         type="button"
                         onClick={() => setHomeCityDraft(city.label)}
-                        className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-line bg-surface px-3.5 text-[15px] font-semibold text-deep transition hover:bg-surface-2 sm:min-h-11 sm:px-4 sm:text-sm"
+                        className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-line bg-surface px-3.5 text-[15px] font-semibold text-deep transition hover:bg-surface-2 sm:px-4 sm:text-sm"
                       >
                         {city.label}
                       </button>

@@ -303,7 +303,7 @@ function DrawerBody({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-2 text-deep transition hover:bg-surface-2"
+          className="inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-2 text-deep transition hover:bg-surface-2"
           aria-label="Close filters"
         >
           <X className="h-4 w-4" />

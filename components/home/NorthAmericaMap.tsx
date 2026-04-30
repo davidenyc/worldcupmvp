@@ -165,7 +165,7 @@ export function NorthAmericaMap({ cityCards }: NorthAmericaMapProps) {
           </span>
           <Link
             href={user.favoriteCountrySlug ? "/me" : "/welcome"}
-            className="inline-flex h-9 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
+            className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
           >
             {user.favoriteCountrySlug ? "Open my Cup →" : "Personalize my Cup →"}
           </Link>

@@ -182,7 +182,7 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-deep transition hover:bg-surface-2"
+      className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-deep transition hover:bg-surface-2"
     >
       {children}
     </button>
@@ -221,7 +221,7 @@ function ActionButton({
   primary?: boolean;
 }) {
   const className = [
-    "inline-flex h-9 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition",
+    "inline-flex min-h-11 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition",
     primary
       ? "bg-gold text-deep hover:bg-gold/90"
       : "border border-line bg-surface text-deep hover:bg-surface-2"
