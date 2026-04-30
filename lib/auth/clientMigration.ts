@@ -17,6 +17,11 @@ type PersistedProfile = {
   promoOptIns?: {
     email?: boolean;
     push?: boolean;
+    proximityPromos?: boolean;
+    groupPromos?: boolean;
+    savedVenuePromoAlerts?: boolean;
+    wantsGroups?: boolean;
+    notificationPermission?: "default" | "granted" | "denied" | "unsupported";
   };
   welcomeSeenAt?: number;
   followingCountrySlugs?: string[];

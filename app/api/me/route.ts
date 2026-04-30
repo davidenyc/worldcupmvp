@@ -23,7 +23,12 @@ const profilePatchSchema = z.object({
   promoOptIns: z
     .object({
       email: z.boolean().optional(),
-      push: z.boolean().optional()
+      push: z.boolean().optional(),
+      proximityPromos: z.boolean().optional(),
+      groupPromos: z.boolean().optional(),
+      savedVenuePromoAlerts: z.boolean().optional(),
+      wantsGroups: z.boolean().optional(),
+      notificationPermission: z.enum(["default", "granted", "denied", "unsupported"]).optional()
     })
     .optional(),
   welcomeSeenAt: z.string().datetime().optional().nullable(),
@@ -122,7 +127,12 @@ export async function PATCH(request: Request) {
       },
       promoOptIns: payload.promoOptIns ?? {
         email: false,
-        push: false
+        push: false,
+        proximityPromos: false,
+        groupPromos: false,
+        savedVenuePromoAlerts: false,
+        wantsGroups: false,
+        notificationPermission: "default"
       },
       welcomeSeenAt: payload.welcomeSeenAt ? new Date(payload.welcomeSeenAt) : null
     }

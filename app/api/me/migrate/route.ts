@@ -35,6 +35,11 @@ type ProfileRow = {
   promoOptIns: {
     email?: boolean;
     push?: boolean;
+    proximityPromos?: boolean;
+    groupPromos?: boolean;
+    savedVenuePromoAlerts?: boolean;
+    wantsGroups?: boolean;
+    notificationPermission?: "default" | "granted" | "denied" | "unsupported";
   };
   welcomeSeenAt: string | null;
   createdAt?: string;
@@ -186,7 +191,12 @@ export async function POST(request: Request) {
     },
     promoOptIns: existingProfile?.promoOptIns ?? payload.profile.promoOptIns ?? {
       email: false,
-      push: false
+      push: false,
+      proximityPromos: false,
+      groupPromos: false,
+      savedVenuePromoAlerts: false,
+      wantsGroups: false,
+      notificationPermission: "default"
     },
     welcomeSeenAt: existingProfile?.welcomeSeenAt ?? (payload.profile.welcomeSeenAt ?? null)
   };
