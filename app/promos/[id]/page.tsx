@@ -6,6 +6,7 @@ import { getHostCity } from "@/lib/data/hostCities";
 import { getPromoSeedById } from "@/lib/data/promos";
 import { getMapPageData } from "@/lib/data/repository";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList } from "@/lib/seo/schema";
 
 export async function generateMetadata({
   params
@@ -46,9 +47,18 @@ export default async function PromoDetailPage({
 
   const mapData = await getMapPageData(promo.cityKey);
   const venue = mapData.venues.find((entry) => entry.slug === promo.venueSlug) ?? null;
+  const breadcrumbSchema = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: "Promos", path: "/promos" },
+    { name: promo.title, path: `/promos/${promo.id}` }
+  ]);
 
   return (
     <main className="container-shell py-6 sm:py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <PromoDetailClient
         promo={promo}
         venueName={venue?.name ?? promo.venueSlug}

@@ -5,6 +5,7 @@ import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
 import { getMapPageData } from "@/lib/data/repository";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList } from "@/lib/seo/schema";
 
 export async function generateMetadata({
   searchParams
@@ -60,5 +61,18 @@ export default async function PromosPage({
     (section): section is NonNullable<typeof section> => Boolean(section && section.promos.length)
   );
 
-  return <PromosPageClient initialCity={requestedCity} cityPayloads={populatedPayloads} />;
+  const breadcrumbSchema = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: "Promos", path: "/promos" }
+  ]);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <PromosPageClient initialCity={requestedCity} cityPayloads={populatedPayloads} />
+    </>
+  );
 }

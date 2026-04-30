@@ -22,6 +22,7 @@ import { getVenuePromos } from "@/lib/data/promos";
 import { formatMatchStage, worldCup2026Matches } from "@/lib/data/matches";
 import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList, toAbsoluteUrl } from "@/lib/seo/schema";
 import {
   getVenueDescriptionCopy,
   getVenueEditorialCopy,
@@ -111,9 +112,42 @@ export default async function VenuePage({
           .filter((match) => Date.parse(match.startsAt) >= Date.now())
           .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
           .slice(0, 4);
+    const localBusinessSchema = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: curatedVenue.name,
+      description: curatedVenue.description,
+      address: curatedVenue.address,
+      telephone: curatedVenue.phone ?? undefined,
+      servesCuisine: curatedVenue.cuisineTags?.length ? curatedVenue.cuisineTags : undefined,
+      url: toAbsoluteUrl(`/venue/${curatedVenue.slug}`),
+      ...(curatedVenue.rating && curatedVenue.reviewCount
+        ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: curatedVenue.rating,
+              reviewCount: curatedVenue.reviewCount
+            }
+          }
+        : {})
+    };
+    const breadcrumbSchema = buildBreadcrumbList([
+      { name: "Home", path: "/" },
+      { name: curatedVenue.city, path: `/${venueCityKey}` },
+      { name: "Map", path: `/${venueCityKey}/map` },
+      { name: curatedVenue.name, path: `/venue/${curatedVenue.slug}` }
+    ]);
 
     return (
       <div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
         <VenueHero venue={rankedVenue} />
       <section className="container-shell py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -7,6 +7,7 @@ import { MapPageClient } from "@/components/map/MapPageClient";
 import { getMapPageData } from "@/lib/data/repository";
 import { getHostCity } from "@/lib/data/hostCities";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { buildBreadcrumbList, toAbsoluteUrl } from "@/lib/seo/schema";
 
 async function getCityGuideIntro(cityKey: string) {
   try {
@@ -60,26 +61,46 @@ export default async function MapPage({
   if (!city) notFound();
 
   const [data, cityGuideIntro] = await Promise.all([getMapPageData(city.key), getCityGuideIntro(city.key)]);
-  const topVenue = data.venues[0];
-
-  const localBusinessSchema = topVenue
-    ? {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        name: topVenue.name,
-        address: topVenue.address,
-        description: topVenue.description,
-        url: `https://gamedaymap.com/venue/${topVenue.slug}`,
-        areaServed: city.label
-      }
-    : null;
+  const localBusinessSchemas = data.venues
+    .slice()
+    .sort((left, right) => (right.reviewCount ?? 0) - (left.reviewCount ?? 0) || (right.rating ?? 0) - (left.rating ?? 0))
+    .slice(0, 10)
+    .map((venue) => ({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: venue.name,
+      description: venue.description,
+      address: venue.address,
+      telephone: venue.phone ?? undefined,
+      servesCuisine: venue.cuisineTags?.length ? venue.cuisineTags : undefined,
+      areaServed: city.label,
+      url: toAbsoluteUrl(`/venue/${venue.slug}`),
+      ...(venue.rating && venue.reviewCount
+        ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: venue.rating,
+              reviewCount: venue.reviewCount
+            }
+          }
+        : {})
+    }));
+  const breadcrumbSchema = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: city.label, path: `/${city.key}` },
+    { name: "Map", path: `/${city.key}/map` }
+  ]);
 
   return (
     <>
-      {localBusinessSchema ? (
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {localBusinessSchemas.length ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchemas) }}
         />
       ) : null}
       <MapPageClient data={data} city={city.key} cityGuideIntro={cityGuideIntro} />
