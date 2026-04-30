@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { trackAliveMatchCardCtaClick } from "@/lib/analytics/track";
+import { trackFeaturedVenueCtaClick } from "@/lib/analytics/track";
 
 type FeaturedVenue = {
   slug: string;
@@ -57,7 +57,7 @@ export function FeaturedVenuesForMatch({
           <Link
             key={venue.slug}
             href={`/venue/${venue.slug}`}
-            onClick={() => trackAliveMatchCardCtaClick({ matchId, cityKey })}
+            onClick={() => trackFeaturedVenueCtaClick({ venueSlug: venue.slug, matchId, cityKey })}
             className="surface min-w-[17.5rem] max-w-[17.5rem] overflow-hidden p-0 transition hover:-translate-y-0.5 sm:min-w-[20rem] sm:max-w-[20rem]"
           >
             <div className="relative aspect-[4/3] overflow-hidden">

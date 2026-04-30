@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { trackEditorialPickCtaClick } from "@/lib/analytics/track";
+
 interface EditorialPickProps {
   eyebrow: string;
   venueName: string;
@@ -22,6 +24,7 @@ export function EditorialPick({ eyebrow, venueName, neighborhood, quote, venueHr
       <p className="mt-4 text-sm text-[color:var(--fg-secondary)]">— GameDay editorial team</p>
       <Link
         href={venueHref}
+        onClick={() => trackEditorialPickCtaClick({ venueHref })}
         className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
       >
         Take me there →

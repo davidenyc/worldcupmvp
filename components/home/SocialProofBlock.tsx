@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { trackSocialProofCtaClick } from "@/lib/analytics/track";
 import { socialProofTestimonials } from "@/lib/data/socialProof";
 
 interface SocialProofBlockProps {
@@ -31,6 +32,7 @@ export function SocialProofBlock({ statLabel, href, initialIndex }: SocialProofB
       <p className="mt-3 text-sm text-[color:var(--fg-secondary)]">— {active.byline}</p>
       <Link
         href={href}
+        onClick={() => trackSocialProofCtaClick({ href })}
         className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
       >
         Take me there →

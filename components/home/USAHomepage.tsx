@@ -222,7 +222,7 @@ export async function USAHomepage() {
               href={heroHref}
             />
           ) : null}
-          <LiveActivityTicker />
+          <LiveActivityTicker cityKey={activeCity} />
           {feedError ? (
             <ActionHeroError />
           ) : (

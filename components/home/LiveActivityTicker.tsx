@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { trackLiveActivityTickerView } from "@/lib/analytics/track";
 import { socialMock } from "@/lib/data/socialMock";
 
-export function LiveActivityTicker() {
+export function LiveActivityTicker({ cityKey = "nyc" }: { cityKey?: string }) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [trackedView, setTrackedView] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -14,6 +16,26 @@ export function LiveActivityTicker() {
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
+
+  useEffect(() => {
+    if (trackedView) return;
+
+    const ticker = document.getElementById("live-activity-ticker");
+    if (!ticker) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        trackLiveActivityTickerView({ cityKey });
+        setTrackedView(true);
+        observer.disconnect();
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(ticker);
+    return () => observer.disconnect();
+  }, [cityKey, trackedView]);
 
   const entries = useMemo(
     () =>
@@ -24,7 +46,7 @@ export function LiveActivityTicker() {
   );
 
   return (
-    <section className="overflow-hidden rounded-[1.2rem] bg-deep text-[color:var(--fg-on-strong)]">
+    <section id="live-activity-ticker" className="overflow-hidden rounded-[1.2rem] bg-deep text-[color:var(--fg-on-strong)]">
       <div className="flex min-h-9 items-center gap-3 px-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--fg-secondary-on-strong)]">
         <span className="inline-flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-green-400" />

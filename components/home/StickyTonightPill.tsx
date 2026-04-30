@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { trackStickyTonightPillClick } from "@/lib/analytics/track";
+
 interface StickyTonightPillProps {
   label: string;
   countdownLabel: string;
@@ -33,6 +35,7 @@ export function StickyTonightPill({ label, countdownLabel, href }: StickyTonight
     >
       <Link
         href={href}
+        onClick={() => trackStickyTonightPillClick({ href })}
         className="pointer-events-auto mx-auto flex h-11 max-w-2xl items-center justify-between gap-3 rounded-full border border-line bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-4 text-sm font-semibold text-deep shadow-sm backdrop-blur-md"
       >
         <span className="truncate">{label}</span>
