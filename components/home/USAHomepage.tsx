@@ -19,6 +19,7 @@ import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
 import { SocialProofBlock } from "./SocialProofBlock";
+import { StickyTonightPill } from "./StickyTonightPill";
 import { VibeChips } from "./VibeChips";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
@@ -191,6 +192,17 @@ export async function USAHomepage() {
       <HomeViewTracker variant="active" />
       <section className="bg-bg">
         <div className="container-shell space-y-8 py-8 lg:py-12">
+          {tonightFeed.hero ? (
+            <StickyTonightPill
+              label={`${tonightFeed.hero.homeCountry.flagEmoji} ${tonightFeed.hero.homeCountry.name} vs ${tonightFeed.hero.awayCountry.flagEmoji} ${tonightFeed.hero.awayCountry.name}`}
+              countdownLabel={
+                tonightFeed.hero.timeContext.window === "live"
+                  ? "Live now"
+                  : tonightFeed.hero.timeContext.countdownLabel
+              }
+              href={heroHref}
+            />
+          ) : null}
           <LiveActivityTicker />
           {feedError ? (
             <ActionHeroError />

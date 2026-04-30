@@ -57,7 +57,7 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
 
   if (!hero) {
     return (
-      <section className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
+      <section id="action-hero" className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
         <div
           className="min-h-[17rem] px-6 py-6 text-[color:var(--fg-on-strong)] sm:min-h-[20rem] sm:px-8 sm:py-8"
           style={{ background: getHeroBackdrop("default") }}
@@ -105,7 +105,7 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
   const crowdLine = hero.projectedGoingCount > 0 ? `${hero.projectedGoingCount}+ fans lining up · ${hero.crowdSignalCopy}` : null;
 
   return (
-    <section className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
+    <section id="action-hero" className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
       <div
         className="relative min-h-[25rem] overflow-hidden px-6 py-6 text-[color:var(--fg-on-strong)] sm:min-h-[29rem] sm:px-8 sm:py-8"
         style={{ background: getHeroBackdrop(primaryCountrySlug) }}
@@ -165,7 +165,7 @@ export function ActionHeroSkeleton() {
 
 export function ActionHeroError() {
   return (
-    <section className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
+    <section id="action-hero" className="overflow-hidden rounded-[1.8rem] border border-line bg-[var(--bg-surface)] shadow-card">
       <div className="p-6 sm:p-8">
       <div className="text-[11px] uppercase tracking-[0.2em] text-mist">Next match day · World Cup 2026</div>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-deep sm:text-4xl">
