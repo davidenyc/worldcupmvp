@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getPromoSeedById, type SavedPromo } from "@/lib/data/promos";
+import { consumeRateLimit } from "@/lib/rateLimit/consume";
 import { createClient } from "@/lib/supabase/server";
 import type { MembershipTier } from "@/lib/store/membership";
 
@@ -24,6 +25,15 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const allowed = await consumeRateLimit({
+    key: `promo-redeem:${user.id}`,
+    limit: 20,
+    windowMs: 60 * 60_000
+  });
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const membership = await prisma.profileMembership.findUnique({

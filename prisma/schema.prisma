@@ -323,6 +323,13 @@ model PromoRedemption {
   @@index([promoId])
 }
 
+model RateLimit {
+  key             String   @id
+  count           Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model Match {
   id             String                  @id @default(cuid())
   slug           String                  @unique

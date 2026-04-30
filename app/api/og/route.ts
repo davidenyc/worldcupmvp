@@ -6,6 +6,7 @@ import { getHostCity } from "@/lib/data/hostCities";
 import { getPromosByCity } from "@/lib/data/promos";
 import { getAllCountries, getMapPageData, getVenueDetails } from "@/lib/data/repository";
 import { getFallbackTonightFeed, getTonightFeed } from "@/lib/hooks/useTonightFeed";
+import { consumeRateLimit, getRequestIp } from "@/lib/rateLimit/consume";
 
 export const runtime = "nodejs";
 
@@ -408,6 +409,18 @@ async function buildMePayload() {
 }
 
 export async function GET(request: Request) {
+  const allowed = await consumeRateLimit({
+    key: `og:${getRequestIp(request)}`,
+    limit: 60,
+    windowMs: 60 * 60_000
+  });
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { "content-type": "application/json" }
+    });
+  }
+
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "home";
 

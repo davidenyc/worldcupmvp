@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { searchGooglePlacesVenues } from "@/lib/providers/googlePlaces";
+import { consumeRateLimit } from "@/lib/rateLimit/consume";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -45,7 +46,15 @@ export async function GET(request: Request) {
       return NextResponse.json([]);
     }
 
-    // TODO(security): apply Postgres-backed per-user rate limit here in commit 7.
+    const allowed = await consumeRateLimit({
+      key: `places-search:${user.id}`,
+      limit: 30,
+      windowMs: 60 * 60_000
+    });
+    if (!allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const venues = await cachedSearch(city, countrySlug, cityLat, cityLng);
 
     return NextResponse.json(venues);
