@@ -28,7 +28,9 @@ export function SocialProofBlock({ statLabel, href, initialIndex }: SocialProofB
   return (
     <section className="surface px-5 py-5 sm:px-6">
       <h2 className="text-2xl font-bold tracking-tight text-deep">{statLabel}</h2>
-      <blockquote className="mt-4 text-lg leading-8 text-[color:var(--fg-primary)]">“{active.quote}”</blockquote>
+      <blockquote className="mt-4 min-h-[8.5rem] text-lg leading-8 text-[color:var(--fg-primary)] sm:min-h-[6rem]">
+        “{active.quote}”
+      </blockquote>
       <p className="mt-3 text-sm text-[color:var(--fg-secondary)]">— {active.byline}</p>
       <Link
         href={href}

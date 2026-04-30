@@ -107,7 +107,12 @@ export function LiveCountdown({ startsAt, withSeconds = false }: LiveCountdownPr
   }, [label, now, startsAt, withSeconds]);
 
   return (
-    <span aria-live="polite" aria-atomic="true" suppressHydrationWarning>
+    <span
+      aria-live="polite"
+      aria-atomic="true"
+      suppressHydrationWarning
+      className="inline-block min-w-[18ch] tabular-nums"
+    >
       {reducedMotion ? reducedMotionLabel : detailedLabel}
     </span>
   );
