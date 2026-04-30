@@ -49,6 +49,7 @@ export function PWAInstallBanner() {
   const [showIosModal, setShowIosModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [delayElapsed, setDelayElapsed] = useState(false);
+  const [forceShow, setForceShow] = useState(false);
 
   useEffect(() => {
     const readDeferredPrompt = () => window.__gamedayDeferredInstallPrompt ?? null;
@@ -60,6 +61,10 @@ export function PWAInstallBanner() {
       setIsMobile(window.innerWidth < 1024);
       setBodyRouteActive(Boolean(document.body?.dataset.route));
       setDeferredPrompt(readDeferredPrompt());
+      setForceShow(
+        process.env.NODE_ENV !== "production" &&
+          window.location.search.includes("forcePwaBanner=1")
+      );
     };
 
     syncState();
@@ -98,7 +103,12 @@ export function PWAInstallBanner() {
     return pathname === "/welcome" || pathname.startsWith("/auth");
   }, [pathname]);
 
-  const visible = delayElapsed && isMobile && !dismissed && !installed && !hiddenForRoute && !bodyRouteActive;
+  const visible =
+    delayElapsed &&
+    isMobile &&
+    !hiddenForRoute &&
+    !bodyRouteActive &&
+    (forceShow || (!dismissed && !installed));
 
   async function handleInstall() {
     if (deferredPrompt) {
@@ -145,24 +155,25 @@ export function PWAInstallBanner() {
                 Open city maps faster, keep your Cup handy, and get back in with one tap.
               </div>
             </div>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                void handleInstall();
+              }}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)] transition hover:brightness-95"
+            >
+              Install →
+            </button>
             <button
               type="button"
               onClick={handleDismiss}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-[var(--bg-surface-elevated)] px-3 text-sm font-semibold text-[color:var(--fg-secondary)] transition hover:bg-[var(--bg-surface-strong)] hover:text-[color:var(--fg-primary)]"
-              aria-label="Dismiss install banner"
+              className="inline-flex min-h-11 items-center justify-center rounded-full px-2 text-sm font-semibold text-[color:var(--fg-secondary)] transition hover:text-[color:var(--fg-primary)]"
             >
-              ×
+              Not now
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              void handleInstall();
-            }}
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)] transition hover:brightness-95"
-          >
-            Install →
-          </button>
         </div>
       </div>
 
