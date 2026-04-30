@@ -21,6 +21,7 @@ import {
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { useUserCity } from "@/lib/hooks/useUserCity";
 import { useMembership } from "@/lib/store/membership";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useTheme } from "@/lib/store/theme";
 import { useSession } from "@/lib/hooks/useSession";
 import { useUser } from "@/lib/store/user";
@@ -44,12 +45,12 @@ function actionButtonClass() {
 }
 
 const PRIMARY_NAV_ITEMS = [
-  { label: "Home", getHref: (_cityMapHref: string) => "/", matches: (path: string, _cityMapHref: string) => path === "/" },
-  { label: "Today", getHref: (_cityMapHref: string, todayHref: string) => todayHref, matches: (path: string) => path.startsWith("/today") },
-  { label: "Matches", getHref: (_cityMapHref: string, _todayHref: string, matchesHref: string) => matchesHref, matches: (path: string) => path.includes("/matches") },
-  { label: "Map", getHref: (cityMapHref: string) => cityMapHref, matches: (path: string) => path.includes("/map") },
-  { label: "Promos", getHref: (_cityMapHref: string) => "/promos", matches: (path: string) => path.startsWith("/promos") },
-  { label: "My Cup", getHref: (_cityMapHref: string) => "/me", matches: (path: string) => path.startsWith("/me") }
+  { label: "Home", key: "home", matches: (path: string) => path === "/" || path === "/app" },
+  { label: "Today", key: "today", matches: (path: string) => path.startsWith("/today") },
+  { label: "Matches", key: "matches", matches: (path: string) => path.includes("/matches") },
+  { label: "Map", key: "map", matches: (path: string) => path.includes("/map") },
+  { label: "Promos", key: "promos", matches: (path: string) => path.startsWith("/promos") },
+  { label: "My Cup", key: "me", matches: (path: string) => path.startsWith("/me") }
 ] as const;
 
 export function SiteHeader() {
@@ -62,7 +63,7 @@ export function SiteHeader() {
   const localUser = useUser();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
-  const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const [mobileNavVisible, setMobileNavVisible] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -80,14 +81,24 @@ export function SiteHeader() {
   const matchesHref = `/${activeCity}/matches`;
   const promosHref = "/promos";
   const myHref = "/me";
+  const homeHref = "/?home=1";
   const searchHref = `/search?city=${activeCity}`;
   const hideMobileNav = currentPath === "/welcome";
   const isHomeSurface = currentPath === "/" || currentPath === "/app";
-  const showHeaderUpgrade = tier === "free" && !isHomeSurface;
+  const hideHeaderUpgrade = isHomeSurface || currentPath === "/welcome";
+  const showHeaderUpgrade = tier === "free" && !hideHeaderUpgrade;
+  const navHrefByKey = {
+    home: homeHref,
+    today: todayHref,
+    matches: matchesHref,
+    map: mapHref,
+    promos: promosHref,
+    me: myHref
+  } as const;
   const primaryNavItems = PRIMARY_NAV_ITEMS.map((item) => ({
-    href: item.getHref(mapHref, todayHref, matchesHref),
+    href: navHrefByKey[item.key],
     label: item.label,
-    active: item.matches(currentPath, mapHref)
+    active: item.matches(currentPath)
   }));
 
   useEffect(() => {
@@ -136,12 +147,13 @@ export function SiteHeader() {
     const updateNav = () => {
       const currentY = window.scrollY;
       const delta = currentY - lastY;
+      const anchorVisible = currentY < 160;
 
-      if (currentY < 24) {
+      if (anchorVisible) {
         setMobileNavVisible(true);
-      } else if (delta > 6) {
+      } else if (delta > 18) {
         setMobileNavVisible(false);
-      } else if (delta < -6) {
+      } else if (delta < -12) {
         setMobileNavVisible(true);
       }
 
@@ -155,6 +167,7 @@ export function SiteHeader() {
       window.requestAnimationFrame(updateNav);
     };
 
+    setMobileNavVisible(true);
     window.addEventListener("scroll", onScroll, { passive: true });
     const onPageShow = () => setMobileNavVisible(true);
     window.addEventListener("pageshow", onPageShow);
@@ -163,6 +176,15 @@ export function SiteHeader() {
       window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
+
+  useEffect(() => {
+    if (hideMobileNav) {
+      setMobileNavVisible(false);
+      return;
+    }
+
+    setMobileNavVisible(true);
+  }, [hideMobileNav, pathname]);
 
   function navigateToCity(nextCity: string) {
     setUserCity(nextCity);
@@ -198,7 +220,7 @@ export function SiteHeader() {
       >
         <div className="container-shell flex min-h-[52px] items-center justify-between gap-3 py-2 lg:min-h-[64px] lg:py-3">
           <div className="flex min-w-0 shrink-0 items-center">
-            <Link href="/" className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)] hover:text-[color:var(--fg-primary)]">
+            <Link href={homeHref} className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)] hover:text-[color:var(--fg-primary)]">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
                 style={{ backgroundColor: "var(--gold)", color: "var(--fg-on-strong)" }}
@@ -270,6 +292,13 @@ export function SiteHeader() {
                 <Crown className="h-4 w-4" />
                 <span className="hidden lg:inline">Upgrade</span>
               </Link>
+            ) : null}
+
+            {authUser ? (
+              <NotificationBell
+                onClick={() => router.push("/notifications")}
+                className={`${actionButtonClass()} lg:h-11 lg:w-11`}
+              />
             ) : null}
 
             <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} lg:h-11 lg:w-11`}>
