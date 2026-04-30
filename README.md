@@ -129,6 +129,10 @@ NEXT_PUBLIC_MAPBOX_TOKEN=
 GOOGLE_PLACES_API_KEY=
 GOOGLE_PLACES_TEXT_SEARCH_URL=https://places.googleapis.com/v1/places:searchText
 RESEND_API_KEY=
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:hello@gamedaymap.com
+CRON_SECRET=
 ```
 
 Notes:
@@ -137,6 +141,28 @@ Notes:
 - Keeping `DATA_PROVIDER=mock` means the public app does not need a live database for the first deploy.
 - `DATABASE_URL` and `DIRECT_URL` come from Supabase Postgres.
 - After deploy, update `NEXT_PUBLIC_APP_URL` to the final production domain.
+
+## Web push / notifications
+
+Generate VAPID keys once, then store them in `.env.local`:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Required envs:
+
+```dotenv
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:hello@gamedaymap.com
+CRON_SECRET=
+```
+
+Notes:
+
+- `VAPID_PRIVATE_KEY` must stay server-only and must not be `NEXT_PUBLIC_` prefixed.
+- `CRON_SECRET` protects `/api/cron/*` routes from public hits.
 
 ## Where real credentials go
 
