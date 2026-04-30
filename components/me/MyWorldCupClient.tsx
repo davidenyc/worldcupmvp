@@ -99,9 +99,11 @@ export function MyWorldCupClient({
             <div className="text-sm uppercase tracking-[0.2em] text-mist">Watch parties</div>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-deep">Your groups</h2>
           </div>
-          <Link href="/groups" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
-            Open groups →
-          </Link>
+          {groups.length ? (
+            <Link href="/groups" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2">
+              Open groups →
+            </Link>
+          ) : null}
         </div>
 
         <div className="mt-5">
