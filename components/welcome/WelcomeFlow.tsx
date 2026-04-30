@@ -900,28 +900,6 @@ export function WelcomeFlow() {
       </section>
 
       {showCelebration ? null : (
-        <div className="mt-2 flex flex-col items-center gap-2 sm:hidden">
-          <div className="flex items-center justify-center gap-2">
-            {steps.map((_, index) => (
-              <span
-                key={index}
-                className={`h-3 w-3 rounded-full transition ${
-                  index < stepIndex
-                    ? "bg-gold"
-                    : index === stepIndex
-                      ? "bg-gold ring-2 ring-gold/30"
-                      : "bg-[color:var(--border-subtle)]"
-                }`}
-              />
-            ))}
-          </div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-mist">
-            Step {Math.min(stepIndex + 1, steps.length)} of {steps.length}
-          </div>
-        </div>
-      )}
-
-      {showCelebration ? null : (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 border-t border-line bg-[var(--bg-page)]/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:pointer-events-auto sm:static sm:mt-5 sm:w-full sm:border-t-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0 sm:backdrop-blur-0">
           <div className="pointer-events-auto mx-auto flex w-full max-w-[34rem] items-center gap-2">
             <button

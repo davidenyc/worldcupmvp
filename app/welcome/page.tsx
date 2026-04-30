@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function WelcomePage() {
   return (
-    <main className="flex min-h-[calc(100dvh-var(--header-h))] justify-center">
+    <main className="flex justify-center">
       <WelcomeFlow />
     </main>
   );
