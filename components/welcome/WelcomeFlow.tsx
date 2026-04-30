@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -883,7 +884,12 @@ export function WelcomeFlow() {
                       </button>
                     );
                   })}
-                  <div className="text-sm text-mist">Pick later in Account → Membership. No charge yet.</div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-mist">
+                    <span>Pick later in Account → Membership.</span>
+                    <Link href="/membership" className="font-semibold text-deep underline underline-offset-4">
+                      Review plan details
+                    </Link>
+                  </div>
                 </div>
               ) : null}
 
