@@ -164,6 +164,26 @@ Notes:
 - `VAPID_PRIVATE_KEY` must stay server-only and must not be `NEXT_PUBLIC_` prefixed.
 - `CRON_SECRET` protects `/api/cron/*` routes from public hits.
 
+## Security setup (required before production deploy)
+
+Generate fresh values for these env vars and set them in Vercel:
+
+- `ELITE_ACCESS_SECRET` — `openssl rand -hex 32`
+- `CRON_SECRET` — `openssl rand -hex 32`
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase Dashboard -> Settings -> API -> reset
+- `STRIPE_WEBHOOK_SECRET` — Stripe Dashboard -> Webhooks -> reveal
+
+Rotate these annually or if anyone outside the team has read access to env logs.
+
+Required env vars (will throw at startup if missing in production):
+
+- `ELITE_ACCESS_SECRET`
+- `CRON_SECRET`
+- `DATABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
 ## Where real credentials go
 
 - `NEXT_PUBLIC_MAPBOX_TOKEN`: optional map imagery/token if you replace the demo 2D panel with Mapbox-backed rendering
