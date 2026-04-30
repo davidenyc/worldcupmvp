@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { UpgradeModal } from "@/components/membership/UpgradeModal";
 import { QRCodeImage } from "@/components/ui/QRCodeImage";
 import { useMembership } from "@/lib/store/membership";
-import { useUser } from "@/lib/store/user";
 import { toast } from "@/lib/toast";
 
 function secondsUntil(expiresAt: string | null) {
@@ -21,7 +20,6 @@ export function EliteAccessCard({
   venueName: string;
 }) {
   const { tier } = useMembership();
-  const user = useUser();
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -40,10 +38,7 @@ export function EliteAccessCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.id,
-          displayName: user.displayName,
-          venueId,
-          tier
+          venueId
         })
       });
 
@@ -67,7 +62,7 @@ export function EliteAccessCard({
       window.clearInterval(refreshInterval);
       window.clearInterval(secondInterval);
     };
-  }, [open, tier, user.displayName, user.id, venueId]);
+  }, [open, tier, venueId]);
 
   async function runManualCheck() {
     if (!token) return;
