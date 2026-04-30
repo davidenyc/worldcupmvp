@@ -31,6 +31,26 @@ const profilePatchSchema = z.object({
       notificationPermission: z.enum(["default", "granted", "denied", "unsupported"]).optional()
     })
     .optional(),
+  notificationPrefs: z
+    .object({
+      channels: z
+        .object({
+          push: z.boolean().optional(),
+          email: z.boolean().optional(),
+          in_app: z.boolean().optional()
+        })
+        .optional(),
+      perKind: z
+        .record(
+          z.string(),
+          z.object({
+            push: z.boolean().optional(),
+            email: z.boolean().optional()
+          })
+        )
+        .optional()
+    })
+    .optional(),
   welcomeSeenAt: z.string().datetime().optional().nullable(),
   followedCountries: z.array(z.string().trim().min(1).max(80)).optional()
 });
@@ -108,6 +128,7 @@ export async function PATCH(request: Request) {
       prefersDarkMode: payload.prefersDarkMode ?? undefined,
       defaultFilters: payload.defaultFilters ?? undefined,
       promoOptIns: payload.promoOptIns ?? undefined,
+      notificationPrefs: payload.notificationPrefs ?? undefined,
       welcomeSeenAt: payload.welcomeSeenAt === undefined ? undefined : payload.welcomeSeenAt ? new Date(payload.welcomeSeenAt) : null
     },
     create: {
@@ -133,6 +154,23 @@ export async function PATCH(request: Request) {
         savedVenuePromoAlerts: false,
         wantsGroups: false,
         notificationPermission: "default"
+      },
+      notificationPrefs: payload.notificationPrefs ?? {
+        channels: {
+          push: true,
+          email: true,
+          in_app: true
+        },
+        perKind: {
+          kickoff_1h: { push: true, email: false },
+          kickoff_30m: { push: true, email: false },
+          match_day_digest: { push: false, email: true },
+          promo_expiring: { push: true, email: true },
+          friend_request_received: { push: true, email: true },
+          watch_party_invite: { push: true, email: true },
+          watch_party_rsvp: { push: true, email: false },
+          new_promo_at_saved: { push: true, email: false }
+        }
       },
       welcomeSeenAt: payload.welcomeSeenAt ? new Date(payload.welcomeSeenAt) : null
     }
