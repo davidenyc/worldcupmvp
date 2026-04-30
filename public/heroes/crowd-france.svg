@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <!-- TODO(davide): swap placeholder with compressed royalty-free crowd photo -->
+  <rect width="1600" height="900" fill="black"/>
+  <circle cx="1350" cy="170" r="220" fill="white" opacity=".08"/>
+  <circle cx="260" cy="220" r="200" fill="gold" opacity=".1"/>
+  <path d="M0 630C190 520 420 700 610 650s310-170 510-110 270 40 480-30V900H0z" fill="white" opacity=".08"/>
+  <text x="90" y="720" fill="white" font-size="94" font-family="Arial, sans-serif" font-weight="700">FRANCE MATCH NIGHT</text>
+</svg>

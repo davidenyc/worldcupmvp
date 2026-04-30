@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import type { TonightHeroData } from "@/lib/hooks/useTonightFeed";
 import { SkeletonLine } from "@/components/ui/SkeletonCard";
@@ -49,6 +50,23 @@ function getHeroBackdrop(slug: string) {
       return "linear-gradient(135deg, rgba(128, 23, 51, 0.96), rgba(14, 27, 43, 0.88)), radial-gradient(circle at top right, rgba(244, 185, 66, 0.22), transparent 36%)";
     default:
       return "linear-gradient(135deg, rgba(21, 34, 55, 0.96), rgba(14, 27, 43, 0.88)), radial-gradient(circle at top right, rgba(244, 185, 66, 0.2), transparent 36%)";
+  }
+}
+
+function getHeroImage(slug: string) {
+  switch (slug) {
+    case "mexico":
+      return "/heroes/crowd-mexico.svg";
+    case "argentina":
+      return "/heroes/crowd-argentina.svg";
+    case "france":
+      return "/heroes/crowd-france.svg";
+    case "brazil":
+      return "/heroes/crowd-brazil.svg";
+    case "portugal":
+      return "/heroes/crowd-portugal.svg";
+    default:
+      return "/heroes/crowd-default.svg";
   }
 }
 
@@ -110,6 +128,14 @@ export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: A
         className="relative min-h-[25rem] overflow-hidden px-6 py-6 text-[color:var(--fg-on-strong)] sm:min-h-[29rem] sm:px-8 sm:py-8"
         style={{ background: getHeroBackdrop(primaryCountrySlug) }}
       >
+        <Image
+          src={getHeroImage(primaryCountrySlug)}
+          alt={`${hero.homeCountry.name} versus ${hero.awayCountry.name} crowd`}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-55"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(10,22,40,0.28)_40%,rgba(10,22,40,0.88)_100%)]" />
         <div className="absolute -right-6 top-5 text-[8rem] opacity-10 sm:text-[11rem]">{hero.homeCountry.flagEmoji}</div>
         <div className="relative flex h-full flex-col justify-end">

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <!-- TODO(davide): swap placeholder with compressed royalty-free crowd photo -->
+  <rect width="1600" height="900" fill="black"/>
+  <circle cx="1320" cy="160" r="240" fill="white" opacity=".08"/>
+  <circle cx="260" cy="220" r="210" fill="gold" opacity=".12"/>
+  <path d="M0 620C210 540 370 700 560 660s300-200 510-120 320 40 530-30V900H0z" fill="white" opacity=".08"/>
+  <text x="90" y="720" fill="white" font-size="94" font-family="Arial, sans-serif" font-weight="700">MEXICO MATCH NIGHT</text>
+</svg>

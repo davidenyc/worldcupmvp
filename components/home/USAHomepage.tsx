@@ -89,6 +89,24 @@ function getPrimaryCountrySlug(match: TonightFeed["hero"], userCountrySlug?: str
   return match.homeCountry.slug;
 }
 
+function getNeighborhoodFallbackImage(neighborhood: string) {
+  const slug = neighborhood.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  switch (slug) {
+    case "williamsburg":
+      return "/neighborhoods/williamsburg.svg";
+    case "bushwick":
+      return "/neighborhoods/bushwick.svg";
+    case "lower-east-side":
+      return "/neighborhoods/lower-east-side.svg";
+    case "chelsea":
+      return "/neighborhoods/chelsea.svg";
+    case "astoria":
+      return "/neighborhoods/astoria.svg";
+    default:
+      return "/neighborhoods/default.svg";
+  }
+}
+
 export async function USAHomepage() {
   const supabase = createClient();
   const {
@@ -156,7 +174,7 @@ export async function USAHomepage() {
             slug: venue.slug,
             name: venue.name,
             neighborhood: venue.neighborhood,
-            imageUrl: getVenueImageSet(venue)[0] ?? "/og/default.png",
+            imageUrl: venue.imageUrls[0] ?? getVenueImageSet(venue)[0] ?? getNeighborhoodFallbackImage(venue.neighborhood),
             rating: venue.rating,
             goingCount: getSeededGoingCount(heroMatch.matchId, venue.slug, venue),
             acceptsReservations: venue.acceptsReservations,
