@@ -272,7 +272,7 @@ export function SiteHeader() {
                   </span>
                 ) : null}
               </button>
-              {!isExplicit ? (
+              {!isExplicit && !isHomeSurface ? (
                 <button
                   type="button"
                   onClick={() => {
