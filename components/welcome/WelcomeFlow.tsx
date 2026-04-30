@@ -164,6 +164,7 @@ export function WelcomeFlow() {
   const [stepIndex, setStepIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const [requestingPermission, setRequestingPermission] = useState(false);
+  const [pendingPermissionPrompt, setPendingPermissionPrompt] = useState(false);
   const [firstNameDraft, setFirstNameDraft] = useState(user.firstName ?? "");
   const [homeCityDraft, setHomeCityDraft] = useState(
     user.homeCity
@@ -208,6 +209,56 @@ export function WelcomeFlow() {
       setEmailDraft(authUser.email);
     }
   }, [authUser?.email, user.email]);
+
+  useEffect(() => {
+    if (!pendingPermissionPrompt) return;
+
+    let cancelled = false;
+
+    async function requestPermission() {
+      try {
+        if (typeof Notification === "undefined" || typeof Notification.requestPermission !== "function") {
+          if (!cancelled) {
+            setNotificationPermissionDraft("unsupported");
+            setNotificationPermission("unsupported");
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          setRequestingPermission(true);
+        }
+
+        const permission = await Notification.requestPermission();
+
+        if (cancelled) return;
+
+        setNotificationPermissionDraft(permission);
+        setNotificationPermission(permission);
+
+        if (permission === "granted") {
+          setNotifyMatchAlertsDraft(true);
+          setPromoOptInsDraft((current) => ({ ...current, push: true }));
+        }
+      } catch {
+        if (!cancelled) {
+          setNotificationPermissionDraft("unsupported");
+          setNotificationPermission("unsupported");
+        }
+      } finally {
+        if (!cancelled) {
+          setRequestingPermission(false);
+          setPendingPermissionPrompt(false);
+        }
+      }
+    }
+
+    void requestPermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingPermissionPrompt, setNotificationPermission]);
 
   const steps = useMemo(
     () => BASE_STEPS.filter((step) => !(step.id === "email" && authUser)),
@@ -354,31 +405,6 @@ export function WelcomeFlow() {
       }
       return [...current, countrySlug];
     });
-  }
-
-  async function handleNotificationPermission() {
-    try {
-      if (typeof Notification === "undefined" || typeof Notification.requestPermission !== "function") {
-        setNotificationPermissionDraft("unsupported");
-        setNotificationPermission("unsupported");
-        return;
-      }
-
-      setRequestingPermission(true);
-      const permission = await Notification.requestPermission();
-      setNotificationPermissionDraft(permission);
-      setNotificationPermission(permission);
-
-      if (permission === "granted") {
-        setNotifyMatchAlertsDraft(true);
-        setPromoOptInsDraft((current) => ({ ...current, push: true }));
-      }
-    } catch {
-      setNotificationPermissionDraft("unsupported");
-      setNotificationPermission("unsupported");
-    } finally {
-      setRequestingPermission(false);
-    }
   }
 
   function handleContinue() {
@@ -867,9 +893,7 @@ export function WelcomeFlow() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => {
-                          void handleNotificationPermission();
-                        }}
+                        onClick={() => setPendingPermissionPrompt(true)}
                         disabled={requestingPermission || notificationPermissionDraft === "granted"}
                         className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-line bg-surface px-5 text-sm font-semibold text-deep transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                       >
