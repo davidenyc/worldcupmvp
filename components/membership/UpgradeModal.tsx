@@ -62,7 +62,7 @@ export function UpgradeModal({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [feature, onClose, pathname]);
 
   async function handleInstantUpgrade() {
     setUpgradingInline(true);

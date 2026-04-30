@@ -12,7 +12,7 @@ interface VibeChipsProps {
 export function VibeChips({ cityKey }: VibeChipsProps) {
   return (
     <section>
-      <div className="text-[11px] uppercase tracking-[0.2em] text-mist">What's your vibe tonight?</div>
+      <div className="text-[11px] uppercase tracking-[0.2em] text-mist">What&apos;s your vibe tonight?</div>
       <div className="mt-4 flex gap-3 overflow-x-auto pb-2 sm:flex-wrap">
         {vibeFilters.map((filter) => (
           <Link

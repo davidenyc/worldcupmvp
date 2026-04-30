@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { CountrySummary } from "@/lib/types";
 import { getFlagImageUrl } from "@/lib/utils/flagImage";
 
@@ -20,14 +22,17 @@ export function CountryFlag({ country, size = "md", className = "" }: Props) {
   const s = sizes[size];
 
   if (imageUrl) {
+    const width = s.img;
+    const height = Math.round(s.img * 0.67);
     return (
-      <img
+      <Image
         src={imageUrl}
         alt={`${country.name} flag`}
-        width={s.img}
-        height={Math.round(s.img * 0.67)}
+        width={width}
+        height={height}
+        unoptimized
         className={`inline-block rounded-sm object-cover shadow-sm ${className}`}
-        style={{ width: s.img, height: Math.round(s.img * 0.67) }}
+        style={{ width, height }}
         loading="lazy"
       />
     );

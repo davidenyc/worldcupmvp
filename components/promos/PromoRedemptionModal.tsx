@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { UpgradeModal } from "@/components/membership/UpgradeModal";
+import { QRCodeImage } from "@/components/ui/QRCodeImage";
 import {
   PromoRecord,
   SavedPromo,
@@ -141,7 +142,7 @@ export function PromoRedemptionModal({
           <div className="mt-5 space-y-4">
             {promo.redemption === "show_qr" || promo.redemption === "walk_in" ? (
               <div className="rounded-[1.75rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] p-5 text-center">
-                <img src={qrUrl} alt={`${promo.title} QR code`} className="mx-auto h-56 w-56 rounded-[1.25rem] bg-white p-3" />
+                <QRCodeImage src={qrUrl} alt={`${promo.title} QR code`} className="mx-auto h-56 w-56 rounded-[1.25rem]" />
                 <div className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
                   Backup code
                 </div>

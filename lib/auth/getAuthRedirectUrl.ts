@@ -12,6 +12,6 @@ export function getAuthRedirectUrl() {
     return `${window.location.origin.replace(/\/$/, "")}/auth/callback`;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002";
   return `${baseUrl.replace(/\/$/, "")}/auth/callback`;
 }

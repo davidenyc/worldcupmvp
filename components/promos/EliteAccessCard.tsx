@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { UpgradeModal } from "@/components/membership/UpgradeModal";
+import { QRCodeImage } from "@/components/ui/QRCodeImage";
 import { useMembership } from "@/lib/store/membership";
 import { useUser } from "@/lib/store/user";
 import { toast } from "@/lib/toast";
@@ -139,7 +140,7 @@ export function EliteAccessCard({
               </button>
             </div>
             <div className="mt-4 rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[var(--bg-surface-elevated)] p-4 text-center">
-              {qrUrl ? <img src={qrUrl} alt="Elite access QR code" className="mx-auto h-56 w-56 rounded-[1rem] bg-white p-3" /> : null}
+              {qrUrl ? <QRCodeImage src={qrUrl} alt="Elite access QR code" className="mx-auto h-56 w-56 rounded-[1rem]" /> : null}
               <div className="mt-3 text-sm font-semibold text-[color:var(--fg-primary)]">{venueName}</div>
               <div className="mt-1 text-xs uppercase tracking-[0.2em] text-[color:var(--fg-muted)]">
                 Rotates every 30 seconds · {secondsLeft}s left

@@ -28,7 +28,7 @@ export function SearchPageClient({
   const [loading, setLoading] = useState(false);
   const cityStripRef = useRef<HTMLDivElement | null>(null);
   const cityOptions = useMemo(() => HOST_CITIES, []);
-  const allVenues = venuesByCity[city] ?? [];
+  const allVenues = useMemo(() => venuesByCity[city] ?? [], [city, venuesByCity]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams.toString());

@@ -118,6 +118,7 @@ export function PushPermissionCard() {
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
+        // TODO(native-ios): keep the browser prompt copy in sync with the native APNs opt-in flow once the iOS shell exposes the same alert settings surface.
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidKey)

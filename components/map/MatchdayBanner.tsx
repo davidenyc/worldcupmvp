@@ -23,13 +23,14 @@ export function MatchdayBanner({
   onApplyMatch: (match: WorldCupMatch) => void;
   onDismiss?: () => void;
 }) {
-  if (!match) return null;
-
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   useEffect(() => {
+    if (!match) return;
     setMobileExpanded(false);
-  }, [match.id]);
+  }, [match]);
+
+  if (!match) return null;
 
   const home = getCountry(countries, match.homeCountry);
   const away = getCountry(countries, match.awayCountry);

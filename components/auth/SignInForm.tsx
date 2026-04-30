@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { migrateAnonymousStateIfPresent } from "@/lib/auth/clientMigration";
@@ -59,7 +59,7 @@ export function SignInForm({
   const autoRequestedRef = useRef(false);
   const next = initialNext && initialNext.startsWith("/") ? initialNext : "/me";
 
-  async function requestCode(requestedEmail: string) {
+  const requestCode = useCallback(async (requestedEmail: string) => {
     setSubmitting(true);
     setStatus("idle");
     setMessage("");
@@ -88,7 +88,7 @@ export function SignInForm({
     setStatus("success");
     setMessage(`Use the email link or enter the ${OTP_LENGTH}-digit code to finish signing in.`);
     setSubmitting(false);
-  }
+  }, [allowCreateUser, next]);
 
   async function handleRequestCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,7 +99,7 @@ export function SignInForm({
     if (!initialAutoRequest || autoRequestedRef.current || step !== "request" || !validateEmail(email)) return;
     autoRequestedRef.current = true;
     void requestCode(email);
-  }, [email, initialAutoRequest, step]);
+  }, [email, initialAutoRequest, requestCode, step]);
 
   const otpPlaceholder = OTP_LENGTH === 6 ? "123456" : "12345678";
 

@@ -34,6 +34,7 @@ export function PushNotificationBridge() {
         const { PushNotifications } = await import("@capacitor/push-notifications");
         const { Capacitor } = await import("@capacitor/core");
 
+        // TODO(native-ios): replace this generic Capacitor bridge with a deeper APNs handoff flow once the native iOS sprint owns token refresh and notification tap routing.
         if (!Capacitor.isNativePlatform()) return;
 
         const cachedToken = localStorage.getItem("push_token");
@@ -61,6 +62,7 @@ export function PushNotificationBridge() {
         });
 
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+          // TODO(native-ios): route native push taps through the app router once deep-link restoration is finalized for iOS shells.
           const url = action.notification.data?.url;
           if (typeof url === "string" && url && window.location) {
             window.location.href = url;

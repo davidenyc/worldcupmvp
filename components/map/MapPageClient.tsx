@@ -600,7 +600,7 @@ export function MapPageClient({
     .map((slug) => countryLookup.get(slug)?.flagEmoji)
     .filter(Boolean)
     .join(" ");
-  const filterVenues = (venues: RankedVenue[]) => {
+  const filterVenues = useCallback((venues: RankedVenue[]) => {
     const filtered = venues.filter((venue) => {
       if (selectedCountrySlugs.length && !venue.associatedCountries.some((slug) => selectedCountrySlugs.includes(slug))) return false;
       if (selectedVenueIntents.length && !selectedVenueIntents.includes(venue.venueIntent)) return false;
@@ -645,13 +645,10 @@ export function MapPageClient({
     }
 
     return sorted;
-  };
-
-  const filteredVenues = useMemo(() => filterVenues(data.venues), [
+  }, [
     acceptsReservations,
     borough,
     capacityBucket,
-    data.venues,
     deferredQuery,
     familyFriendly,
     highAtmosphereOnly,
@@ -663,27 +660,13 @@ export function MapPageClient({
     selectedVenueIntents,
     soccerBarsMode,
     sortKey,
-    venueType
+    venueType,
+    vibe
   ]);
 
-  const regionalFilteredVenues = useMemo(() => filterVenues(data.regionalVenues), [
-    acceptsReservations,
-    borough,
-    capacityBucket,
-    data.regionalVenues,
-    deferredQuery,
-    familyFriendly,
-    highAtmosphereOnly,
-    mapCenter,
-    neighborhood,
-    openNowOnly,
-    outdoorSeating,
-    selectedCountrySlugs,
-    selectedVenueIntents,
-    soccerBarsMode,
-    sortKey,
-    venueType
-  ]);
+  const filteredVenues = useMemo(() => filterVenues(data.venues), [data.venues, filterVenues]);
+
+  const regionalFilteredVenues = useMemo(() => filterVenues(data.regionalVenues), [data.regionalVenues, filterVenues]);
 
   const initialMapView = useMemo(
     () => buildInitialMapView(filteredVenues, [selectedCityConfig.lat, selectedCityConfig.lng], selectedCityConfig.key),
