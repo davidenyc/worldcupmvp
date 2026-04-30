@@ -42,7 +42,7 @@ export function MarketingHeroActions({ variant = "hero" }: { variant?: "hero" | 
         href={secondaryHref}
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/20 px-5 text-sm font-semibold text-[color:var(--fg-on-strong)] transition hover:bg-white/10"
       >
-        Tonight&apos;s matches →
+        See the slate →
       </Link>
     </div>
   );
