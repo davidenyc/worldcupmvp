@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MyActivityTimeline } from "@/components/me/MyActivityTimeline";
 import { MyFollowing } from "@/components/me/MyFollowing";
 import { MyHeroIdentity } from "@/components/me/MyHeroIdentity";
+import { PushPermissionCard } from "@/components/notifications/PushPermissionCard";
 import { MyQRCodes } from "@/components/me/MyQRCodes";
 import { MySavedVenues } from "@/components/me/MySavedVenues";
 import { MyWatchlist } from "@/components/me/MyWatchlist";
@@ -60,6 +61,7 @@ export function MyWorldCupClient({
   return (
     <div className="space-y-6">
       <MyHeroIdentity user={user} tier={tier} />
+      <PushPermissionCard />
       <MyFollowing
         favoriteCountry={user.favoriteCountrySlug}
         followedCountries={user.followingCountrySlugs}

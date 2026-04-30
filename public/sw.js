@@ -1,15 +1,18 @@
 const CACHE_NAME = "gameday-map-v3";
 const OFFLINE_URL = "/offline";
 const SHELL_ROUTES = ["/", "/app", "/today", "/nyc/map", "/nyc/matches", "/manifest.json", OFFLINE_URL];
+const IS_LOCALHOST = self.location.hostname === "localhost" || self.location.hostname === "127.0.0.1";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ROUTES)));
+  event.waitUntil(
+    IS_LOCALHOST ? Promise.resolve() : caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ROUTES))
+  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
+    (IS_LOCALHOST ? Promise.resolve([]) : caches.keys()).then((keys) =>
       Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
@@ -27,6 +30,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (IS_LOCALHOST) return;
   if (request.method !== "GET") return;
 
   if (url.pathname.startsWith("/api/")) {
