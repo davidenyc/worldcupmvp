@@ -47,7 +47,7 @@ export function PrimaryCountryStrip({ countries, cityKey }: PrimaryCountryStripP
   return (
     <section>
       <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-mist">
-        Not your match? Pick your nation.
+        Backing someone else? Pick a flag.
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
         <CollapsibleGrid initialCount={6} noun="nation">

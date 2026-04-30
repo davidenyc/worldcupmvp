@@ -81,7 +81,7 @@ export function FeaturedVenuesForMatch({
                 <span>{venue.goingCount}+ going</span>
               </div>
               <div className="inline-flex h-11 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
-                {venue.acceptsReservations ? "Reserve →" : "Get there →"}
+                {venue.acceptsReservations ? "Reserve a spot →" : "Get there →"}
               </div>
             </div>
           </Link>

@@ -80,7 +80,7 @@ export function AliveMatchCard({ match, variant = "default" }: AliveMatchCardPro
         ) : null}
       </div>
       <div className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]">
-        {hasVenueCount ? "Find a spot →" : "Browse the map →"}
+        {hasVenueCount ? "Take me there →" : "Browse the map →"}
       </div>
     </button>
   );

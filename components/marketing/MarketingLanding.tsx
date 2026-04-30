@@ -84,20 +84,7 @@ export async function MarketingLanding() {
                     Pick your city or your team now, and we&apos;ll point you straight to the rooms most worth showing up for.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/today?city=nyc"
-                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-deep transition hover:bg-surface-2"
-                  >
-                    See the slate →
-                  </Link>
-                  <Link
-                    href="/nyc/map"
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-[color:var(--fg-on-accent)]"
-                  >
-                    Browse the map →
-                  </Link>
-                </div>
+                <MarketingHeroActions variant="compact" />
               </div>
             )}
           </section>

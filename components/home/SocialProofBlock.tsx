@@ -33,7 +33,7 @@ export function SocialProofBlock({ statLabel, href, initialIndex }: SocialProofB
         href={href}
         className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
       >
-        See spots →
+        Take me there →
       </Link>
     </section>
   );
