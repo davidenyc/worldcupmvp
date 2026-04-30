@@ -461,26 +461,26 @@ export function SiteHeader() {
         >
           <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
             <nav className="flex items-stretch justify-between gap-1">
-              <a href="/" className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              <Link href="/" className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Home className="h-5 w-5" />
                 <span>Home</span>
-              </a>
-              <a href={todayHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/today") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </Link>
+              <Link href={todayHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/today") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <SunMedium className="h-5 w-5" />
                 <span>Today</span>
-              </a>
-              <a href={mapHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </Link>
+              <Link href={mapHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/map") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <MapIcon className="h-5 w-5" />
                 <span>Map</span>
-              </a>
-              <a href={matchesHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/matches") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </Link>
+              <Link href={matchesHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.includes("/matches") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Trophy className="h-5 w-5" />
                 <span>Matches</span>
-              </a>
-              <a href={myHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              </Link>
+              <Link href={myHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath.startsWith("/me") ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Heart className="h-5 w-5" />
                 <span>My Cup</span>
-              </a>
+              </Link>
             </nav>
           </div>
         </div>
