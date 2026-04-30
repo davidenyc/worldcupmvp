@@ -343,6 +343,8 @@ export function WelcomeFlow() {
 
     if (favoriteCountry) {
       lines.push(`You're backing ${favoriteCountry.flagEmoji} ${favoriteCountry.name} in ${cityLabel}.`);
+    } else {
+      lines.push(`Your Cup is set for ${cityLabel}.`);
     }
     if (followingSummary) {
       lines.push(`Following ${followingSummary}.`);
@@ -356,6 +358,8 @@ export function WelcomeFlow() {
 
     return lines.slice(0, 4);
   }, [favoriteCountryDraft, followingDraft, homeCityDraft, suggestedCity, tier, wantsGroupsDraft]);
+
+  const celebrationName = firstNameDraft.trim() || user.firstName || "Fan";
 
   function resolveHomeCity(value: string) {
     return getHostCity(value)?.key ?? getHostCity(value.toLowerCase().replace(/\s+/g, "-"))?.key ?? null;
@@ -580,7 +584,7 @@ export function WelcomeFlow() {
             <div className="text-5xl leading-none">🎉</div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-mist">Welcome</div>
             <h1 className="text-3xl font-semibold tracking-tight text-deep sm:text-4xl">
-              Welcome to GameDay Map{firstNameDraft.trim() ? `, ${firstNameDraft.trim()}` : ""}.
+              Welcome to GameDay Map, {celebrationName}.
             </h1>
             <div className="space-y-2 text-sm leading-7 text-mist">
               {celebrationLines.length ? celebrationLines.map((line) => <p key={line}>{line}</p>) : (
