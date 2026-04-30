@@ -108,7 +108,8 @@ const PLAN_CARD_COPY: Record<
       "Everything in Free",
       "Unlimited saves and follows",
       "Reservation requests",
-      "Priority watch-party invites"
+      "Priority watch-party invites",
+      "Match-day push alerts"
     ]
   },
   elite: {
@@ -815,7 +816,7 @@ export function WelcomeFlow() {
                       </button>
                     );
                   })}
-                  <div className="text-sm text-mist">Pick later in Account → Membership.</div>
+                  <div className="text-sm text-mist">Pick later in Account → Membership. No charge yet.</div>
                 </div>
               ) : null}
 
