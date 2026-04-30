@@ -63,7 +63,7 @@ async function getResolvedTonightFeed(cityKey: string, userCountrySlug?: string)
       };
     } catch {
       return {
-        feed: { hero: null, carousel: [], windowLabel: "Schedule loading" } satisfies TonightFeed,
+        feed: { hero: null, carousel: [], windowLabel: "Next match day" } satisfies TonightFeed,
         feedError: true
       };
     }
@@ -84,6 +84,24 @@ export async function USAHomepage() {
   const userCountrySlug = profile?.favoriteCountrySlug ?? undefined;
 
   const allCountries = await getAllCountries();
+  const countryLookup = new Map(allCountries.map((country) => [country.slug, country] as const));
+  const featuredMatchDay = getFeaturedMatchDay();
+  const fallbackMatch = featuredMatchDay.matches[0]
+    ? (() => {
+        const match = featuredMatchDay.matches[0]!;
+        const home = countryLookup.get(match.homeCountry);
+        const away = countryLookup.get(match.awayCountry);
+
+        if (!home || !away) return null;
+
+        return {
+          label: featuredMatchDay.label,
+          homeLabel: `${home.flagEmoji} ${home.name}`,
+          awayLabel: `${away.flagEmoji} ${away.name}`,
+          startsAt: match.startsAt
+        };
+      })()
+    : null;
   const [cityCards, tonightFeedResult] = await Promise.all([
     Promise.all(
       HOST_CITIES.map(async (city) => ({
@@ -95,6 +113,20 @@ export async function USAHomepage() {
     getResolvedTonightFeed(activeCity, userCountrySlug)
   ]);
   const { feed: tonightFeed, feedError } = tonightFeedResult;
+  const matchSectionTitle =
+    tonightFeed.windowLabel === "Next match day"
+      ? "Next match day"
+      : tonightFeed.windowLabel === "Tomorrow"
+        ? "Tomorrow's matches"
+        : tonightFeed.windowLabel === "Today"
+          ? "Today's matches"
+          : "Tonight's matches";
+  const emptyScheduleCopy =
+    tonightFeed.windowLabel === "Next match day"
+      ? "The next match day is coming up. Pick your city or team now and we’ll point you to the right room."
+      : tonightFeed.windowLabel === "Tomorrow"
+        ? "Tomorrow’s slate is coming into focus. Pick your city or team and we’ll get you there."
+        : "Tonight’s slate is coming into focus. Pick your city or team and we’ll get you there.";
 
   return (
     <main className="bg-bg text-deep">
@@ -109,6 +141,10 @@ export async function USAHomepage() {
               cityLabel={HOST_CITIES.find((city) => city.key === activeCity)?.shortLabel ?? "NYC"}
               userCountrySlug={userCountrySlug}
               initialFeed={tonightFeed}
+              fallbackMatch={fallbackMatch ? {
+                ...fallbackMatch,
+                venueCount: cityCards.find((city) => city.key === activeCity)?.venueCount
+              } : null}
             />
           )}
           <PrimaryCountryStrip countries={allCountries} cityKey={activeCity} />
@@ -116,7 +152,7 @@ export async function USAHomepage() {
             <div className="flex items-end justify-between gap-3">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.2em] text-mist">{tonightFeed.windowLabel}</div>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-deep">Tonight&apos;s matches</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-deep">{matchSectionTitle}</h2>
               </div>
               <Link href="/today" className="text-sm font-semibold text-[color:var(--fg-primary)]">
                 See all matches →
@@ -130,7 +166,7 @@ export async function USAHomepage() {
               </div>
             ) : (
               <div className="mt-5 surface px-5 py-4 text-sm text-[color:var(--fg-secondary)]">
-                We&apos;re checking on tonight&apos;s schedule. Try refresh.
+                {emptyScheduleCopy}
               </div>
             )}
           </section>

@@ -480,22 +480,9 @@ export function WelcomeFlow() {
 
   function handleOpenCup() {
     markWelcomeSeen();
-    const target =
-      !authUser
-        ? (() => {
-            const params = new URLSearchParams({ next: "/me" });
-            if (validateEmail(emailDraft)) {
-              params.set("email", emailDraft.trim());
-              params.set("send", "1");
-              params.set("create", "1");
-            }
-            return `/auth/sign-in?${params.toString()}`;
-          })()
-        : "/me";
-
-    // Use a hard navigation here because the final onboarding CTA was flaky
-    // in some browser contexts when relying on a client-side router transition.
-    window.location.assign(target);
+    // Always land users in My Cup from the celebration screen so the onboarding
+    // finish moment feels complete instead of bouncing out to auth first.
+    window.location.assign("/me");
   }
 
   function renderToggleRow(
@@ -552,7 +539,7 @@ export function WelcomeFlow() {
         </button>
       </div>
 
-      <div className="mt-1 hidden flex-col items-center gap-2 sm:hidden">
+      <div className="mt-1 flex flex-col items-center gap-2 sm:hidden">
         <div className="flex items-center justify-center gap-2">
           {steps.map((_, index) => (
             <span

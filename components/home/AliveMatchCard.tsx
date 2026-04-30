@@ -43,9 +43,10 @@ export function AliveMatchCard({ match, variant = "default" }: AliveMatchCardPro
         trackAliveMatchCardCtaClick({ matchId: match.matchId, cityKey: match.cityKey });
         router.push(href);
       }}
-      className={`surface flex h-full min-w-[18rem] flex-col justify-between p-4 transition hover:-translate-y-0.5 ${
+      aria-label={`${match.homeCountry.name} versus ${match.awayCountry.name} in ${match.cityKey}. ${hasVenueCount ? `${match.venueCount} venues showing.` : "Browse the map."}`}
+      className={`surface flex h-full flex-col justify-between p-4 transition hover:-translate-y-0.5 ${
         match.isUserMatch ? "border-gold" : "border-line"
-      } ${variant === "compact" ? "min-w-[16rem]" : ""}`}
+      } ${variant === "compact" ? "min-w-[16rem]" : "w-full"}`}
     >
       <div>
         <div className="text-[10px] uppercase tracking-[0.18em] text-mist">
@@ -63,7 +64,14 @@ export function AliveMatchCard({ match, variant = "default" }: AliveMatchCardPro
           {match.timeContext.window === "live" ? "Match in progress" : <LiveCountdown startsAt={match.startsAt} />}
         </div>
         {hasVenueCount ? (
-          <div className="mt-4 text-sm text-[color:var(--fg-secondary)]">{match.venueCount} venues showing</div>
+          <div className="mt-4 flex flex-wrap gap-2 text-sm text-[color:var(--fg-secondary)]">
+            <span>{match.venueCount} venues showing</span>
+            <span>•</span>
+            <span>{match.projectedGoingCount}+ fans lining up</span>
+          </div>
+        ) : null}
+        {hasVenueCount ? (
+          <div className="mt-2 text-sm font-medium text-deep">{match.crowdSignalCopy} — show up early.</div>
         ) : null}
         {variant === "default" ? (
           <div className="mt-3">

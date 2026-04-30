@@ -5,6 +5,8 @@ import { worldCup2026Matches, type WorldCupMatch } from "@/lib/data/matches";
 import { getAllCountries, getMapPageData } from "@/lib/data/repository";
 import { getCityTimeZone } from "@/lib/data/cityTimezones";
 import { type MatchWindow, classifyMatch } from "@/lib/time/matchWindows";
+import { getCrowdSignal } from "@/lib/social/crowdSignals";
+import { getSeededGoingCount } from "@/lib/social/seededGoingCount";
 import { getStrongestCrowdNeighborhood } from "@/lib/social/strongestCrowdNeighborhood";
 
 type MatchCountry = {
@@ -21,6 +23,8 @@ export interface TonightHeroData {
   cityKey: string;
   cityLabel: string;
   venueCount: number;
+  projectedGoingCount: number;
+  crowdSignalCopy: string;
   topNeighborhood: { name: string; venueCount: number; supporterCountrySlug: string } | null;
   countdownSeed: string;
   isUserMatch: boolean;
@@ -155,6 +159,11 @@ export async function getTonightFeed(cityKey: string, userCountrySlug?: string):
 
         return venue.associatedCountries.includes(match.homeCountry) || venue.associatedCountries.includes(match.awayCountry);
       });
+      const projectedGoingCount = matchingVenues.reduce(
+        (total, venue) => total + getSeededGoingCount(match.id, venue.slug, venue),
+        0
+      );
+      const crowdSignal = getCrowdSignal(Math.round(projectedGoingCount / Math.max(1, matchingVenues.length || 1)));
 
       const crowdCandidates = [match.homeCountry, match.awayCountry]
         .map((countrySlug) => {
@@ -186,6 +195,8 @@ export async function getTonightFeed(cityKey: string, userCountrySlug?: string):
         cityKey: city.key,
         cityLabel: city.shortLabel,
         venueCount: matchingVenues.length,
+        projectedGoingCount,
+        crowdSignalCopy: crowdSignal.copy,
         topNeighborhood: crowdCandidates[0] ?? null,
         countdownSeed: match.startsAt,
         isUserMatch: Boolean(
@@ -208,7 +219,7 @@ export async function getFallbackTonightFeed(cityKey: string, userCountrySlug?: 
   const candidateMatches = selectCandidateMatches(now, timeZone);
 
   if (!city) {
-    return { hero: null, carousel: [], windowLabel: "Schedule loading" };
+    return { hero: null, carousel: [], windowLabel: "Next match day" };
   }
 
   const fallbackMatches = candidateMatches.filter(
@@ -240,6 +251,8 @@ export async function getFallbackTonightFeed(cityKey: string, userCountrySlug?: 
         cityKey: city.key,
         cityLabel: city.shortLabel,
         venueCount: 0,
+        projectedGoingCount: 0,
+        crowdSignalCopy: "Match radar warming up",
         topNeighborhood: null,
         countdownSeed: match.startsAt,
         isUserMatch: Boolean(

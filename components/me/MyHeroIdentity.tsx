@@ -38,7 +38,7 @@ export function MyHeroIdentity({
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-[0.18em] text-mist">My Cup</div>
             <h1 className="mt-1 break-words text-3xl font-semibold tracking-tight text-deep">
-              Welcome back, {firstName}.
+              {firstName}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {tier === "free" ? (

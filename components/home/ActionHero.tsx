@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { TonightHeroData } from "@/lib/hooks/useTonightFeed";
 import { SkeletonLine } from "@/components/ui/SkeletonCard";
 import { ActionHeroCta } from "./ActionHeroCta";
@@ -12,6 +14,13 @@ interface ActionHeroProps {
     hero: TonightHeroData | null;
     windowLabel: string;
   };
+  fallbackMatch?: {
+    label: string;
+    homeLabel: string;
+    awayLabel: string;
+    startsAt: string;
+    venueCount?: number;
+  } | null;
 }
 
 function getPrimaryCountrySlug(hero: TonightHeroData) {
@@ -26,24 +35,41 @@ function getPrimaryCountrySlug(hero: TonightHeroData) {
   return hero.homeCountry.slug;
 }
 
-export function ActionHero({ cityKey, cityLabel, initialFeed }: ActionHeroProps) {
+export function ActionHero({ cityKey, cityLabel, initialFeed, fallbackMatch }: ActionHeroProps) {
   const hero = initialFeed.hero;
 
   if (!hero) {
     return (
       <section className="surface p-6 sm:p-8">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-mist">Schedule loading · World Cup 2026</div>
+        <div className="text-[11px] uppercase tracking-[0.2em] text-mist">
+          {fallbackMatch ? `${fallbackMatch.label.toUpperCase()} · WORLD CUP 2026` : "NEXT MATCH DAY · WORLD CUP 2026"}
+        </div>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-deep sm:text-4xl">
-          Schedule loading...
+          {fallbackMatch ? `${fallbackMatch.homeLabel} vs ${fallbackMatch.awayLabel}` : "World Cup starts June 11."}
         </h1>
-        <p className="mt-4 text-sm text-[color:var(--fg-secondary)]">
-          We&apos;re checking the next matches for {cityLabel}.
-        </p>
-        <ActionHeroRefreshButton
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
-        >
-          Try refresh
-        </ActionHeroRefreshButton>
+        <div className="mt-4 text-base font-medium text-[color:var(--fg-primary)]">
+          {fallbackMatch ? <>Kickoff <LiveCountdown startsAt={fallbackMatch.startsAt} /></> : "Plan your first match-day room now."}
+        </div>
+        <div className="mt-5 h-px w-full max-w-md bg-[color:var(--border-subtle)]" />
+        <div className="mt-5 space-y-2 text-sm text-[color:var(--fg-secondary)]">
+          <p>
+            {fallbackMatch
+              ? `World Cup 2026 opens soon. Start with ${cityLabel} and line up your room before kickoff.`
+              : `Start with ${cityLabel} and line up your room before kickoff.`}
+          </p>
+          {fallbackMatch?.venueCount ? <p>{fallbackMatch.venueCount} venues already mapped in {cityLabel}</p> : null}
+        </div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={`/today?city=${cityKey}`}
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
+          >
+            Browse next match day →
+          </Link>
+          <ActionHeroRefreshButton className="inline-flex min-h-12 items-center justify-center rounded-full border border-line px-5 text-sm font-semibold text-[color:var(--fg-primary)]">
+            Refresh schedule
+          </ActionHeroRefreshButton>
+        </div>
       </section>
     );
   }
@@ -53,6 +79,9 @@ export function ActionHero({ cityKey, cityLabel, initialFeed }: ActionHeroProps)
   const eyebrow = hero.timeContext.window === "live" ? "LIVE NOW · WORLD CUP 2026" : `${initialFeed.windowLabel.toUpperCase()} · WORLD CUP 2026`;
   const neighborhoodLine = hero.topNeighborhood
     ? `Strongest ${hero.topNeighborhood.supporterCountrySlug === hero.homeCountry.slug ? hero.homeCountry.name : hero.awayCountry.name} crowd: ${hero.topNeighborhood.name}`
+    : null;
+  const crowdLine = hero.projectedGoingCount > 0
+    ? `${hero.projectedGoingCount}+ fans lining up · ${hero.crowdSignalCopy}`
     : null;
 
   return (
@@ -67,6 +96,7 @@ export function ActionHero({ cityKey, cityLabel, initialFeed }: ActionHeroProps)
       <div className="mt-5 h-px w-full max-w-md bg-[color:var(--border-subtle)]" />
       <div className="mt-5 space-y-2 text-sm text-[color:var(--fg-secondary)]">
         <p id="action-hero-venue-count">{hero.venueCount} venues showing this in {cityLabel}</p>
+        {crowdLine ? <p className="font-medium text-deep">{crowdLine}</p> : null}
         {neighborhoodLine ? <p>{neighborhoodLine}</p> : null}
       </div>
       <ActionHeroCta
@@ -103,11 +133,13 @@ export function ActionHeroSkeleton() {
 export function ActionHeroError() {
   return (
     <section className="surface p-6 sm:p-8">
-      <div className="text-[11px] uppercase tracking-[0.2em] text-mist">Schedule check · World Cup 2026</div>
+      <div className="text-[11px] uppercase tracking-[0.2em] text-mist">Next match day · World Cup 2026</div>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-deep sm:text-4xl">
-        We&apos;re checking on tonight&apos;s schedule.
+        We&apos;re lining up the next match day.
       </h1>
-      <p className="mt-4 text-sm text-[color:var(--fg-secondary)]">Try refresh.</p>
+      <p className="mt-4 text-sm text-[color:var(--fg-secondary)]">
+        Venue counts and crowd signals can take a second. Try refresh and we&apos;ll pull the latest.
+      </p>
       <ActionHeroRefreshButton className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border border-line px-5 text-sm font-semibold text-[color:var(--fg-primary)]">
         Refresh
       </ActionHeroRefreshButton>
