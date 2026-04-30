@@ -1,4 +1,16 @@
 import Link from "next/link";
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export const metadata = buildMetadata({
+  title: "Page not found",
+  description:
+    "That GameDay Map page doesn’t exist or moved. Head back to find the right World Cup watch spot and keep your match-day plan moving.",
+  path: "/404",
+  robots: {
+    index: false,
+    follow: false
+  }
+});
 
 export default function NotFound() {
   return (

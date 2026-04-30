@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { MapPageClient } from "@/components/map/MapPageClient";
 import { getMapPageData } from "@/lib/data/repository";
 import { getHostCity } from "@/lib/data/hostCities";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 async function getCityGuideIntro(cityKey: string) {
   try {
@@ -33,35 +34,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const city = getHostCity(params.city);
   if (!city) {
-    return {
-      title: "GameDay Map",
+    return buildMetadata({
+      title: "City map",
       description: "Find World Cup 2026 watch parties near you."
-    };
+    });
   }
 
   const data = await getMapPageData(city.key);
   const neighborhoods = Array.from(new Set(data.venues.map((venue) => venue.neighborhood))).slice(0, 3);
   const description = `Find the best ${city.label} bars and restaurants to watch World Cup 2026 matches with fans from your country. ${data.venues.length} curated venues across ${neighborhoods.join(", ")}.`;
-  const title = `Best Bars to Watch World Cup 2026 in ${city.label} | GameDay Map`;
-
-  return {
-    title,
+  return buildMetadata({
+    title: `${city.label} map`,
     description,
-    openGraph: {
-      type: "website",
-      url: `https://gamedaymap.com/${city.key}/map`,
-      title,
-      description,
-      siteName: "GameDay Map",
-      images: [`/api/og?type=city-map&city=${city.key}`]
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [`/api/og?type=city-map&city=${city.key}`]
-    }
-  };
+    path: `/${city.key}/map`,
+    image: `/api/og?type=city-map&city=${city.key}`
+  });
 }
 
 export default async function MapPage({

@@ -1,3 +1,12 @@
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export const metadata = buildMetadata({
+  title: "Terms",
+  description:
+    "Review the current GameDay Map terms for venue discovery, match-day planning, and the pre-launch World Cup 2026 product experience.",
+  path: "/terms"
+});
+
 export default function TermsPage() {
   return (
     <main className="min-h-[100dvh] bg-bg px-4 py-10 sm:px-6 lg:px-8">

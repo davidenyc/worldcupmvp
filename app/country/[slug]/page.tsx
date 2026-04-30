@@ -9,6 +9,7 @@ import { demoCountries } from "@/lib/data/demo";
 import { HOST_CITIES, getHostCity } from "@/lib/data/hostCities";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAllCountries, getMapPageData } from "@/lib/data/repository";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 async function getCountryVenueBuckets() {
   const cityResults = await Promise.all(
@@ -46,23 +47,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const country = countries.find((item) => item.slug === params.slug);
 
   if (!country) {
-    return {
-      title: "GameDay Map",
-      description: "World Cup 2026 fan venue finder."
-    };
+    return buildMetadata({
+      title: "Country venues",
+      description: "Browse supporter venues and fan rooms for every World Cup 2026 country on GameDay Map."
+    });
   }
 
-  return {
-    title: `Best ${country.name} Watch Party Bars in the US | GameDay Map`,
-    description: `Find every ${country.name} bar and restaurant across all 17 World Cup 2026 host cities. Find your fellow supporters and watch the games together.`,
-    openGraph: {
-      images: [`/api/og?type=country&slug=${country.slug}`]
-    },
-    twitter: {
-      card: "summary_large_image",
-      images: [`/api/og?type=country&slug=${country.slug}`]
-    }
-  };
+  return buildMetadata({
+    title: `${country.name} watch party venues`,
+    description: `Find ${country.name} bars, restaurants, and supporter rooms across all 17 World Cup 2026 host cities.`,
+    path: `/country/${country.slug}`,
+    image: `/api/og?type=country&slug=${country.slug}`
+  });
 }
 
 export default async function CountryPage({ params }: { params: { slug: string } }) {

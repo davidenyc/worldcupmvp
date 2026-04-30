@@ -1,6 +1,14 @@
+import { buildMetadata } from "@/lib/seo/metadata";
 import { SavedVenuesClient } from "@/components/venue/SavedVenuesClient";
 import { HOST_CITIES } from "@/lib/data/hostCities";
 import { getMapPageData } from "@/lib/data/repository";
+
+export const metadata = buildMetadata({
+  title: "Saved venues",
+  description:
+    "Keep your World Cup watchlist of bars and restaurants in one place so it’s easy to come back to the right room on match day.",
+  path: "/saved"
+});
 
 export default async function SavedPage() {
   const cityResults = await Promise.all(HOST_CITIES.map((city) => getMapPageData(city.key)));

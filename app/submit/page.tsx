@@ -1,4 +1,12 @@
+import { buildMetadata } from "@/lib/seo/metadata";
 import { SubmitForm } from "@/components/submit/submit-form";
+
+export const metadata = buildMetadata({
+  title: "Submit a venue",
+  description:
+    "Submit a World Cup watch venue, supporter bar, or neighborhood room so more fans can find the right spot before match day.",
+  path: "/submit"
+});
 
 export default function SubmitPage() {
   return (

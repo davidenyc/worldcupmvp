@@ -1,3 +1,12 @@
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export const metadata = buildMetadata({
+  title: "Contact",
+  description:
+    "Contact the GameDay Map team about venue listings, supporter-group updates, partnerships, or help finding the right World Cup room.",
+  path: "/contact"
+});
+
 export default function ContactPage() {
   return (
     <main className="bg-bg text-deep">

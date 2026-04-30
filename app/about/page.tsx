@@ -1,5 +1,13 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export const metadata = buildMetadata({
+  title: "About",
+  description:
+    "Learn how GameDay Map finds the right World Cup 2026 watch room across 17 host cities using venue data, fan signals, and local curation.",
+  path: "/about"
+});
 
 export default function AboutPage() {
   return (
