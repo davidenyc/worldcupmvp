@@ -47,6 +47,29 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(networkFirst(request));
 });
 
+self.addEventListener("push", (event) => {
+  const data = event.data?.json() ?? {};
+
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "GameDay Map", {
+      body: data.body ?? "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/badge-72.png",
+      data: {
+        href: data.href ?? "/"
+      },
+      tag: data.tag ?? "gameday-notification"
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const href = event.notification.data?.href ?? "/";
+
+  event.waitUntil(self.clients.openWindow(href));
+});
+
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
