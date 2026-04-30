@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { HOST_CITIES } from "@/lib/data/hostCities";
+import { editorialPicks } from "@/lib/data/editorialPicks";
 import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
@@ -12,6 +13,7 @@ import { getSeededGoingCount } from "@/lib/social/seededGoingCount";
 import { getVenueImageSet } from "@/lib/utils/venueImages";
 import { ActionHero, ActionHeroError } from "./ActionHero";
 import { AliveMatchCard } from "./AliveMatchCard";
+import { EditorialPick } from "./EditorialPick";
 import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
@@ -173,6 +175,8 @@ export async function USAHomepage() {
       : tonightFeed.windowLabel === "Tomorrow"
         ? "Tomorrow’s slate is coming into focus. Pick your city or team and we’ll get you there."
         : "Tonight’s slate is coming into focus. Pick your city or team and we’ll get you there.";
+  const editorialSeed = featuredCountrySlug ? editorialPicks[featuredCountrySlug] ?? null : null;
+  const editorialVenue = featuredMatchVenues[0] ?? null;
 
   return (
     <main className="bg-bg text-deep">
@@ -227,6 +231,15 @@ export async function USAHomepage() {
               </div>
             )}
           </section>
+          {editorialSeed && editorialVenue ? (
+            <EditorialPick
+              eyebrow={editorialSeed.eyebrow}
+              venueName={editorialVenue.name}
+              neighborhood={editorialVenue.neighborhood}
+              quote={editorialSeed.quote}
+              venueHref={`/venue/${editorialVenue.slug}`}
+            />
+          ) : null}
         </div>
       </section>
 
