@@ -281,10 +281,10 @@ export function WelcomeFlow() {
       lines.push(`Following ${followingSummary}.`);
     }
     if (tier !== "free") {
-      lines.push(`${TIER_META[tier].label} perks are ready when you are.`);
+      lines.push(`${TIER_META[tier].label} perks unlocked.`);
     }
     if (wantsGroupsDraft) {
-      lines.push("Group invites will come to you first.");
+      lines.push("Group invites coming first to your inbox.");
     }
 
     return lines.slice(0, 4);
@@ -568,7 +568,7 @@ export function WelcomeFlow() {
               onClick={handleOpenCup}
               className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)]"
             >
-              {authUser ? "Open my Cup →" : "Sign in to save my Cup →"}
+              Open my Cup →
             </button>
             <button
               type="button"
