@@ -34,7 +34,7 @@ const BASE_STEPS: Array<{
     required: false,
     eyebrow: "Your fan ID",
     title: "Who's watching?",
-    body: "First name and home city used to personalize matches, promos, and saved spots."
+    body: "First name and home city - used to personalize matches, promos, and saved spots."
   },
   {
     id: "email",
@@ -83,7 +83,7 @@ const BASE_STEPS: Array<{
     required: false,
     eyebrow: "Notifications",
     title: "How should we reach you?",
-    body: "Promos and kickoff alerts. Email plus push. All optional, change anytime."
+    body: "Promos and kickoff alerts. Email + push. All optional, change anytime."
   }
 ];
 
@@ -689,7 +689,7 @@ export function WelcomeFlow() {
                     </div>
                   </label>
                   <div className="text-xs text-mist">
-                    Leave it blank to skip for now, or add one so kickoff alerts have somewhere to go.
+                    Skip and add it later, or give kickoff alerts a place to land now.
                   </div>
                   {emailError ? <div className="text-sm font-medium text-red-500">{emailError}</div> : null}
                   <button
