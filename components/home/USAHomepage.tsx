@@ -11,6 +11,7 @@ import { getFallbackTonightFeed, getTonightFeed, type TonightFeed } from "@/lib/
 import { ActionHero, ActionHeroError } from "./ActionHero";
 import { AliveMatchCard } from "./AliveMatchCard";
 import { HomeViewTracker } from "./HomeViewTracker";
+import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
 
 const NorthAmericaMap = dynamic(() => import("./NorthAmericaMap").then((mod) => mod.NorthAmericaMap), {
@@ -133,6 +134,7 @@ export async function USAHomepage() {
       <HomeViewTracker variant="active" />
       <section className="bg-bg">
         <div className="container-shell space-y-8 py-8 lg:py-12">
+          <LiveActivityTicker />
           {feedError ? (
             <ActionHeroError />
           ) : (
