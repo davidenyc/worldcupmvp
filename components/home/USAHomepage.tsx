@@ -8,8 +8,11 @@ import { getMatchHostCityKey } from "@/lib/data/matchLocations";
 import { worldCup2026Matches } from "@/lib/data/matches";
 import { getAdminQueue, getAllCountries, getMapPageData } from "@/lib/data/repository";
 import { getFallbackTonightFeed, getTonightFeed, type TonightFeed } from "@/lib/hooks/useTonightFeed";
+import { getSeededGoingCount } from "@/lib/social/seededGoingCount";
+import { getVenueImageSet } from "@/lib/utils/venueImages";
 import { ActionHero, ActionHeroError } from "./ActionHero";
 import { AliveMatchCard } from "./AliveMatchCard";
+import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
@@ -71,6 +74,15 @@ async function getResolvedTonightFeed(cityKey: string, userCountrySlug?: string)
   }
 }
 
+function getPrimaryCountrySlug(match: TonightFeed["hero"], userCountrySlug?: string) {
+  if (!match) return null;
+  if (userCountrySlug && [match.homeCountry.slug, match.awayCountry.slug].includes(userCountrySlug)) {
+    return userCountrySlug;
+  }
+
+  return match.homeCountry.slug;
+}
+
 export async function USAHomepage() {
   const supabase = createClient();
   const {
@@ -103,7 +115,7 @@ export async function USAHomepage() {
         };
       })()
     : null;
-  const [cityCards, tonightFeedResult] = await Promise.all([
+  const [cityCards, tonightFeedResult, activeMapData] = await Promise.all([
     Promise.all(
       HOST_CITIES.map(async (city) => ({
         ...city,
@@ -111,9 +123,42 @@ export async function USAHomepage() {
         ...(await getCityVenueCount(city.key))
       }))
     ),
-    getResolvedTonightFeed(activeCity, userCountrySlug)
+    getResolvedTonightFeed(activeCity, userCountrySlug),
+    getMapPageData(activeCity)
   ]);
   const { feed: tonightFeed, feedError } = tonightFeedResult;
+  const heroMatch = tonightFeed.hero;
+  const featuredCountrySlug = getPrimaryCountrySlug(tonightFeed.hero, userCountrySlug);
+  const featuredCountry = featuredCountrySlug ? countryLookup.get(featuredCountrySlug) ?? null : null;
+  const featuredMatchVenues =
+    heroMatch && featuredCountrySlug
+      ? activeMapData.venues
+          .filter((venue) => {
+            if (
+              venue.likelySupporterCountry === heroMatch.homeCountry.slug ||
+              venue.likelySupporterCountry === heroMatch.awayCountry.slug
+            ) {
+              return true;
+            }
+
+            return (
+              venue.associatedCountries.includes(heroMatch.homeCountry.slug) ||
+              venue.associatedCountries.includes(heroMatch.awayCountry.slug)
+            );
+          })
+          .map((venue) => ({
+            slug: venue.slug,
+            name: venue.name,
+            neighborhood: venue.neighborhood,
+            imageUrl: getVenueImageSet(venue)[0] ?? "/og/default.png",
+            rating: venue.rating,
+            goingCount: getSeededGoingCount(heroMatch.matchId, venue.slug, venue),
+            acceptsReservations: venue.acceptsReservations,
+            rankScore: venue.rankScore
+          }))
+          .sort((left, right) => right.goingCount - left.goingCount || right.rankScore - left.rankScore)
+          .slice(0, 3)
+      : [];
   const matchSectionTitle =
     tonightFeed.windowLabel === "Next match day"
       ? "Next match day"
@@ -149,6 +194,16 @@ export async function USAHomepage() {
               } : null}
             />
           )}
+          {tonightFeed.hero && featuredCountry ? (
+            <FeaturedVenuesForMatch
+              cityKey={activeCity}
+              countryLabel={featuredCountry.name}
+              countrySlug={featuredCountry.slug}
+              totalVenueCount={tonightFeed.hero.venueCount}
+              venues={featuredMatchVenues}
+              matchId={tonightFeed.hero.matchId}
+            />
+          ) : null}
           <PrimaryCountryStrip countries={allCountries} cityKey={activeCity} />
           <section>
             <div className="flex items-end justify-between gap-3">
