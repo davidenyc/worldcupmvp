@@ -33,27 +33,27 @@ const BASE_STEPS: Array<{
     required: false,
     eyebrow: "Your fan ID",
     title: "Who's watching?",
-    body: "First name and home city personalize matches, promos, and saved spots."
+    body: "First name and home city used to personalize matches, promos, and saved spots."
   },
   {
     id: "email",
     required: false,
     eyebrow: "Email",
-    title: "Where should alerts go?",
-    body: "Optional. Skip it and add an email later in Account."
+    title: "Where should kickoff alerts go?",
+    body: "Optional. Skip and add later in Account."
   },
   {
     id: "country",
     required: true,
     eyebrow: "Your team",
-    title: "Pick your nation.",
-    body: "Used to surface your matches, crowd, and country-specific promos."
+    title: "Pick the nation you're backing.",
+    body: "Used to surface your matches, your fan crowd, and country-specific promos."
   },
   {
     id: "follow",
     required: false,
     eyebrow: "Following",
-    title: "Any other nations?",
+    title: "Other nations you'll watch?",
     body: "Pick up to 2 on Free. Fan Pass unlocks all 48."
   },
   {
@@ -68,21 +68,21 @@ const BASE_STEPS: Array<{
     required: false,
     eyebrow: "Groups",
     title: "Bringing friends along?",
-    body: "Save your spot now and we’ll loop you in first when groups launch."
+    body: "Group invites launch post-MVP. Save your spot now and we'll loop you in first."
   },
   {
     id: "plan",
     required: false,
     eyebrow: "Plan",
     title: "Pick your plan.",
-    body: "Free works for one country. Fan Pass unlocks every nation."
+    body: "Free works for one country. Fan Pass unlocks every nation. Switch anytime."
   },
   {
     id: "promos",
     required: false,
     eyebrow: "Notifications",
     title: "How should we reach you?",
-    body: "Promos and kickoff alerts. Email plus push. All optional."
+    body: "Promos and kickoff alerts. Email plus push. All optional, change anytime."
   }
 ];
 
