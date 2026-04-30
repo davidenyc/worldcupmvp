@@ -36,7 +36,7 @@ export function MarketingHeroActions({ variant = "hero" }: { variant?: "hero" | 
         href={primaryHref}
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 text-sm font-semibold text-[color:var(--fg-on-accent)] transition hover:brightness-95"
       >
-        Make this my Cup →
+        Personalize My Cup →
       </Link>
       <Link
         href={secondaryHref}

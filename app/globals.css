@@ -233,7 +233,7 @@ a {
 }
 
 .live-ticker-track {
-  animation: liveTickerMarquee 40s linear infinite;
+  animation: liveTickerMarquee 52s linear infinite;
   will-change: transform;
 }
 
