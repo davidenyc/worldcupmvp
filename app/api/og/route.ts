@@ -203,7 +203,7 @@ function renderOgImage(payload: OgPayload) {
             color: "rgba(248,251,255,0.72)"
           }
         },
-        React.createElement("div", null, "17 host cities · 48 nations · every fan diaspora"),
+        React.createElement("div", null, "17 host cities · 48 nations · match-night rooms for every crowd"),
         React.createElement(
           "div",
           {
@@ -367,8 +367,8 @@ async function buildTonightPayload(cityKey: string) {
       if (!hero) {
         return {
           eyebrow: `${city?.label ?? "New York"} tonight`,
-          title: "Watch parties loading",
-          subtitle: `We're checking the next World Cup watch parties for ${city?.label ?? "New York"}.`,
+          title: "Next match day",
+          subtitle: `The next World Cup watch parties are lining up now in ${city?.label ?? "New York"}.`,
           accent: "#f4b942",
           emoji: "🌙",
           pill: city?.shortLabel?.toUpperCase() ?? "NYC"
