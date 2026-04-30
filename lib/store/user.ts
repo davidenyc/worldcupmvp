@@ -743,6 +743,26 @@ export function useUserHydration() {
           prefersDarkMode: data.profile?.prefersDarkMode ?? false,
           defaultFilters: data.profile?.defaultFilters ?? createDefaultProfile().defaultFilters,
           promoOptIns: data.profile?.promoOptIns ?? createDefaultProfile().promoOptIns,
+          wantsGroups:
+            data.profile?.wantsGroups ??
+            data.profile?.promoOptIns?.wantsGroups ??
+            createDefaultProfile().wantsGroups,
+          proximityPromos:
+            data.profile?.proximityPromos ??
+            data.profile?.promoOptIns?.proximityPromos ??
+            createDefaultProfile().proximityPromos,
+          groupPromos:
+            data.profile?.groupPromos ??
+            data.profile?.promoOptIns?.groupPromos ??
+            createDefaultProfile().groupPromos,
+          savedVenuePromoAlerts:
+            data.profile?.savedVenuePromoAlerts ??
+            data.profile?.promoOptIns?.savedVenuePromoAlerts ??
+            createDefaultProfile().savedVenuePromoAlerts,
+          notificationPermission:
+            data.profile?.notificationPermission ??
+            data.profile?.promoOptIns?.notificationPermission ??
+            createDefaultProfile().notificationPermission,
           welcomeSeenAt: data.profile?.welcomeSeenAt ? new Date(data.profile.welcomeSeenAt).getTime() : undefined,
           joinedAt: data.profile?.createdAt ?? user.created_at ?? new Date().toISOString(),
           watchlistMatchIds: watchedMatches.map((entry) => entry.matchId),

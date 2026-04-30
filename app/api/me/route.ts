@@ -4,6 +4,22 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
+const DEFAULT_FILTERS = {
+  soundOn: false,
+  reservationsPossible: false,
+  outdoorSeating: false
+} as const;
+
+const DEFAULT_PROMO_OPT_INS = {
+  email: false,
+  push: false,
+  proximityPromos: false,
+  groupPromos: false,
+  savedVenuePromoAlerts: false,
+  wantsGroups: false,
+  notificationPermission: "default"
+} as const;
+
 const profilePatchSchema = z.object({
   displayName: z.string().trim().min(1).max(80).optional().nullable(),
   firstName: z.string().trim().min(1).max(40).optional().nullable(),
@@ -115,6 +131,27 @@ export async function PATCH(request: Request) {
   }
 
   const payload = parsed.data;
+  const existingProfile = await prisma.profile.findUnique({
+    where: { id: user.id },
+    select: {
+      defaultFilters: true,
+      promoOptIns: true
+    }
+  });
+  const mergedDefaultFilters = payload.defaultFilters
+    ? {
+        ...DEFAULT_FILTERS,
+        ...(existingProfile?.defaultFilters as Record<string, boolean> | null | undefined),
+        ...payload.defaultFilters
+      }
+    : undefined;
+  const mergedPromoOptIns = payload.promoOptIns
+    ? {
+        ...DEFAULT_PROMO_OPT_INS,
+        ...(existingProfile?.promoOptIns as Record<string, boolean | string> | null | undefined),
+        ...payload.promoOptIns
+      }
+    : undefined;
   const profile = await prisma.profile.upsert({
     where: { id: user.id },
     update: {
@@ -126,8 +163,8 @@ export async function PATCH(request: Request) {
       favoriteCountrySlug: payload.favoriteCountrySlug ?? undefined,
       language: payload.language ?? undefined,
       prefersDarkMode: payload.prefersDarkMode ?? undefined,
-      defaultFilters: payload.defaultFilters ?? undefined,
-      promoOptIns: payload.promoOptIns ?? undefined,
+      defaultFilters: mergedDefaultFilters ?? undefined,
+      promoOptIns: mergedPromoOptIns ?? undefined,
       notificationPrefs: payload.notificationPrefs ?? undefined,
       welcomeSeenAt: payload.welcomeSeenAt === undefined ? undefined : payload.welcomeSeenAt ? new Date(payload.welcomeSeenAt) : null
     },
@@ -141,20 +178,8 @@ export async function PATCH(request: Request) {
       favoriteCountrySlug: payload.favoriteCountrySlug ?? null,
       language: payload.language ?? "en",
       prefersDarkMode: payload.prefersDarkMode ?? false,
-      defaultFilters: payload.defaultFilters ?? {
-        soundOn: false,
-        reservationsPossible: false,
-        outdoorSeating: false
-      },
-      promoOptIns: payload.promoOptIns ?? {
-        email: false,
-        push: false,
-        proximityPromos: false,
-        groupPromos: false,
-        savedVenuePromoAlerts: false,
-        wantsGroups: false,
-        notificationPermission: "default"
-      },
+      defaultFilters: mergedDefaultFilters ?? DEFAULT_FILTERS,
+      promoOptIns: mergedPromoOptIns ?? DEFAULT_PROMO_OPT_INS,
       notificationPrefs: payload.notificationPrefs ?? {
         channels: {
           push: true,

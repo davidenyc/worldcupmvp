@@ -71,6 +71,16 @@ type MembershipRow = {
   cancelAtPeriodEnd: boolean;
 };
 
+const DEFAULT_PROMO_OPT_INS = {
+  email: false,
+  push: false,
+  proximityPromos: false,
+  groupPromos: false,
+  savedVenuePromoAlerts: false,
+  wantsGroups: false,
+  notificationPermission: "default"
+} as const;
+
 async function requireAuthedUser() {
   const supabase = createClient();
   const {
@@ -189,14 +199,10 @@ export async function POST(request: Request) {
       reservationsPossible: false,
       outdoorSeating: false
     },
-    promoOptIns: existingProfile?.promoOptIns ?? payload.profile.promoOptIns ?? {
-      email: false,
-      push: false,
-      proximityPromos: false,
-      groupPromos: false,
-      savedVenuePromoAlerts: false,
-      wantsGroups: false,
-      notificationPermission: "default"
+    promoOptIns: {
+      ...DEFAULT_PROMO_OPT_INS,
+      ...(existingProfile?.promoOptIns ?? {}),
+      ...(payload.profile.promoOptIns ?? {})
     },
     welcomeSeenAt: existingProfile?.welcomeSeenAt ?? (payload.profile.welcomeSeenAt ?? null)
   };
