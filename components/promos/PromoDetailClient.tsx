@@ -9,7 +9,6 @@ import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import type { Promo } from "@/lib/data/promos";
 import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
-import { useUser } from "@/lib/store/user";
 import { toast } from "@/lib/toast";
 
 export function PromoDetailClient({
@@ -22,7 +21,6 @@ export function PromoDetailClient({
   reservationUrl?: string;
 }) {
   const { tier, hasFeature } = useMembership();
-  const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
   const [saving, setSaving] = useState(false);
@@ -47,9 +45,7 @@ export function PromoDetailClient({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        promoId: promo.id,
-        userId: user.id,
-        tier
+        promoId: promo.id
       })
     });
 

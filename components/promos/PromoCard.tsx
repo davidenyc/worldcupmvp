@@ -11,7 +11,6 @@ import {
 import { UpgradePrompt } from "@/components/membership/UpgradePrompt";
 import { useMembership } from "@/lib/store/membership";
 import { useSavedPromosStore } from "@/lib/store/savedPromos";
-import { useUser } from "@/lib/store/user";
 import { PromoRedemptionModal } from "@/components/promos/PromoRedemptionModal";
 import { toast } from "@/lib/toast";
 
@@ -27,7 +26,6 @@ export function PromoCard({
   compact?: boolean;
 }) {
   const { tier, hasFeature } = useMembership();
-  const user = useUser();
   const savedPromos = useSavedPromosStore((state) => state.savedPromos);
   const savePromo = useSavedPromosStore((state) => state.savePromo);
   const [open, setOpen] = useState(false);
@@ -61,9 +59,7 @@ export function PromoCard({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        promoId: promo.id,
-        userId: user.id,
-        tier
+        promoId: promo.id
       })
     });
 

@@ -224,6 +224,7 @@ model Profile {
   activity            ActivityEvent[]
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
+  promoRedemptions    PromoRedemption[]
 }
 
 model ProfileFollowedCountry {
@@ -307,6 +308,19 @@ model PushSubscription {
 
   @@unique([profileId, endpoint])
   @@index([profileId])
+}
+
+model PromoRedemption {
+  id             String   @id @default(cuid())
+  profileId      String   @db.Uuid
+  promoId        String
+  redemptionCode String
+  claimedAt      DateTime @default(now())
+  expiresAt      DateTime
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, promoId])
+  @@index([promoId])
 }
 
 model Match {

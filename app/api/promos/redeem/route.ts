@@ -1,13 +1,10 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
+import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
 
+import { prisma } from "@/lib/prisma";
 import { getPromoSeedById, type SavedPromo } from "@/lib/data/promos";
+import { createClient } from "@/lib/supabase/server";
 import type { MembershipTier } from "@/lib/store/membership";
-
-type RedemptionLogRecord = SavedPromo & {
-  userId: string;
-  tier: MembershipTier;
-};
 
 function hasTierAccess(required: MembershipTier, actual: MembershipTier) {
   if (required === "free") return true;
@@ -19,64 +16,60 @@ function buildRedemptionCode(promoId: string) {
   return `${promoId.replace(/^promo-/, "").replace(/-/g, "").slice(0, 6).toUpperCase()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
 }
 
-async function readRedemptionLog(filePath: string) {
-  try {
-    const raw = await readFile(filePath, "utf8");
-    return raw
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line) as RedemptionLogRecord);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return [];
-    }
-    throw error;
-  }
-}
-
 export async function POST(request: Request) {
+  const supabase = createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const membership = await prisma.profileMembership.findUnique({
+    where: { profileId: user.id }
+  });
+  const tier = (membership?.tier ?? "free") as MembershipTier;
+
   const body = (await request.json()) as {
     promoId?: string;
-    userId?: string;
-    tier?: MembershipTier;
     claimedAt?: string;
   };
 
-  if (!body.promoId || !body.userId) {
-    return Response.json({ error: "promoId and userId are required" }, { status: 400 });
+  if (!body.promoId) {
+    return NextResponse.json({ error: "promoId required" }, { status: 400 });
   }
 
   const promo = getPromoSeedById(body.promoId);
   if (!promo) {
-    return Response.json({ error: "Promo not found" }, { status: 404 });
+    return NextResponse.json({ error: "Promo not found" }, { status: 404 });
   }
 
   const now = new Date();
   if (Date.parse(promo.startsAt) > now.getTime() || Date.parse(promo.endsAt) < now.getTime()) {
-    return Response.json({ error: "Promo is not active" }, { status: 409 });
+    return NextResponse.json({ error: "Promo is not active" }, { status: 409 });
   }
 
-  const tier = body.tier ?? "free";
   if (!hasTierAccess(promo.tier, tier)) {
-    return Response.json({ error: "Tier not eligible for this promo" }, { status: 403 });
+    return NextResponse.json({ error: "Tier not eligible for this promo" }, { status: 403 });
   }
 
-  const dataDir = path.join(process.cwd(), "data");
-  const redemptionLogPath = path.join(dataDir, "promo-redemptions.jsonl");
-  await mkdir(dataDir, { recursive: true });
-
-  const existingClaims = await readRedemptionLog(redemptionLogPath);
-  const userClaimsForPromo = existingClaims.filter(
-    (claim) => claim.userId === body.userId && claim.promoId === body.promoId
-  );
-  if (userClaimsForPromo.length >= promo.perUserLimit) {
-    return Response.json({ error: "Per-user promo limit reached" }, { status: 409 });
+  const userClaimsForPromo = await prisma.promoRedemption.count({
+    where: {
+      profileId: user.id,
+      promoId: body.promoId
+    }
+  });
+  if (userClaimsForPromo >= promo.perUserLimit) {
+    return NextResponse.json({ error: "Per-user promo limit reached" }, { status: 409 });
   }
 
   if (promo.totalLimit) {
-    const totalClaims = existingClaims.filter((claim) => claim.promoId === body.promoId).length;
+    const totalClaims = await prisma.promoRedemption.count({
+      where: { promoId: body.promoId }
+    });
     if (totalClaims >= promo.totalLimit) {
-      return Response.json({ error: "Promo has reached its global limit" }, { status: 409 });
+      return NextResponse.json({ error: "Promo has reached its global limit" }, { status: 409 });
     }
   }
 
@@ -89,13 +82,23 @@ export async function POST(request: Request) {
     expiresAt: promo.endsAt
   };
 
-  const record: RedemptionLogRecord = {
-    ...savedPromo,
-    userId: body.userId,
-    tier
-  };
+  try {
+    await prisma.promoRedemption.create({
+      data: {
+        profileId: user.id,
+        promoId: promo.id,
+        redemptionCode: savedPromo.code,
+        claimedAt: new Date(claimedAt),
+        expiresAt: new Date(savedPromo.expiresAt)
+      }
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json({ error: "Per-user promo limit reached" }, { status: 409 });
+    }
+    throw error;
+  }
 
-  await appendFile(redemptionLogPath, `${JSON.stringify(record)}\n`, "utf8");
-
-  return Response.json({ savedPromo, redemptionCode: savedPromo.code });
+  // TODO(migrate-jsonl): import existing data from data/promo-redemptions.jsonl before deleting any historic backups.
+  return NextResponse.json({ savedPromo, redemptionCode: savedPromo.code });
 }
