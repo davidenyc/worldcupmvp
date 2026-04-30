@@ -396,6 +396,17 @@ async function buildTonightPayload(cityKey: string) {
   }
 }
 
+async function buildMePayload() {
+  return {
+    eyebrow: "My Cup",
+    title: "My Cup · GameDay Map",
+    subtitle: "Your saved venues, country follows, and World Cup watch-party plans in one place.",
+    accent: "#f4b942",
+    emoji: "🗂️",
+    pill: "My Cup"
+  } satisfies OgPayload;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "home";
@@ -420,6 +431,9 @@ export async function GET(request: Request) {
       break;
     case "tonight":
       payload = await buildTonightPayload(searchParams.get("city") ?? "nyc");
+      break;
+    case "me":
+      payload = await buildMePayload();
       break;
     default:
       payload = await buildHomePayload();
