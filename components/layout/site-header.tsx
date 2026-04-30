@@ -42,7 +42,7 @@ function primaryNavClass(active: boolean) {
 }
 
 function actionButtonClass() {
-  return "inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]";
+  return "inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] max-[359px]:min-h-10 max-[359px]:w-10";
 }
 
 const PRIMARY_NAV_ITEMS = [
@@ -64,11 +64,12 @@ export function SiteHeader() {
   const localUser = useUser();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
-  const [mobileNavVisible, setMobileNavVisible] = useState(false);
+  const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
   const accountButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastScrollYRef = useRef(0);
 
   const activeCity = useMemo(() => {
     const fromPath = getActiveCityFromPath(pathname);
@@ -144,38 +145,27 @@ export function SiteHeader() {
   }, [accountMenuOpen]);
 
   useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
-
     const updateNav = () => {
       const currentY = window.scrollY;
-      const delta = currentY - lastY;
-      const anchorVisible = currentY < 160;
+      const previousY = lastScrollYRef.current;
+      const nearTop = currentY < 12;
+      const scrollingUp = currentY < previousY - 4;
+      const nextVisible = nearTop || scrollingUp;
 
-      if (anchorVisible) {
-        setMobileNavVisible(true);
-      } else if (delta > 18) {
-        setMobileNavVisible(false);
-      } else if (delta < -12) {
-        setMobileNavVisible(true);
-      }
+      setMobileNavVisible((current) => (current === nextVisible ? current : nextVisible));
 
-      lastY = currentY;
-      ticking = false;
+      lastScrollYRef.current = currentY;
     };
 
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(updateNav);
-    };
-
+    lastScrollYRef.current = window.scrollY;
     setMobileNavVisible(true);
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", updateNav, { passive: true });
+    document.addEventListener("scroll", updateNav, { passive: true, capture: true });
     const onPageShow = () => setMobileNavVisible(true);
     window.addEventListener("pageshow", onPageShow);
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", updateNav);
+      document.removeEventListener("scroll", updateNav, true);
       window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
@@ -221,18 +211,18 @@ export function SiteHeader() {
         className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_94%,transparent)] backdrop-blur-xl"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        <div className="container-shell flex min-h-[52px] items-center justify-between gap-3 py-2 lg:min-h-[64px] lg:py-3">
-          <div className="flex min-w-0 shrink-0 items-center">
+        <div className="container-shell flex min-h-[52px] items-center justify-between gap-2 py-2 lg:grid lg:min-h-[64px] lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:py-3">
+          <div className="flex min-w-0 shrink-0 items-center lg:justify-self-start">
             <Link href={homeHref} className="brand-wordmark flex min-w-0 shrink-0 items-center gap-2 text-[color:var(--fg-primary)] [text-decoration:none] visited:text-[color:var(--fg-primary)] hover:text-[color:var(--fg-primary)]">
               <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-black"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-xs font-black sm:h-9 sm:w-9 sm:text-sm"
                 style={{ backgroundColor: "var(--gold)", color: "var(--fg-on-strong)" }}
               >
                 GM
               </div>
               <div className="min-w-0">
-                <div className="truncate text-lg font-extrabold tracking-tight text-[color:var(--fg-primary)] sm:text-xl">
-                  GameDay Map<span className="ml-0.5 font-black text-gold">.</span>
+                <div className="truncate text-[1.3rem] font-extrabold tracking-tight text-[color:var(--fg-primary)] sm:text-xl">
+                  GameDay Maps<span className="ml-0.5 font-black text-gold">.</span>
                 </div>
                 <div className="hidden truncate text-xs text-[color:var(--fg-secondary)] lg:block">
                   World Cup 2026 watch parties
@@ -241,7 +231,7 @@ export function SiteHeader() {
             </Link>
           </div>
 
-          <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+          <div className="hidden min-w-0 justify-center lg:flex lg:justify-self-center">
             <nav className="flex items-center gap-6">
               {primaryNavItems.map((item) => (
                 <Link key={item.label} href={item.href} className={primaryNavClass(item.active)}>
@@ -251,7 +241,7 @@ export function SiteHeader() {
             </nav>
           </div>
 
-          <div className="flex min-w-0 shrink-0 items-center justify-end gap-2">
+          <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:justify-self-end">
             <div className="flex flex-col items-end gap-1">
               <button
                 type="button"
@@ -260,37 +250,25 @@ export function SiteHeader() {
                   setCityMenuOpen(true);
                 }}
                 aria-label={`Switch city from ${activeCityData.label}`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-3 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)]"
+                className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center gap-1 rounded-full border border-[color:var(--border-subtle)] bg-[var(--bg-surface)] px-2 text-sm font-semibold text-[color:var(--fg-primary)] transition hover:bg-[var(--bg-surface-elevated)] sm:gap-2 sm:px-3 max-[359px]:min-h-10"
               >
                 <MapPin className="h-4 w-4" />
-                <span className={`max-w-[5.5rem] truncate sm:max-w-none ${isExplicit ? "" : "italic text-[color:var(--fg-secondary)]"}`}>
+                <span className={`max-w-[3rem] truncate sm:max-w-[5.5rem] ${isExplicit ? "" : "italic text-[color:var(--fg-secondary)]"}`}>
                   {activeCityData.shortLabel}
                 </span>
                 {!isExplicit ? (
-                  <span className="hidden text-[10px] uppercase tracking-[0.18em] text-mist sm:inline">
+                  <span className="hidden text-[10px] uppercase tracking-[0.18em] text-mist md:inline">
                     detected
                   </span>
                 ) : null}
               </button>
-              {!isExplicit && !isHomeSurface ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAccountMenuOpen(false);
-                    setCityMenuOpen(true);
-                  }}
-                  className="text-[11px] font-medium text-mist transition hover:text-[color:var(--fg-secondary)]"
-                >
-                  Not {activeCityData.shortLabel}? Pick yours.
-                </button>
-              ) : null}
             </div>
 
             {showHeaderUpgrade ? (
               <Link
                 href="/membership"
                 aria-label="Upgrade"
-                className="inline-flex min-h-11 w-11 items-center justify-center rounded-full border border-gold/45 bg-gold/10 text-gold transition hover:bg-gold/20 lg:w-auto lg:gap-2 lg:px-4 lg:text-sm lg:font-semibold"
+                className="hidden min-h-11 w-11 items-center justify-center rounded-full border border-gold/45 bg-gold/10 text-gold transition hover:bg-gold/20 lg:inline-flex lg:w-auto lg:gap-2 lg:px-4 lg:text-sm lg:font-semibold"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden lg:inline">Upgrade</span>
@@ -307,8 +285,16 @@ export function SiteHeader() {
               />
             ) : null}
 
-            <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} lg:h-11 lg:w-11`}>
+            <Link href={searchHref} aria-label="Search" className={`${actionButtonClass()} hidden lg:inline-flex lg:h-11 lg:w-11`}>
               <Search className="h-4 w-4" />
+            </Link>
+
+            <Link
+              href={myHref}
+              aria-label="My Cup"
+              className={`${actionButtonClass()} lg:hidden`}
+            >
+              <User2 className="h-4 w-4" />
             </Link>
 
             <button
@@ -316,7 +302,7 @@ export function SiteHeader() {
               type="button"
               onClick={() => setAccountMenuOpen((current) => !current)}
               aria-label="Account menu"
-              className={`${actionButtonClass()} lg:h-11 lg:w-11`}
+              className={`${actionButtonClass()} hidden lg:inline-flex lg:h-11 lg:w-11`}
             >
               <User2 className="h-4 w-4" />
             </button>
@@ -455,13 +441,15 @@ export function SiteHeader() {
 
       {hideMobileNav ? null : (
         <div
-          className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-[70] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-transform duration-200 ease-out min-[600px]:hidden ${
-            mobileNavVisible ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
+          className={`mobile-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-[70] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] transition-all duration-200 ease-out lg:hidden ${
+            mobileNavVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-[calc(100%+7rem)] opacity-0"
           }`}
         >
           <div className="pointer-events-auto relative mx-auto max-w-md rounded-2xl border border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--bg-surface)_96%,transparent)] px-3 py-2 shadow-popover backdrop-blur-xl">
             <nav className="flex items-stretch justify-between gap-1">
-              <Link href="/" className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
+              <Link href={homeHref} className={`touch-manipulation flex min-h-11 flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 text-[11px] font-semibold ${currentPath === "/" ? "text-gold" : "text-[color:var(--fg-muted)]"}`}>
                 <Home className="h-5 w-5" />
                 <span>Home</span>
               </Link>

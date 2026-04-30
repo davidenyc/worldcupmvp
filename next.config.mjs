@@ -34,9 +34,11 @@ const nextConfig = {
     ]
   },
   async headers() {
+    const devScriptSources =
+      process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com https://cdn.jsdelivr.net",
+      `script-src 'self' 'unsafe-inline'${devScriptSources} https://va.vercel-scripts.com https://cdn.jsdelivr.net`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' https: data: blob:",
       "font-src 'self' data:",

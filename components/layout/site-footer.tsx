@@ -10,7 +10,7 @@ export function SiteFooter() {
                 GM
             </div>
             <div>
-              <div className="font-semibold text-[color:var(--fg-primary)]">GameDay Map</div>
+              <div className="font-semibold text-[color:var(--fg-primary)]">GameDay Maps</div>
               <div className="text-sm text-[color:var(--fg-muted)]">World Cup 2026 watch parties</div>
             </div>
           </div>
