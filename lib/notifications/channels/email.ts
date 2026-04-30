@@ -15,10 +15,11 @@ interface EmailInput {
 let warnedMissingResendEnv = false;
 
 function renderTemplate(input: EmailInput) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002";
   const ctaHref =
     typeof input.href === "string" && input.href.startsWith("/")
-      ? `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${input.href}`
-      : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      ? `${appUrl}${input.href}`
+      : appUrl;
 
   return `
     <div style="font-family:Inter,system-ui,sans-serif;background:#f7fafc;padding:24px;">
