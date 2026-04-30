@@ -1,10 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { getEliteAccessSecret } from "@/lib/elite/secret";
 
-const DEFAULT_SECRET = "gameday-map-dev-elite-secret";
-
-function getSecret() {
-  return process.env.ELITE_ACCESS_SECRET ?? DEFAULT_SECRET;
-}
+const ELITE_ACCESS_SECRET = getEliteAccessSecret();
 
 type AccessPayload = {
   userId: string;
@@ -18,7 +15,7 @@ type AccessPayload = {
 function verifyToken(token: string) {
   const [encoded, signature] = token.split(".");
   if (!encoded || !signature) return { ok: false as const, reason: "Malformed token" };
-  const expected = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
+  const expected = createHmac("sha256", ELITE_ACCESS_SECRET).update(encoded).digest("base64url");
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
   if (signatureBuffer.length !== expectedBuffer.length) {

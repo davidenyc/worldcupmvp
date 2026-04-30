@@ -3,9 +3,8 @@ import { createHmac, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { getEliteAccessSecret } from "@/lib/elite/secret";
 import { createClient } from "@/lib/supabase/server";
-
-const DEFAULT_SECRET = "gameday-map-dev-elite-secret";
 
 type AccessPayload = {
   userId: string;
@@ -16,13 +15,11 @@ type AccessPayload = {
   exp: number;
 };
 
-function getSecret() {
-  return process.env.ELITE_ACCESS_SECRET ?? DEFAULT_SECRET;
-}
+const ELITE_ACCESS_SECRET = getEliteAccessSecret();
 
 function signPayload(payload: AccessPayload) {
   const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = createHmac("sha256", getSecret()).update(encoded).digest("base64url");
+  const signature = createHmac("sha256", ELITE_ACCESS_SECRET).update(encoded).digest("base64url");
   return `${encoded}.${signature}`;
 }
 

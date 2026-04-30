@@ -1,3 +1,15 @@
+if (process.env.NODE_ENV === "production") {
+  const secret = process.env.ELITE_ACCESS_SECRET;
+
+  if (!secret) {
+    throw new Error("ELITE_ACCESS_SECRET is required in production");
+  }
+
+  if (secret.length < 32) {
+    throw new Error("ELITE_ACCESS_SECRET must be at least 32 characters");
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
