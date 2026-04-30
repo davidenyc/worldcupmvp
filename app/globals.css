@@ -280,8 +280,64 @@ a {
   font: inherit;
 }
 
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.leaflet-container .leaflet-tile,
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container img.leaflet-tile {
+  mix-blend-mode: normal;
+}
+
 .leaflet-tile {
-  filter: none;
+  visibility: hidden;
+  filter: contrast(1.28) saturate(1.14) brightness(0.94);
+  image-rendering: auto;
+}
+
+.leaflet-tile-loaded {
+  visibility: inherit;
+}
+
+.leaflet-map-pane {
+  z-index: 1;
+}
+
+.leaflet-tile-pane {
+  z-index: 2;
+}
+
+.leaflet-overlay-pane {
+  z-index: 4;
+}
+
+.leaflet-shadow-pane {
+  z-index: 5;
+}
+
+.leaflet-marker-pane {
+  z-index: 6;
+}
+
+.leaflet-popup-pane {
+  z-index: 7;
 }
 
 .dark .leaflet-container {
@@ -292,10 +348,9 @@ a {
   filter: brightness(1.48) contrast(1.18) saturate(1.12) hue-rotate(-4deg);
 }
 
-.leaflet-pane,
 .leaflet-top,
 .leaflet-bottom {
-  z-index: 1;
+  z-index: 8;
 }
 
 .leaflet-control-attribution {
