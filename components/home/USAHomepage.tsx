@@ -15,6 +15,7 @@ import { ActionHero, ActionHeroError } from "./ActionHero";
 import { AliveMatchCard } from "./AliveMatchCard";
 import { EditorialPick } from "./EditorialPick";
 import { FeaturedVenuesForMatch } from "./FeaturedVenuesForMatch";
+import { HomeFAQ } from "./HomeFAQ";
 import { HomeViewTracker } from "./HomeViewTracker";
 import { LiveActivityTicker } from "./LiveActivityTicker";
 import { PrimaryCountryStrip } from "./PrimaryCountryStrip";
@@ -218,6 +219,7 @@ export async function USAHomepage() {
               } : null}
             />
           )}
+          <PrimaryCountryStrip countries={allCountries} cityKey={activeCity} />
           {tonightFeed.hero && featuredCountry ? (
             <FeaturedVenuesForMatch
               cityKey={activeCity}
@@ -228,7 +230,6 @@ export async function USAHomepage() {
               matchId={tonightFeed.hero.matchId}
             />
           ) : null}
-          <PrimaryCountryStrip countries={allCountries} cityKey={activeCity} />
           <section>
             <div className="flex items-end justify-between gap-3">
               <div>
@@ -290,6 +291,7 @@ export async function USAHomepage() {
             Pick your city. Pick your team. Show up before kickoff.
           </section>
 
+          <HomeFAQ />
           <footer className="px-1 text-sm text-[color:var(--fg-secondary)]">
             <Link href="/membership" className="font-medium text-[color:var(--fg-primary)]">Fan Pass</Link>
             {" · "}
