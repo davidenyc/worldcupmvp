@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { trackLiveActivityTickerView } from "@/lib/analytics/track";
@@ -57,23 +58,31 @@ export function LiveActivityTicker({ cityKey = "nyc" }: { cityKey?: string }) {
         {reducedMotion ? (
           <div className="flex min-h-9 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-sm text-[color:var(--fg-on-strong)]">
             {entries.map((entry) => (
-              <span key={entry.id} className="inline-flex items-center gap-2 whitespace-nowrap">
+              <Link
+                key={entry.id}
+                href={entry.href}
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[color:var(--fg-on-strong)] transition hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+              >
                 <span>{entry.avatar}</span>
                 <span>{entry.label}</span>
-              </span>
+              </Link>
             ))}
           </div>
         ) : (
           <div className="group flex min-h-9 items-center overflow-hidden py-2">
             <div
-              className="flex min-w-max items-center gap-6 whitespace-nowrap px-4 text-sm text-[color:var(--fg-on-strong)] motion-safe:animate-[ticker_36s_linear_infinite] group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]"
+              className="live-ticker-track flex min-w-max items-center gap-4 whitespace-nowrap px-4 text-sm text-[color:var(--fg-on-strong)] group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]"
               aria-label="Live fan activity"
             >
               {entries.map((entry, index) => (
-                <span key={`${entry.id}-${index}`} className="inline-flex items-center gap-2">
+                <Link
+                  key={`${entry.id}-${index}`}
+                  href={entry.href}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-[color:var(--fg-on-strong)] transition hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+                >
                   <span>{entry.avatar}</span>
                   <span>{entry.label}</span>
-                </span>
+                </Link>
               ))}
             </div>
           </div>
