@@ -361,6 +361,12 @@ export function WelcomeFlow() {
   }, [favoriteCountryDraft, followingDraft, homeCityDraft, suggestedCity, tier, wantsGroupsDraft]);
 
   const celebrationName = firstNameDraft.trim() || user.firstName || "Fan";
+  const pushPermissionLabel =
+    notificationPermissionDraft === "granted"
+      ? "Browser permission is on. Match alerts can reach this device."
+      : notificationPermissionDraft === "denied"
+        ? "Browser permission is off. You can still save the preference and enable it later."
+        : "Allow browser permission now so match alerts can actually reach this device.";
 
   function resolveHomeCity(value: string) {
     return getHostCity(value)?.key ?? getHostCity(value.toLowerCase().replace(/\s+/g, "-"))?.key ?? null;
@@ -933,6 +939,9 @@ export function WelcomeFlow() {
                       notifyNewVenuesDraft,
                       () => setNotifyNewVenuesDraft((current) => !current)
                     )}
+                    <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm leading-6 text-mist">
+                      {pushPermissionLabel}
+                    </div>
                     {notificationPermissionDraft === "unsupported" ? (
                       <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-mist">
                         Push notifications are unavailable in this browser right now. We’ll keep your preference saved.
