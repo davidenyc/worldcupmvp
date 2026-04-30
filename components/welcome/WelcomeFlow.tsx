@@ -766,12 +766,13 @@ export function WelcomeFlow() {
                     "Yes, save my spot for groups when they launch",
                     wantsGroupsDraft,
                     () => setWantsGroupsDraft((current) => !current),
-                    "One-tap invites and supporter crews arrive after MVP."
+                    "One-tap invites and supporter crews land right after MVP."
                   )}
                   {renderToggleRow(
                     "Maybe later",
                     !wantsGroupsDraft,
-                    () => setWantsGroupsDraft(false)
+                    () => setWantsGroupsDraft(false),
+                    "You can always turn groups on from Account later."
                   )}
                 </div>
               ) : null}
